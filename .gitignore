@@ -1,0 +1,24 @@
+## Résultats de builds
+bin/
+obj/
+log/
+
+## Fichiers de configuration du projet Visual Studio
+.vs/
+*.user
+*.userosscache
+*.suo
+*.cache
+*.csproj.user
+
+## .NET
+project.lock.json
+project.fragment.lock.json
+artifacts/
+
+## Autres fichiers
+*.swp
+*.tmp
+.DS_Store
+Thumbs.db
+*.log
