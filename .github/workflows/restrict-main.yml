@@ -1,0 +1,15 @@
+name: Restrict PR to main
+
+on:
+  pull_request:
+    branches: [main]
+
+jobs:
+  check-source-branch:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Block PRs not from develop
+        if: github.head_ref != 'develop'
+        run: |
+          echo "Erreur : Seules les PR depuis 'develop' sont autorisées vers 'main'. Vous devez obligatoirement merger vers 'develop'"
+          exit 1
