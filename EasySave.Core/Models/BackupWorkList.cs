@@ -9,14 +9,21 @@ namespace EasySave.Core.Models
     public class BackupWorkList
 
     {
-        public List <BackupWork> liste { get; set; }
+        public List<BackupWork> liste { get; set; }
 
         public BackupWorkList(List<BackupWork> liste)
         {
             this.liste = liste;
-           
+
 
         }
+
+        public void AddBackupWork(BackupWork backupWork)
+        {
+            liste.Add(backupWork);
+
+        }
+
 
     }
 }
