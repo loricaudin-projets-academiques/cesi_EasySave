@@ -14,9 +14,16 @@ namespace EasySave.Core.Models
         public BackupWorkList(List<BackupWork> liste)
         {
             this.liste = liste;
-           
-
         }
 
+        public void RemoveBackupWork(BackupWork backupWork)
+        {
+            this.liste.Remove(backupWork);
+        }
+
+        public void RemoveBackupWorkById(int id)
+        {
+            this.liste.RemoveAt(id);
+        }
     }
 }
