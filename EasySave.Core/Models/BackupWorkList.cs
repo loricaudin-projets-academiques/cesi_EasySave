@@ -16,14 +16,30 @@ namespace EasySave.Core.Models
             this.liste = liste;
         }
 
-        public void RemoveBackupWork(BackupWork backupWork)
+        public bool RemoveBackupWork(BackupWork backupWork)
         {
-            this.liste.Remove(backupWork);
+            try
+            {
+                this.liste.Remove(backupWork);
+                return true;
+            }
+            catch
+            {
+                return false;
+            }
         }
 
-        public void RemoveBackupWorkById(int id)
+        public bool RemoveBackupWorkById(int id)
         {
-            this.liste.RemoveAt(id);
+            try
+            {
+                this.liste.RemoveAt(id);
+                return true;
+            }
+            catch
+            {
+                return false;
+            }
         }
     }
 }
