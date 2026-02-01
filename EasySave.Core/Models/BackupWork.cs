@@ -65,7 +65,7 @@ namespace EasySave.Core.Models
         private string ExecuteDifferentialBackup()
         {
             // Set the destination folder for differential backup
-            destinationPath = @"C:\tmpinst\source\repos\cesi_EassySave\Backups_Differentiel";
+            destinationPath = @"C:\tmpinst\source\repos\cesi_EassySave\Backups_Differential";
 
             // Create the destination folder if it doesn't exist
             Directory.CreateDirectory(destinationPath);
