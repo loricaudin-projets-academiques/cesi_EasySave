@@ -9,26 +9,44 @@ namespace EasySave.Core.Models
     public class BackupWorkList
 
     {
-        public List<BackupWork> liste { get; set; }
+        private List <BackupWork> List { get; set; }
 
-        public BackupWorkList(List<BackupWork> liste)
+        public BackupWorkList(List<BackupWork> list)
         {
-            this.liste = liste;
-
-
+            this.List = list;
         }
 
 
-        public bool AddBackupWork(BackupWork backupWork)
+        public void AddBackupWork(BackupWork backupWork)
         {
+            // Add the BackupWork object to the list
+            list.Add(backupWork);
+        }
+
+        public bool RemoveBackupWork(BackupWork backupWork)
+        {
+            try
             {
-                // Add the BackupWork object to the list
-                liste.Add(backupWork);
-                return true; // The object was successfully added
+                this.List.Remove(backupWork);
+                return true;
             }
-
-            return false; // The object already exists in the list, not added
+            catch
+            {
+                return false;
+            }
         }
 
+        public bool RemoveBackupWorkById(int id)
+        {
+            try
+            {
+                this.List.RemoveAt(id);
+                return true;
+            }
+            catch
+            {
+                return false;
+            }
+        }
     }
 }
