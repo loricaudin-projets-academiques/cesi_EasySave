@@ -21,11 +21,11 @@ namespace EasySave.Core.Models
 
         public string Execute()
         {
-            if (type == BackupType.DIFFERENTIAL_BACKUP)
+            if (this.Type == BackupType.DIFFERENTIAL_BACKUP)
             {
                 return ExecuteDifferentialBackup();
             }
-            else if (type == BackupType.FULL_BACKUP)
+            else if (this.Type == BackupType.FULL_BACKUP)
             {
                 return ExecuteFullBackup();
             }
@@ -36,9 +36,7 @@ namespace EasySave.Core.Models
 
         private string ExecuteFullBackup()
         {
-            //Set the destination folder for full backup
-            this.DestinationPath = @"C:\tmpinst\source\repos\cesi_EassySave\Backups_Complete";
-
+            ProgressBar progressBar = new ProgressBar();
             // Create the destination folder if it doesn't exist
             Directory.CreateDirectory(this.DestinationPath);
 
@@ -64,9 +62,6 @@ namespace EasySave.Core.Models
 
         private string ExecuteDifferentialBackup()
         {
-            // Set the destination folder for differential backup
-            this.DestinationPath = @"C:\tmpinst\source\repos\cesi_EassySave\Backups_Differential";
-
             // Create the destination folder if it doesn't exist
             Directory.CreateDirectory(this.DestinationPath);
 
