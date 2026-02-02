@@ -9,18 +9,18 @@ namespace EasySave.Core.Models
     public class BackupWorkList
 
     {
-        public List <BackupWork> liste { get; set; }
+        private List <BackupWork> List { get; set; }
 
-        public BackupWorkList(List<BackupWork> liste)
+        public BackupWorkList(List<BackupWork> list)
         {
-            this.liste = liste;
+            this.List = list;
         }
 
         public bool RemoveBackupWork(BackupWork backupWork)
         {
             try
             {
-                this.liste.Remove(backupWork);
+                this.List.Remove(backupWork);
                 return true;
             }
             catch
@@ -33,7 +33,7 @@ namespace EasySave.Core.Models
         {
             try
             {
-                this.liste.RemoveAt(id);
+                this.List.RemoveAt(id);
                 return true;
             }
             catch
