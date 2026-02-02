@@ -4,22 +4,19 @@ namespace EasySave.Core.Models
 {
     public class BackupWork
     {
-        public string name { get; set; }
-        public string sourcePath { get; set; }
-        public string destinationPath { get; set; }
-        public BackupType type { get; set; }
+        private string Name { get; set; }
+        private string SourcePath { get; set; }
+        private string DestinationPath { get; set; }
+        private BackupType Type { get; set; }
 
         public BackupWork(string sourcePath, string destinationPath, string name, BackupType type)
         {
-            this.name = name;
-            this.sourcePath = sourcePath;
-            this.destinationPath = destinationPath;
-
-            this.type = type;
+            this.Name = name;
+            this.SourcePath = sourcePath;
+            this.DestinationPath = destinationPath;
+            this.Type = type;
 
         }
-
-
 
     }
 }
