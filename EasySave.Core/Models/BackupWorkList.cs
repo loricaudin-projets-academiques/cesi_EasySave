@@ -21,8 +21,6 @@ namespace EasySave.Core.Models
 
         public bool AddBackupWork(BackupWork backupWork)
         {
-            // Check if the BackupWork object already exists in the list
-            if (!liste.Contains(backupWork))
             {
                 // Add the BackupWork object to the list
                 liste.Add(backupWork);
