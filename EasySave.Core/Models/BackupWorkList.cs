@@ -16,6 +16,13 @@ namespace EasySave.Core.Models
             this.List = list;
         }
 
+
+        public void AddBackupWork(BackupWork backupWork)
+        {
+            // Add the BackupWork object to the list
+            list.Add(backupWork);
+        }
+
         public bool RemoveBackupWork(BackupWork backupWork)
         {
             try
