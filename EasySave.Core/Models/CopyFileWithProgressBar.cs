@@ -21,7 +21,7 @@ internal class CopyFileWithProgressBar : ProgressBar
         this.totalBytes = files.Sum(f => new FileInfo(f).Length);
         this.copiedBytes = 0;
 
-        this.State.SetLastActionTimestamp(DateTime.Now);
+        this.State.SetLastActionTimestamp(DateTime.UtcNow);
         this.State.SetTotalFiles(files.Length);
         this.State.SetFileSize(this.totalBytes);
 
