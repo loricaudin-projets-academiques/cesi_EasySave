@@ -8,7 +8,7 @@ namespace EasySave.Core.Models
 {
     internal class ProgressBar
     {
-        private float percentage;
+        protected double Percentage;
 
         private void DrawProgressBar(double progress, int barSize = 50)
         {
@@ -27,33 +27,20 @@ namespace EasySave.Core.Models
 
         public ProgressBar()
         {
-            this.percentage = 0;
-
-            this.InitProgressBar("Démarrage du traitement...\n");
-
-            // Simulation d'un traitement
-            for (int i = 0; i <= 100; i++)
-            {
-                DrawProgressBar(i / 100.0);
-                Thread.Sleep(50); // Pause pour simuler un travail
-            }
-
-            Console.WriteLine("\n\nTraitement terminé !");
+            this.Percentage = 0;
         }
 
         public void InitProgressBar(string text)
         {
-            this.percentage = 0;
+            this.Percentage = 0;
             Console.WriteLine(text);
-            this.DrawProgressBar(percentage);
-
-
+            this.DrawProgressBar(Percentage);
         }
 
-        public void SetProgressBar(float value)
+        public void SetProgressBar(double value)
         {
-            this.percentage = value;
-            this.DrawProgressBar(percentage);
+            this.Percentage = value;
+            this.DrawProgressBar(Percentage);
         }
     }
 }

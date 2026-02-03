@@ -10,6 +10,7 @@ namespace EasySave.Core.Models
         private string SourcePath { get; set; }
         private string DestinationPath { get; set; }
         private BackupType Type { get; set; }
+        private BackupState State { get; set; }
 
         public BackupWork(string sourcePath, string destinationPath, string name, BackupType type)
         {
@@ -17,6 +18,7 @@ namespace EasySave.Core.Models
             this.SourcePath = sourcePath;
             this.DestinationPath = destinationPath;
             this.Type = type;
+            this.State = new BackupState(this.Name, DateTime.Now, 0, 0.0, 0, this.SourcePath, this.DestinationPath);
         }
 
         public string Execute()
@@ -36,25 +38,12 @@ namespace EasySave.Core.Models
 
         private string ExecuteFullBackup()
         {
-            ProgressBar progressBar = new ProgressBar();
-            // Create the destination folder if it doesn't exist
-            Directory.CreateDirectory(this.DestinationPath);
-
             // Get all files from the source folder
             string[] files = Directory.GetFiles(this.SourcePath);
 
-            // Loop through each file and copy it to the destination folder
-            foreach (string file in files)
-            {
-                // Get the file name from the full path
-                string fileName = Path.GetFileName(file);
-
-                // Combine destination path with the file name to get full destination path
-                string destFile = Path.Combine(this.DestinationPath, fileName);
-
-                // Copy the file to the destination folder (overwrite not needed here, all files are copied)
-                File.Copy(file, destFile);
-            }
+            CopyFileWithProgressBar cp = new CopyFileWithProgressBar(this.State);
+            cp.InitProgressBar($"Full Backup in progress for : {this.Name}");
+            cp.CopyFiles(this.SourcePath, this.DestinationPath, files);
 
             // Return a success message
             return "Full backup completed successfully.";
@@ -62,9 +51,6 @@ namespace EasySave.Core.Models
 
         private string ExecuteDifferentialBackup()
         {
-            // Create the destination folder if it doesn't exist
-            Directory.CreateDirectory(this.DestinationPath);
-
             // Get all files from the source folder
             string[] files = Directory.GetFiles(this.SourcePath);
 
@@ -78,12 +64,7 @@ namespace EasySave.Core.Models
                 string destFile = Path.Combine(this.DestinationPath, fileName);
 
                 // If the file does not exist in the backup, copy it
-                if (!File.Exists(destFile))
-                {
-                    File.Copy(file, destFile);
-                }
-                // If the file exists but the source file is newer, overwrite it
-                else if (File.GetLastWriteTime(file) > File.GetLastWriteTime(destFile))
+                if (!File.Exists(destFile) || File.GetLastWriteTime(file) > File.GetLastWriteTime(destFile))
                 {
                     File.Copy(file, destFile, true); // true = overwrite the old file
                 }
