@@ -18,7 +18,7 @@ namespace EasySave.Core.Models
             this.SourcePath = sourcePath;
             this.DestinationPath = destinationPath;
             this.Type = type;
-            this.State = new BackupState(this.Name, DateTime.Now, 0, 0.0, 0, this.SourcePath, this.DestinationPath);
+            this.State = new BackupState(this.Name, DateTime.UtcNow, 0, 0.0, 0, this.SourcePath, this.DestinationPath);
         }
 
         public string Execute()
