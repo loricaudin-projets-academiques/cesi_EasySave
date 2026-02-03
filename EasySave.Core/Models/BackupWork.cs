@@ -53,22 +53,24 @@ namespace EasySave.Core.Models
         {
             // Get all files from the source folder
             string[] files = Directory.GetFiles(this.SourcePath);
+            List<string> filesToUpdate = new List<string>();
 
-            // Loop through each file in the source folder
+            CopyFileWithProgressBar cp = new CopyFileWithProgressBar(this.State);
+            cp.InitProgressBar($"Differential Backup in progress for : {this.Name}");
+
             foreach (string file in files)
             {
-                // Get the file name from the full path
                 string fileName = Path.GetFileName(file);
-
-                // Combine destination path with the file name to get full destination path
                 string destFile = Path.Combine(this.DestinationPath, fileName);
 
-                // If the file does not exist in the backup, copy it
                 if (!File.Exists(destFile) || File.GetLastWriteTime(file) > File.GetLastWriteTime(destFile))
                 {
-                    File.Copy(file, destFile, true); // true = overwrite the old file
+                    filesToUpdate.Add(file);
                 }
             }
+            files = filesToUpdate.ToArray();
+
+            cp.CopyFiles(this.SourcePath, this.DestinationPath, files);
 
             //  Return a success message
             return "Differential backup completed successfully.";
