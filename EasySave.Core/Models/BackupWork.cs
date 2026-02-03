@@ -21,22 +21,32 @@ namespace EasySave.Core.Models
             this.State = new BackupState(this.Name, DateTime.Now, 0, 0.0, 0, this.SourcePath, this.DestinationPath);
         }
 
-        public string Execute()
+        public void Execute()
         {
+            if (!Directory.Exists(this.SourcePath))
+            {
+                throw new Exception($"Source path is invalid or not accessible: {this.SourcePath}");
+            }
+            if (!Directory.Exists(this.DestinationPath))
+            {
+                throw new Exception($"Destination path is invalid or not accessible: {this.DestinationPath}");
+            }
+
             if (this.Type == BackupType.DIFFERENTIAL_BACKUP)
             {
-                return ExecuteDifferentialBackup();
+                ExecuteDifferentialBackup();
             }
             else if (this.Type == BackupType.FULL_BACKUP)
             {
-                return ExecuteFullBackup();
+                ExecuteFullBackup();
             }
-
-
-            return "Unknown backup type.";
+            else
+            {
+                throw new Exception("Unknown backup type.");
+            }
         }
 
-        private string ExecuteFullBackup()
+        private void ExecuteFullBackup()
         {
             // Get all files from the source folder
             string[] files = Directory.GetFiles(this.SourcePath);
@@ -44,26 +54,24 @@ namespace EasySave.Core.Models
             CopyFileWithProgressBar cp = new CopyFileWithProgressBar(this.State);
             cp.InitProgressBar($"Full Backup in progress for : {this.Name}");
             cp.CopyFiles(this.SourcePath, this.DestinationPath, files);
-
-            // Return a success message
-            return "Full backup completed successfully.";
         }
 
-        private string ExecuteDifferentialBackup()
+        private void ExecuteDifferentialBackup()
         {
             // Get all files from the source folder
             string[] files = Directory.GetFiles(this.SourcePath);
             List<string> filesToUpdate = new List<string>();
 
             CopyFileWithProgressBar cp = new CopyFileWithProgressBar(this.State);
-            cp.InitProgressBar($"Differential Backup in progress for : {this.Name}");
+            cp.InitProgressBar($"Differential Backup in progress for: {this.Name}");
 
             foreach (string file in files)
             {
                 string fileName = Path.GetFileName(file);
+                string sourceFile = Path.Combine(this.SourcePath, fileName);
                 string destFile = Path.Combine(this.DestinationPath, fileName);
 
-                if (!File.Exists(destFile) || File.GetLastWriteTime(file) > File.GetLastWriteTime(destFile))
+                if (!File.Exists(destFile) || File.GetLastWriteTime(file) > File.GetLastWriteTime(destFile) || new FileInfo(sourceFile).Length != new FileInfo(destFile).Length)
                 {
                     filesToUpdate.Add(file);
                 }
@@ -71,9 +79,6 @@ namespace EasySave.Core.Models
             files = filesToUpdate.ToArray();
 
             cp.CopyFiles(this.SourcePath, this.DestinationPath, files);
-
-            //  Return a success message
-            return "Differential backup completed successfully.";
         }
     }
 }

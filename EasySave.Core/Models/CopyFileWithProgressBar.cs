@@ -14,10 +14,6 @@ internal class CopyFileWithProgressBar : ProgressBar
 
     public void CopyFiles(string source, string dest, string[] files)
     {
-        // Create the destination folder if it doesn't exist
-        Directory.CreateDirectory(dest);
-
-        // Calcul du total d'octets à copier
         this.totalBytes = files.Sum(f => new FileInfo(f).Length);
         this.copiedBytes = 0;
 
@@ -60,7 +56,14 @@ internal class CopyFileWithProgressBar : ProgressBar
         int read;
         while ((read = input.Read(buffer, 0, buffer.Length)) > 0)
         {
-            output.Write(buffer, 0, read);
+            try
+            {
+                output.Write(buffer, 0, read);
+            }
+            catch (IOException e)
+            {
+                throw new Exception($"A error is occured during backup work. Check if folders is always accessible and there is enough space disk.");
+            }
 
             onChunkCopied?.Invoke(read);
         }
