@@ -32,21 +32,17 @@ namespace EasySave.Core.Models
             this.List.Add(backupWork);
         }
               
-        public bool UpdateBackupWork(BackupWork backupWork, string name, string sourcePath, string destinationPath, BackupType type)
+        public BackupWork? UpdateBackupWork(BackupWork oldBackupWork, BackupWork newBackupWork)
         {
-            try
+            int index = this.List.IndexOf(oldBackupWork);
+            if (index != -1)
             {
-                backupWork.SetName(name);
-                backupWork.SetSourcePath(sourcePath);
-                backupWork.SetDestinationPath(destinationPath);
-                backupWork.SetType(type);
-
-                // Update succeeded
-                return true;
+                return null;
             }
-            catch
+            else
             {
-                return false;
+                this.List[index] = newBackupWork;
+                return newBackupWork;
             }
         }
 
