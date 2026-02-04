@@ -71,7 +71,7 @@ namespace EasySave.Core.Models
                 return false;
             }
         }
-public List<BackupWork> GetAllWorks()
+        public List<BackupWork> GetAllWorks()
         {
             return this.List;
         }
