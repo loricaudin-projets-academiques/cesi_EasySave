@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -11,7 +12,7 @@ namespace EasySave.Core.Models
         // Constructeur par défaut
         public BackupWorkList()
         {
-            this.liste = new List<BackupWork>();
+            this.List = new List<BackupWork>();
         }
 
         private List <BackupWork> List { get; set; }
@@ -23,7 +24,7 @@ namespace EasySave.Core.Models
 
         public void AddBackupWork(BackupWork backupWork)
         {
-            if (liste.Count >= 5)
+            if (List.Count >= 5)
             {
                 throw new Exception("Cannot add more than 5 backup works.");
             }
@@ -72,22 +73,31 @@ namespace EasySave.Core.Models
             catch
             {
                 return false;
+            }
+        }
 public List<BackupWork> GetAllWorks()
         {
-            return this.liste;
+            return this.List;
         }
 
         public int GetCount()
         {
-            return this.liste.Count;
+            return this.List.Count;
         }
 
         public void ExecuteBackupWork(int index)
         {
-            if (index >= 0 && index < liste.Count)
+            if (index >= 0 && index < List.Count)
             {
-                string result = liste[index].Execute();
-                Console.WriteLine(result);
+                try
+                {
+                    List[index].Execute();
+                    Console.WriteLine("...");
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine(e.Message);
+                }
             }
             else
             {
@@ -97,10 +107,17 @@ public List<BackupWork> GetAllWorks()
 
         public void ExecuteAllBackupWorks()
         {
-            foreach (BackupWork work in liste)
+            foreach (BackupWork work in List)
             {
-                string result = work.Execute();
-                Console.WriteLine(result);
+                try
+                {
+                    work.Execute();
+                    Console.WriteLine("...");
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine(e.Message);
+                }
             }
         }
     }
