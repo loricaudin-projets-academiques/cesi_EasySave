@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -8,33 +8,29 @@ namespace EasySave.Core.Models
 {
     public class BackupWorkList
     {
-        public List<BackupWork> liste { get; set; }
-
         // Constructeur par défaut
         public BackupWorkList()
         {
             this.liste = new List<BackupWork>();
         }
 
-        // Constructeur avec paramètre
-        public BackupWorkList(List<BackupWork> liste)
+        private List <BackupWork> List { get; set; }
+
+        public BackupWorkList(List<BackupWork> list)
         {
-            this.liste = liste;
+            this.List = list;
         }
 
         public void AddBackupWork(BackupWork backupWork)
         {
-            // Vérifier la limite de 5 travaux
             if (liste.Count >= 5)
             {
-                Console.WriteLine("Cannot add more than 5 backup works.");
-                return;
+                throw new Exception("Cannot add more than 5 backup works.");
             }
-
             // Add the BackupWork object to the list
-            liste.Add(backupWork);
+            this.List.Add(backupWork);
         }
-
+              
         public bool UpdateBackupWork(BackupWork backupWork, string name, string sourcePath, string destinationPath, BackupType type)
         {
             try
@@ -57,7 +53,7 @@ namespace EasySave.Core.Models
         {
             try
             {
-                this.liste.Remove(backupWork);
+                this.List.Remove(backupWork);
                 return true;
             }
             catch
@@ -70,16 +66,13 @@ namespace EasySave.Core.Models
         {
             try
             {
-                this.liste.RemoveAt(id);
+                this.List.RemoveAt(id);
                 return true;
             }
             catch
             {
                 return false;
-            }
-        }
-
-        public List<BackupWork> GetAllWorks()
+public List<BackupWork> GetAllWorks()
         {
             return this.liste;
         }
