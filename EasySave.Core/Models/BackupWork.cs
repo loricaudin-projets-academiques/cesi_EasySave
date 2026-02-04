@@ -1,4 +1,4 @@
-﻿using System.Diagnostics;
+using System.Diagnostics;
 using System.Reflection;
 using System.Xml.Linq;
 
@@ -12,13 +12,53 @@ namespace EasySave.Core.Models
         private BackupType Type { get; set; }
         private BackupState State { get; set; }
 
-        public BackupWork(string sourcePath, string destinationPath, string name, BackupType type)
+        public BackupWork(string name, string sourcePath, string destinationPath, BackupType type)
         {
             this.Name = name;
             this.SourcePath = sourcePath;
             this.DestinationPath = destinationPath;
             this.Type = type;
             this.State = new BackupState(this.Name, DateTime.UtcNow, 0, 0.0, 0, this.SourcePath, this.DestinationPath);
+        }
+      
+        public string GetName()
+        {
+            return this.Name;
+        }
+
+        public string GetDestinationPath()
+        {
+            return this.DestinationPath;
+        }
+
+        public string GetSourcePath()
+        {
+            return this.SourcePath;
+        }
+
+        public BackupType GetBackupType()
+        {
+            return this.Type;
+        }
+
+        public void SetName(string name)
+        {
+            Name = name;
+        }
+
+        public void SetDestinationPath(string destinationPath)
+        {
+            DestinationPath = destinationPath;
+        }
+
+        public void SetSourcePath(string sourcePath)
+        {
+            SourcePath = sourcePath;
+        }
+
+        public void SetType(BackupType type)
+        {
+            Type = type;
         }
 
         public void Execute()

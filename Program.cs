@@ -4,6 +4,39 @@ class Program
 {
     static void Main(string[] args)
     {
-        Console.WriteLine("Hello World!");
+        if (args.Length == 0)
+        {
+            Console.WriteLine("No argument provided.");
+        }
+
+        BackupWorkList list = new BackupWorkList();
+
+        if (args[0] == "add")
+        {
+            list.AddBackupWork(new BackupWork("Backup1", "C:\\source", "D:\\dest", BackupType.FULL_BACKUP));
+        }
+
+        else if (args[0] == "ModifyBackupWork")
+        {
+
+            list.ModifyBackupWork(new BackupWork("Backup1", "C:\\source", "D:\\dest", BackupType.FULL_BACKUP));
+
+        }
+
+        else if (args[0] == "RemoveBackupWork")
+        {
+            list.RemoveBackupWork();
+
+        }
+        else if (args[0] == "Execute")
+        {
+            list.Execute(new BackupWork("Backup1", "C:\\source", "D:\\dest", BackupType.FULL_BACKUP));
+
+        }
+        else
+        {
+            Console.WriteLine("Unknown command");
+        }
+        
     }
 }
