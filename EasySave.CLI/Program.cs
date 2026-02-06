@@ -7,7 +7,7 @@ using EasySave.Core.Localization;
 using Microsoft.Extensions.DependencyInjection;
 using Spectre.Console.Cli;
 
-System.Diagnostics.Debugger.Launch();
+//System.Diagnostics.Debugger.Launch();
 
 // ============ CONFIGURATION ============
 
