@@ -38,26 +38,27 @@ namespace EasySave.Core.Models
             this.List.Add(backupWork);
             this.jsonFileGestion.Save<List<BackupWork>>(JSON_FILE_PATH, this.List);
         }
-              
-        public BackupWork? UpdateBackupWork(BackupWork oldBackupWork, BackupWork newBackupWork)
+
+        public BackupWork? EditBackupWork(BackupWork oldBackupWork, BackupWork newBackupWork)
         {
+            // 1. On cherche l'index de l'ancien travail de sauvegarde
             int index = this.List.IndexOf(oldBackupWork);
+
+            // 2. Si on le trouve (index n'est pas -1)
             if (index != -1)
             {
-                backupWork.SetName(name);
-                backupWork.SetSourcePath(sourcePath);
-                backupWork.SetDestinationPath(destinationPath);
-                backupWork.SetType(type);
+                // On remplace l'ancien objet par le nouveau à cet index précis
+                this.List[index] = newBackupWork;
 
+                // On sauvegarde la liste modifiée dans le JSON
                 this.jsonFileGestion.Save<List<BackupWork>>(JSON_FILE_PATH, this.List);
 
-                return true;
-            }
-            else
-            {
-                this.List[index] = newBackupWork;
+                // On retourne le nouveau travail pour confirmer
                 return newBackupWork;
             }
+
+            // 3. Si non trouvé, on retourne null
+            return null;
         }
 
         public bool RemoveBackupWork(BackupWork backupWork)
