@@ -69,5 +69,17 @@ namespace EasySave.Tests
             Assert.Equal(5, list.GetCount());
         }
 
+        [Fact]
+        public void GetAllWorks()
+        {
+            
+            BackupWorkList list = new BackupWorkList();
+
+           
+            List<BackupWork> works = list.GetAllWorks();
+
+            Assert.NotNull(works);
+            Assert.Empty(works);
+        }
     }
 }
