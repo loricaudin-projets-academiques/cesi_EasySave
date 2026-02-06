@@ -1,6 +1,4 @@
-using System.Diagnostics;
-using System.Reflection;
-using System.Xml.Linq;
+using System.Text.Json.Serialization;
 
 namespace EasySave.Core.Models
 {
@@ -12,7 +10,13 @@ namespace EasySave.Core.Models
         public string Name { get; private set; }
         public string SourcePath { get; private set; }
         public string DestinationPath { get; private set; }
+        
+        /// <summary>Backup type serialized as string (FULL_BACKUP / DIFFERENTIAL_BACKUP).</summary>
+        [JsonConverter(typeof(JsonStringEnumConverter))]
         public BackupType Type { get; private set; }
+        
+        /// <summary>Runtime state, excluded from JSON serialization.</summary>
+        [JsonIgnore]
         public BackupState State { get; private set; }
         
         /// <summary>Event raised when file copy progress updates.</summary>
