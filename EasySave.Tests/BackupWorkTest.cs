@@ -6,16 +6,86 @@ namespace EasySave.Tests
     public class BackupWorkTest
     {
         [Fact]
-        public void BackupWork_Create()
+        public void BackupWork_Execute()
         {
-            // Arrange : préparation des données
-            BackupWork backupWork = new BackupWork("Test", @"C:\Test_1", @"C:\Test_2", BackupType.DIFFERENTIAL_BACKUP);
+            string sourcePath = @"C:\Test_1";
+            string sourceDest = @"C:\Test_2";
+            BackupWork backupWork_1 = new BackupWork("Test", sourcePath, sourceDest, BackupType.FULL_BACKUP);
+            BackupWork backupWork_2 = new BackupWork("Test", sourcePath, sourceDest, BackupType.DIFFERENTIAL_BACKUP);
 
-            // Act : exécution de l’action à tester
-            var result = backupWork.GetName() == "Test";
+            try
+            {
+                Directory.CreateDirectory(sourcePath);
+                Directory.CreateDirectory(sourceDest);
+                File.WriteAllText(Path.Combine(sourcePath, "test1.txt"), "Bonjour");
 
-            // Assert : vérification du résultat
-            Assert.True(result);
+                backupWork_1.Execute();
+
+
+                string[] sourceFiles = Directory.GetFiles(sourcePath);
+                string[] destFiles = Directory.GetFiles(sourceDest);
+
+                bool result = destFiles.Length > 0 &&
+                              File.Exists(Path.Combine(sourceDest, "test1.txt"));
+
+                Directory.Delete(sourcePath, true);
+                Directory.Delete(sourceDest, true);
+
+                Assert.True(result, "Files should have been copied to destination");
+            }
+            catch (Exception e)
+            {
+          
+                if (Directory.Exists(sourcePath)) Directory.Delete(sourcePath, true);
+                if (Directory.Exists(sourceDest)) Directory.Delete(sourceDest, true);
+                Assert.Fail(e.Message);
+            }
+
+            try
+            {
+                Directory.CreateDirectory(sourcePath);
+                Directory.CreateDirectory(sourceDest);
+                File.WriteAllText(Path.Combine(sourcePath, "test2.txt"), "Hello");
+
+                backupWork_2.Execute();
+
+                string[] destFiles = Directory.GetFiles(sourceDest);
+                bool result = destFiles.Length > 0 &&
+                              File.Exists(Path.Combine(sourceDest, "test2.txt"));
+
+                Directory.Delete(sourcePath, true);
+                Directory.Delete(sourceDest, true);
+
+                Assert.True(result, "Files should have been copied to destination");
+            }
+            catch (Exception e)
+            {
+             
+                if (Directory.Exists(sourcePath)) Directory.Delete(sourcePath, true);
+                if (Directory.Exists(sourceDest)) Directory.Delete(sourceDest, true);
+                Assert.Fail(e.Message);
+            }
+
+            try
+            {
+                backupWork_1.Execute();
+                Assert.Fail("Backup works must not succeed");
+            }
+            catch (Exception)
+            {
+               
+            }
+
+            
+            try
+            {
+                backupWork_2.Execute();
+                Assert.Fail("Backup works must not succeed");
+            }
+            catch 
+            {
+                
+            }
         }
     }
 }
