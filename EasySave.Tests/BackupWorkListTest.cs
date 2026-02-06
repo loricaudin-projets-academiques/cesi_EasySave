@@ -10,7 +10,7 @@ namespace EasySave.Tests
         public void EditBackupWork_Test()
         {
             // Arrange
-            BackupWorkList list = new BackupWorkList();
+            BackupWorkList list = new BackupWorkList(new List<BackupWork>());
             BackupWork oldBackup = new BackupWork("OldName", @"C:\OldSource", @"C:\OldDest", BackupType.DIFFERENTIAL_BACKUP);
             BackupWork newBackup = new BackupWork("NewName", @"C:\NewSource", @"C:\NewDest", BackupType.FULL_BACKUP);
             list.AddBackupWork(oldBackup);
@@ -31,7 +31,7 @@ namespace EasySave.Tests
         public void RemoveBackupWork_Test()
         {
 
-            BackupWorkList list = new BackupWorkList();
+            BackupWorkList list = new BackupWorkList(new List<BackupWork>());
             BackupWork backupWork = new BackupWork(@"C:\Test_1", @"C:\Test_2", "TestBackup", BackupType.DIFFERENTIAL_BACKUP);
 
             list.AddBackupWork(backupWork);
@@ -47,7 +47,7 @@ namespace EasySave.Tests
         [Fact]
         public void AddBackupWork_Test()
         {
-            BackupWorkList list = new BackupWorkList();
+            BackupWorkList list = new BackupWorkList(new List<BackupWork>());
 
  
             Assert.Equal(0, list.GetCount());
@@ -73,7 +73,7 @@ namespace EasySave.Tests
         public void GetAllWorks()
         {
             
-            BackupWorkList list = new BackupWorkList();
+            BackupWorkList list = new BackupWorkList(new List<BackupWork>());
 
            
             List<BackupWork> works = list.GetAllWorks();

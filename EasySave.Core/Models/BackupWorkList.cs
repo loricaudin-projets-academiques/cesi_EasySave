@@ -1,74 +1,98 @@
-using EasySave.Core.Services;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Reflection;
-using System.Text;
-using System.Threading.Tasks;
+ï»¿using EasySave.Core.Services;
 
 namespace EasySave.Core.Models
 {
+    /// <summary>
+    /// Manages a collection of backup works with persistence to JSON.
+    /// </summary>
     public class BackupWorkList
     {
+        private List<BackupWork> List { get; set; }
+        private readonly JsonFileGestion jsonFileGestion;
+
+        /// <summary>Path to the JSON configuration file.</summary>
+        public static readonly string JSON_FILE_PATH = Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), 
+            "AppData", "Roaming", "ProSoft", "EasySave", "config", "BackupWorks.json");
+
+        /// <summary>
+        /// Creates a new BackupWorkList and loads existing works from JSON.
+        /// </summary>
         public BackupWorkList()
         {
-            this.List = new List<BackupWork>();
             this.jsonFileGestion = JsonFileGestion.GetInstance();
+            this.List = LoadFromJson() ?? new List<BackupWork>();
         }
 
-        private List<BackupWork> List { get; set; }
-
-        private JsonFileGestion jsonFileGestion;
-
-        public static readonly string JSON_FILE_PATH = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "AppData", "Roaming", "ProSoft", "EasySave", "config", "BackupWorks.json");
-
+        /// <summary>
+        /// Creates a new BackupWorkList with the specified list (for testing).
+        /// </summary>
+        /// <param name="list">Initial list of backup works.</param>
         public BackupWorkList(List<BackupWork> list)
         {
             this.List = list;
             this.jsonFileGestion = JsonFileGestion.GetInstance();
         }
 
-        public void AddBackupWork(BackupWork backupWork)
+        /// <summary>
+        /// Loads the backup works list from JSON file.
+        /// </summary>
+        /// <returns>List of backup works or null if file doesn't exist.</returns>
+        private List<BackupWork>? LoadFromJson()
         {
-            if (List.Count >= 5)
+            try
             {
-                throw new Exception("Cannot add more than 5 backup works.");
+                if (File.Exists(JSON_FILE_PATH))
+                    return jsonFileGestion.Open<List<BackupWork>>(JSON_FILE_PATH);
             }
-            // Add the BackupWork object to the list
-            this.List.Add(backupWork);
-            this.jsonFileGestion.Save<List<BackupWork>>(JSON_FILE_PATH, this.List);
-        }
-
-        public BackupWork? EditBackupWork(BackupWork oldBackupWork, BackupWork newBackupWork)
-        {
-            // 1. On cherche l'index de l'ancien travail de sauvegarde
-            int index = this.List.IndexOf(oldBackupWork);
-
-            // 2. Si on le trouve (index n'est pas -1)
-            if (index != -1)
+            catch
             {
-                // On remplace l'ancien objet par le nouveau à cet index précis
-                this.List[index] = newBackupWork;
-
-                // On sauvegarde la liste modifiée dans le JSON
-                this.jsonFileGestion.Save<List<BackupWork>>(JSON_FILE_PATH, this.List);
-
-                // On retourne le nouveau travail pour confirmer
-                return newBackupWork;
             }
-
-            // 3. Si non trouvé, on retourne null
             return null;
         }
 
+        /// <summary>
+        /// Adds a new backup work to the list.
+        /// </summary>
+        /// <param name="backupWork">The backup work to add.</param>
+        /// <exception cref="Exception">Thrown when maximum of 5 works is reached.</exception>
+        public void AddBackupWork(BackupWork backupWork)
+        {
+            if (List.Count >= 5)
+                throw new Exception("Cannot add more than 5 backup works.");
+            
+            this.List.Add(backupWork);
+            this.jsonFileGestion.Save(JSON_FILE_PATH, this.List);
+        }
+
+        /// <summary>
+        /// Replaces an existing backup work with a new one.
+        /// </summary>
+        /// <param name="oldBackupWork">The work to replace.</param>
+        /// <param name="newBackupWork">The new work.</param>
+        /// <returns>The new backup work if successful, null otherwise.</returns>
+        public BackupWork? EditBackupWork(BackupWork oldBackupWork, BackupWork newBackupWork)
+        {
+            int index = this.List.IndexOf(oldBackupWork);
+            if (index == -1)
+                return null;
+
+            this.List[index] = newBackupWork;
+            this.jsonFileGestion.Save(JSON_FILE_PATH, this.List);
+            return newBackupWork;
+        }
+
+        /// <summary>
+        /// Removes a backup work from the list.
+        /// </summary>
+        /// <param name="backupWork">The work to remove.</param>
+        /// <returns>True if successful, false otherwise.</returns>
         public bool RemoveBackupWork(BackupWork backupWork)
         {
             try
             {
                 this.List.Remove(backupWork);
-
-                this.jsonFileGestion.Save<List<BackupWork>>(JSON_FILE_PATH, this.List);
-
+                this.jsonFileGestion.Save(JSON_FILE_PATH, this.List);
                 return true;
             }
             catch
@@ -77,14 +101,17 @@ namespace EasySave.Core.Models
             }
         }
 
+        /// <summary>
+        /// Removes a backup work by its index.
+        /// </summary>
+        /// <param name="id">Index of the work to remove.</param>
+        /// <returns>True if successful, false otherwise.</returns>
         public bool RemoveBackupWorkById(int id)
         {
             try
             {
                 this.List.RemoveAt(id);
-
-                this.jsonFileGestion.Save<List<BackupWork>>(JSON_FILE_PATH, this.List);
-
+                this.jsonFileGestion.Save(JSON_FILE_PATH, this.List);
                 return true;
             }
             catch
@@ -92,36 +119,44 @@ namespace EasySave.Core.Models
                 return false;
             }
         }
-        public List<BackupWork> GetAllWorks()
-        {
-            return this.List;
-        }
 
-        public int GetCount()
-        {
-            return this.List.Count;
-        }
+        /// <summary>
+        /// Gets all backup works.
+        /// </summary>
+        /// <returns>List of all backup works.</returns>
+        public List<BackupWork> GetAllWorks() => this.List;
 
+        /// <summary>
+        /// Gets the count of backup works.
+        /// </summary>
+        /// <returns>Number of backup works.</returns>
+        public int GetCount() => this.List.Count;
+
+        /// <summary>
+        /// Executes a backup work by its index.
+        /// </summary>
+        /// <param name="index">Index of the work to execute.</param>
         public void ExecuteBackupWork(int index)
         {
-            if (index >= 0 && index < List.Count)
-            {
-                try
-                {
-                    List[index].Execute();
-                    Console.WriteLine("...");
-                }
-                catch (Exception e)
-                {
-                    Console.WriteLine(e.Message);
-                }
-            }
-            else
+            if (index < 0 || index >= List.Count)
             {
                 Console.WriteLine("Invalid backup work index.");
+                return;
+            }
+
+            try
+            {
+                List[index].Execute();
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e.Message);
             }
         }
 
+        /// <summary>
+        /// Executes all backup works sequentially.
+        /// </summary>
         public void ExecuteAllBackupWorks()
         {
             foreach (BackupWork work in List)
@@ -129,7 +164,6 @@ namespace EasySave.Core.Models
                 try
                 {
                     work.Execute();
-                    Console.WriteLine("...");
                 }
                 catch (Exception e)
                 {
