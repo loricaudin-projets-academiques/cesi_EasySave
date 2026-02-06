@@ -1,35 +1,30 @@
 namespace EasySave.Core.Localization
 {
     /// <summary>
-    /// Service de localisation pour gérer les messages multilingues.
+    /// Service interface for managing multilingual messages.
     /// </summary>
     public interface ILocalizationService
     {
         /// <summary>
-        /// Obtient une chaîne localisée.
+        /// Gets a localized string.
         /// </summary>
-        /// <param name="key">Clé de traduction (ex: "commands.add.success")</param>
-        /// <param name="args">Arguments de remplacement</param>
+        /// <param name="key">Translation key (e.g., "commands.add.success").</param>
+        /// <param name="args">Replacement arguments.</param>
+        /// <returns>Localized string.</returns>
         string Get(string key, params object[] args);
 
-        /// <summary>
-        /// Obtient la langue actuelle.
-        /// </summary>
+        /// <summary>Gets the current language.</summary>
         Language CurrentLanguage { get; }
 
-        /// <summary>
-        /// Définit la langue.
-        /// </summary>
+        /// <summary>Sets the current language.</summary>
         void SetLanguage(Language language);
 
-        /// <summary>
-        /// Obtient les langues disponibles.
-        /// </summary>
+        /// <summary>Gets the list of available languages.</summary>
         IReadOnlyList<Language> AvailableLanguages { get; }
     }
 
     /// <summary>
-    /// Énumération des langues supportées.
+    /// Supported languages enumeration.
     /// </summary>
     public enum Language
     {
@@ -38,57 +33,60 @@ namespace EasySave.Core.Localization
     }
 
     /// <summary>
-    /// Extensions pour l'énumération Language.
+    /// Extension methods for the Language enumeration.
     /// </summary>
     public static class LanguageExtensions
     {
-        // On définit les infos une seule fois ici : (Code, DisplayName)
         private static readonly Dictionary<Language, (string Code, string DisplayName)> _languageInfos = new()
-    {
-        { Language.French, ("fr", "Français") },
-        { Language.English, ("en", "English") }
-    };
+        {
+            { Language.French, ("fr", "Français") },
+            { Language.English, ("en", "English") }
+        };
 
+        /// <summary>
+        /// Gets language enum from language code.
+        /// </summary>
+        /// <param name="code">Language code (e.g., "fr", "en").</param>
+        /// <returns>Corresponding Language enum value.</returns>
         public static Language GetEnumByCode(string code)
         {
             if (string.IsNullOrWhiteSpace(code)) return Language.French;
 
-            // On cherche l'entrée dont le Code correspond
             var match = _languageInfos.FirstOrDefault(x =>
                 x.Value.Code.Equals(code, StringComparison.OrdinalIgnoreCase));
 
-            // Si match est vide (default), on renvoie French, sinon la clé trouvée
             return IsMatchValid(match) ? match.Key : Language.French;
         }
 
-        // --- 2. Récupérer l'Enum via le NOM (ex: "English") ---
+        /// <summary>
+        /// Gets language enum from display name.
+        /// </summary>
+        /// <param name="displayName">Display name (e.g., "English", "Français").</param>
+        /// <returns>Corresponding Language enum value.</returns>
         public static Language GetEnumByDisplayName(string displayName)
         {
             if (string.IsNullOrWhiteSpace(displayName)) return Language.French;
 
-            // On cherche l'entrée dont le DisplayName correspond
             var match = _languageInfos.FirstOrDefault(x =>
                 x.Value.DisplayName.Equals(displayName, StringComparison.OrdinalIgnoreCase));
 
             return IsMatchValid(match) ? match.Key : Language.French;
         }
 
-        // --- Méthodes d'extension (Enum -> String) ---
-
+        /// <summary>Gets the language code (e.g., "fr", "en").</summary>
         public static string GetCode(this Language language)
         {
             return _languageInfos.TryGetValue(language, out var info) ? info.Code : "unknown";
         }
 
+        /// <summary>Gets the display name (e.g., "Français", "English").</summary>
         public static string GetDisplayName(this Language language)
         {
             return _languageInfos.TryGetValue(language, out var info) ? info.DisplayName : "Unknown";
         }
 
-        // --- Helper privé pour vérifier si le résultat LINQ est valide ---
         private static bool IsMatchValid(KeyValuePair<Language, (string Code, string DisplayName)> match)
         {
-            // Vérifie si la structure trouvée n'est pas la valeur par défaut (vide)
             return !match.Equals(default(KeyValuePair<Language, (string, string)>));
         }
     }

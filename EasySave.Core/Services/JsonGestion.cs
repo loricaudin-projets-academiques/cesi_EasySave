@@ -1,39 +1,44 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Text.Json;
-using System.Threading.Tasks;
 
 namespace EasySave.Core.Services
 {
+    /// <summary>
+    /// Singleton service for JSON serialization/deserialization.
+    /// </summary>
     internal class JsonGestion
     {
         private static JsonGestion? _instance;
 
-        private JsonGestion()
-        {
-        }
+        private JsonGestion() { }
 
+        /// <summary>
+        /// Gets the singleton instance.
+        /// </summary>
         public static JsonGestion GetInstance()
         {
-            if (_instance == null)
-            {
-                _instance = new JsonGestion();
-            }
-            return _instance;
+            return _instance ??= new JsonGestion();
         }
 
+        /// <summary>
+        /// Deserializes a JSON string to an object.
+        /// </summary>
+        /// <typeparam name="T">Target type.</typeparam>
+        /// <param name="jsonString">JSON string to deserialize.</param>
+        /// <returns>Deserialized object or null.</returns>
         public T? GetObjectFromJsonString<T>(string jsonString)
         {
-            T? obj = JsonSerializer.Deserialize<T>(jsonString);
-            return obj;
+            return JsonSerializer.Deserialize<T>(jsonString);
         }
 
+        /// <summary>
+        /// Serializes an object to a JSON string.
+        /// </summary>
+        /// <typeparam name="T">Type of object.</typeparam>
+        /// <param name="obj">Object to serialize.</param>
+        /// <returns>Formatted JSON string.</returns>
         public string GetJsonStringFromObject<T>(T obj)
         {
-            string jsonString = JsonSerializer.Serialize<T>(obj, new JsonSerializerOptions { WriteIndented = true });
-            return jsonString;
+            return JsonSerializer.Serialize(obj, new JsonSerializerOptions { WriteIndented = true });
         }
     }
 }

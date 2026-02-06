@@ -3,14 +3,23 @@ using System.Text.Json;
 
 namespace EasySave.Core.Settings
 {
+    /// <summary>
+    /// Application configuration loaded from appsettings.json.
+    /// </summary>
     public class Config
     {
+        /// <summary>Current language setting.</summary>
         public Language Language { get; set; } = Language.French;
         
+        /// <summary>Localization service instance.</summary>
         [System.ComponentModel.EditorBrowsable(System.ComponentModel.EditorBrowsableState.Never)]
         public ILocalizationService Localization => _localization ??= new LocalizationService(Language);
         private ILocalizationService? _localization;
 
+        /// <summary>
+        /// Loads configuration from appsettings.json.
+        /// </summary>
+        /// <returns>Config instance with loaded settings.</returns>
         public static Config Load()
         {
             try
@@ -39,6 +48,9 @@ namespace EasySave.Core.Settings
             }
         }
 
+        /// <summary>
+        /// Saves current configuration to appsettings.json.
+        /// </summary>
         public void Save()
         {
             var configPath = FindConfigFile() ?? "appsettings.json";
@@ -48,7 +60,6 @@ namespace EasySave.Core.Settings
             }, new JsonSerializerOptions { WriteIndented = true });
             File.WriteAllText(configPath, json);
             
-            // Reset localization to use new language
             _localization = null;
         }
 

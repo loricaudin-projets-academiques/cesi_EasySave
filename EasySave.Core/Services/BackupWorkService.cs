@@ -2,17 +2,12 @@ using EasySave.Core.Localization;
 using EasySave.Core.Models;
 using EasySave.Core.Services.Logging;
 using EasyLog.Services;
-using System.Diagnostics;
 
 namespace EasySave.Core.Services
 {
     /// <summary>
-    /// Service de gestion des travaux de sauvegarde.
-    /// 
-    /// ARCHITECTURE PROPRE:
-    /// - BackupWork, BackupWorkList: PURES (pas de logger)
-    /// - BackupWorkService: Émet des événements lors de transferts
-    /// - Observers: Écoutent les événements et logguent
+    /// Service for managing backup work operations.
+    /// Handles CRUD operations and execution with event notifications.
     /// </summary>
     public class BackupWorkService
     {
@@ -20,13 +15,20 @@ namespace EasySave.Core.Services
         private readonly ILocalizationService _localization;
         private readonly EasyLogger _logger;
         
-        // ? Événements pour notifier les observateurs
+        /// <summary>Event raised when a file transfer completes.</summary>
         public event EventHandler<FileTransferredEventArgs>? FileTransferred;
+        
+        /// <summary>Event raised when a file transfer fails.</summary>
         public event EventHandler<FileTransferErrorEventArgs>? FileTransferError;
         
-        // ? Liste des observers (TEMPS RÉEL SEULEMENT)
         private readonly List<IBackupEventObserver> _observers = new();
 
+        /// <summary>
+        /// Creates a new BackupWorkService.
+        /// </summary>
+        /// <param name="localization">Localization service for messages.</param>
+        /// <param name="workList">List of backup works.</param>
+        /// <param name="logger">Logger for file transfer logging.</param>
         public BackupWorkService(ILocalizationService localization, BackupWorkList workList, EasyLogger? logger = null)
         {
             _localization = localization;
@@ -34,14 +36,22 @@ namespace EasySave.Core.Services
             _logger = logger ?? new EasyLogger();
         }
 
-        // ============ OBSERVER PATTERN (TEMPS RÉEL SEULEMENT) ============
+        #region Observer Pattern
 
+        /// <summary>
+        /// Adds an observer to receive backup events.
+        /// </summary>
+        /// <param name="observer">Observer to add.</param>
         public void AddObserver(IBackupEventObserver observer)
         {
             if (!_observers.Contains(observer))
                 _observers.Add(observer);
         }
 
+        /// <summary>
+        /// Removes an observer from receiving backup events.
+        /// </summary>
+        /// <param name="observer">Observer to remove.</param>
         public void RemoveObserver(IBackupEventObserver observer)
         {
             _observers.Remove(observer);
@@ -51,17 +61,14 @@ namespace EasySave.Core.Services
         {
             foreach (var observer in _observers)
             {
-                try
-                {
-                    action(observer);
-                }
-                catch
-                {
-                }
+                try { action(observer); }
+                catch { }
             }
         }
 
-        // ============ ÉVÉNEMENTS POUR LOGGING ============
+        #endregion
+
+        #region Event Emitters
 
         protected virtual void OnFileTransferred(string backupName, string sourceFile, string targetFile, 
                                                long fileSize, double transferTimeMs)
@@ -89,14 +96,21 @@ namespace EasySave.Core.Services
             });
         }
 
+        #endregion
+
+        #region CRUD Operations
+
         /// <summary>
-        /// Ajoute un nouveau travail de sauvegarde.
+        /// Adds a new backup work.
         /// </summary>
+        /// <param name="name">Name of the backup job.</param>
+        /// <param name="sourcePath">Source directory path.</param>
+        /// <param name="destinationPath">Destination directory path.</param>
+        /// <param name="typeString">Backup type (full/diff).</param>
         public void AddWork(string name, string sourcePath, string destinationPath, string typeString)
         {
             if (!Directory.Exists(sourcePath))
                 throw new DirectoryNotFoundException(_localization.Get("errors.source_not_found", sourcePath));
-
 
             if (!Directory.Exists(destinationPath))
                 throw new DirectoryNotFoundException(_localization.Get("errors.destination_not_found", destinationPath));
@@ -107,37 +121,34 @@ namespace EasySave.Core.Services
         }
 
         /// <summary>
-        /// Récupère tous les travaux.
+        /// Gets all backup works.
         /// </summary>
+        /// <returns>List of all backup works.</returns>
         public List<BackupWork> GetAllWorks() => _workList.GetAllWorks();
 
         /// <summary>
-        /// Récupère un travail par index (basé sur 0 ou 1 selon utilisation).
+        /// Gets a backup work by index.
         /// </summary>
+        /// <param name="index">Zero-based index.</param>
+        /// <returns>Backup work or null if not found.</returns>
         public BackupWork? GetWorkByIndex(int index)
         {
             var works = _workList.GetAllWorks();
-            if (index >= 0 && index < works.Count)
-                return works[index];
-            return null;
+            return (index >= 0 && index < works.Count) ? works[index] : null;
         }
 
         /// <summary>
-        /// Supprime un travail par index.
-        /// ? Nettoie aussi l'état dans state.json
+        /// Removes a backup work by index. Also cleans up state.json.
         /// </summary>
+        /// <param name="index">Zero-based index.</param>
+        /// <returns>True if successful.</returns>
         public bool RemoveWorkByIndex(int index)
         {
             try
             {
                 var result = _workList.RemoveBackupWorkById(index);
-                
-                // ? Nettoyer l'état du travail supprimé
                 if (result)
-                {
                     _logger.RemoveBackupState(index);
-                }
-                
                 return result;
             }
             catch
@@ -147,8 +158,14 @@ namespace EasySave.Core.Services
         }
 
         /// <summary>
-        /// Modifie un travail existant.
+        /// Modifies an existing backup work.
         /// </summary>
+        /// <param name="index">Zero-based index.</param>
+        /// <param name="newName">New name (optional).</param>
+        /// <param name="newSourcePath">New source path (optional).</param>
+        /// <param name="newDestinationPath">New destination path (optional).</param>
+        /// <param name="newType">New backup type (optional).</param>
+        /// <returns>True if successful.</returns>
         public bool ModifyWork(int index, string? newName = null, string? newSourcePath = null, 
             string? newDestinationPath = null, string? newType = null)
         {
@@ -157,8 +174,6 @@ namespace EasySave.Core.Services
                 return false;
 
             var original = works[index];
-            
-            // Créer une copie avec les modifications
             var modified = new BackupWork(
                 newName ?? original.Name,
                 newSourcePath ?? original.SourcePath,
@@ -166,15 +181,18 @@ namespace EasySave.Core.Services
                 newType != null ? ParseBackupType(newType) : original.GetBackupType()
             );
 
-            var result = _workList.EditBackupWork(original, modified);
-            return result != null;
+            return _workList.EditBackupWork(original, modified) != null;
         }
 
+        #endregion
+
+        #region Execution
+
         /// <summary>
-        /// Exécute un travail par index.
-        /// Les événements sont capturés et émis automatiquement.
-        /// ? Passe l'index au logger (pas le nom) pour éviter les doublons avec même nom
+        /// Executes a backup work by index.
+        /// Events are captured and emitted automatically.
         /// </summary>
+        /// <param name="index">Zero-based index of the work to execute.</param>
         public void ExecuteWork(int index)
         {
             try
@@ -183,22 +201,18 @@ namespace EasySave.Core.Services
                 if (work == null)
                     return;
 
-                // ?? Notifier: Début (Temps réel)
                 var files = Directory.GetFiles(work.SourcePath, "*", SearchOption.AllDirectories);
                 var totalSize = files.Sum(f => new FileInfo(f).Length);
+                
                 NotifyObservers(o => o.OnBackupStarted(work.Name, files.Length, totalSize));
-
-                // ? Passer l'INDEX au logger (pas le nom!)
                 _logger.StartBackup(index, work.Name, files.Length, totalSize);
 
-                // ? CONNECTER LES ÉVÉNEMENTS AVANT L'EXÉCUTION
+                // Connect file transfer events
                 work.FileTransferred += (sender, args) => 
                 {
                     if (args is FileCopiedEventArgs fileArgs)
                     {
-                        // ? Logger dans le fichier journalier
                         _logger.LogFileTransfer(work.Name, fileArgs.SourceFile, fileArgs.DestFile, fileArgs.FileSize, fileArgs.TransferTimeMs);
-                        
                         OnFileTransferred(work.Name, fileArgs.SourceFile, fileArgs.DestFile, fileArgs.FileSize, fileArgs.TransferTimeMs);
                     }
                 };
@@ -207,14 +221,12 @@ namespace EasySave.Core.Services
                 {
                     if (args is FileCopyErrorEventArgs errorArgs)
                     {
-                        // ? Logger l'erreur dans le fichier journalier
                         _logger.LogFileTransferError(work.Name, errorArgs.SourceFile, errorArgs.DestFile, errorArgs.FileSize);
-                        
                         OnFileTransferError(work.Name, errorArgs.SourceFile, errorArgs.DestFile, errorArgs.FileSize, errorArgs.Exception);
                     }
                 };
                 
-                // ? Capturer la progression (pour remplir SourceFilePath et TargetFilePath)
+                // Connect progress events
                 work.FileProgress += (sender, args) =>
                 {
                     if (args is FileProgressEventArgs progressArgs)
@@ -222,17 +234,13 @@ namespace EasySave.Core.Services
                         long filesLeft = files.Length - (int)(progressArgs.CurrentProgress / 100 * files.Length);
                         long sizeLeft = (long)(totalSize * (100 - progressArgs.CurrentProgress) / 100);
                         
-                        // ? Passer l'INDEX à UpdateProgress aussi!
                         _logger.UpdateProgress(index, progressArgs.SourceFile, progressArgs.DestFile, filesLeft, sizeLeft, progressArgs.CurrentProgress);
-                        
                         NotifyObservers(o => o.OnProgressUpdated(work.Name, progressArgs.SourceFile, progressArgs.DestFile, filesLeft, sizeLeft, progressArgs.CurrentProgress));
                     }
                 };
 
-                // ? MAINTENANT exécuter (les événements seront émis)
                 _workList.ExecuteBackupWork(index);
 
-                // ?? Notifier: Fin (Temps réel)
                 _logger.CompleteBackup(index);
                 NotifyObservers(o => o.OnBackupCompleted(work.Name));
             }
@@ -247,9 +255,8 @@ namespace EasySave.Core.Services
             }
         }
 
-
         /// <summary>
-        /// Exécute tous les travaux séquentiellement.
+        /// Executes all backup works sequentially.
         /// </summary>
         public void ExecuteAllWorks()
         {
@@ -257,13 +264,15 @@ namespace EasySave.Core.Services
         }
 
         /// <summary>
-        /// Retourne le nombre total de travaux.
+        /// Gets the total count of backup works.
         /// </summary>
+        /// <returns>Number of backup works.</returns>
         public int GetWorkCount() => _workList.GetCount();
 
-        /// <summary>
-        /// Convertit une string en BackupType.
-        /// </summary>
+        #endregion
+
+        #region Helpers
+
         private BackupType ParseBackupType(string type)
         {
             return type.ToLowerInvariant() switch
@@ -275,13 +284,17 @@ namespace EasySave.Core.Services
         }
 
         /// <summary>
-        /// Retourne le nom localisé d'un type de sauvegarde.
+        /// Gets the localized name of a backup type.
         /// </summary>
+        /// <param name="type">Backup type.</param>
+        /// <returns>Localized type name.</returns>
         public string GetLocalizedBackupTypeName(BackupType type)
         {
             return type == BackupType.FULL_BACKUP 
                 ? _localization.Get("backup_types.full")
                 : _localization.Get("backup_types.diff");
         }
+
+        #endregion
     }
 }

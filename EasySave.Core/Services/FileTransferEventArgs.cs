@@ -1,10 +1,7 @@
-using System;
-
 namespace EasySave.Core.Services
 {
     /// <summary>
-    /// Arguments pour l'événement de transfert réussi
-    /// Permet à BackupWorkService de notifier les listeners (logger, stats, etc.)
+    /// Event arguments for successful file transfers.
     /// </summary>
     public class FileTransferredEventArgs : EventArgs
     {
@@ -16,7 +13,7 @@ namespace EasySave.Core.Services
     }
 
     /// <summary>
-    /// Arguments pour l'événement d'erreur de transfert
+    /// Event arguments for file transfer errors.
     /// </summary>
     public class FileTransferErrorEventArgs : EventArgs
     {

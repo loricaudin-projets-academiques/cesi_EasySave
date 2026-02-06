@@ -4,8 +4,8 @@ using System.Text.Json;
 namespace EasySave.Core.Localization
 {
     /// <summary>
-    /// Implémentation du service de localisation.
-    /// Charge les traductions depuis des fichiers JSON embarqués.
+    /// Localization service implementation.
+    /// Loads translations from embedded JSON resource files.
     /// </summary>
     public class LocalizationService : ILocalizationService
     {
@@ -23,22 +23,20 @@ namespace EasySave.Core.Localization
             LoadTranslations();
         }
 
+        /// <inheritdoc/>
         public string Get(string key, params object[] args)
         {
             if (!_translations[_currentLanguage].TryGetValue(key, out var translation))
-            {
                 return $"[MISSING: {key}]";
-            }
 
             return args.Length > 0 ? string.Format(translation, args) : translation;
         }
 
+        /// <inheritdoc/>
         public void SetLanguage(Language language)
         {
             if (!_translations.ContainsKey(language))
-            {
-                throw new ArgumentException($"Langue non supportée : {language}");
-            }
+                throw new ArgumentException($"Unsupported language: {language}");
 
             _currentLanguage = language;
         }
@@ -61,10 +59,7 @@ namespace EasySave.Core.Localization
                 using var stream = assembly.GetManifestResourceStream(resourceName);
 
                 if (stream == null)
-                {
-                    Console.Error.WriteLine($"? Ressource de traduction introuvable : {resourceName}");
                     return new Dictionary<string, string>();
-                }
 
                 using var reader = new StreamReader(stream);
                 var json = reader.ReadToEnd();
@@ -75,16 +70,15 @@ namespace EasySave.Core.Localization
 
                 return translations;
             }
-            catch (Exception ex)
+            catch
             {
-                Console.Error.WriteLine($"? Erreur lors du chargement des traductions ({language.GetDisplayName()}) : {ex.Message}");
                 return new Dictionary<string, string>();
             }
         }
 
         /// <summary>
-        /// Aplatit la structure JSON imbriquée en clés hierarchiques séparées par des points.
-        /// Exemple : { "commands": { "add": { "success": "..." } } } => "commands.add.success"
+        /// Flattens nested JSON structure into dot-separated keys.
+        /// Example: { "commands": { "add": { "success": "..." } } } => "commands.add.success"
         /// </summary>
         private void FlattenJson(JsonElement element, string prefix, Dictionary<string, string> result)
         {
@@ -93,13 +87,9 @@ namespace EasySave.Core.Localization
                 var key = string.IsNullOrEmpty(prefix) ? property.Name : $"{prefix}.{property.Name}";
 
                 if (property.Value.ValueKind == JsonValueKind.Object)
-                {
                     FlattenJson(property.Value, key, result);
-                }
                 else if (property.Value.ValueKind == JsonValueKind.String)
-                {
                     result[key] = property.Value.GetString() ?? "";
-                }
             }
         }
     }

@@ -1,55 +1,36 @@
-using EasyLog.Models;
-
 namespace EasySave.Core.Services.Logging
 {
     /// <summary>
-    /// Observer pour les événements de sauvegarde
-    /// Permet à d'autres composants de réagir aux événements (logs, IHM, etc.)
-    /// Pattern Observer: couplage faible entre BackupWorkService et EasyLog
+    /// Observer interface for backup events.
+    /// Enables loose coupling between BackupWorkService and consumers.
     /// </summary>
     public interface IBackupEventObserver
     {
-        /// <summary>
-        /// Appelé au démarrage d'une sauvegarde
-        /// </summary>
+        /// <summary>Called when a backup starts.</summary>
         void OnBackupStarted(string backupName, long totalFiles, long totalSize);
 
-        /// <summary>
-        /// Appelé pour chaque fichier transféré avec succès
-        /// </summary>
+        /// <summary>Called when a file is successfully transferred.</summary>
         void OnFileTransferred(string backupName, string sourceFile, string targetFile, 
                              long fileSize, double transferTimeMs);
 
-        /// <summary>
-        /// Appelé en cas d'erreur de transfert
-        /// </summary>
+        /// <summary>Called when a file transfer fails.</summary>
         void OnFileTransferError(string backupName, string sourceFile, string targetFile, 
                                 long fileSize, Exception ex);
 
-        /// <summary>
-        /// Appelé pour mettre à jour la progression
-        /// </summary>
+        /// <summary>Called to update progress.</summary>
         void OnProgressUpdated(string backupName, string currentFile, string targetFile,
                               long filesLeft, long sizeLeft, double progression);
 
-        /// <summary>
-        /// Appelé à la fin d'une sauvegarde
-        /// </summary>
+        /// <summary>Called when a backup completes.</summary>
         void OnBackupCompleted(string backupName);
 
-        /// <summary>
-        /// Appelé en cas d'erreur globale
-        /// </summary>
+        /// <summary>Called when a backup fails.</summary>
         void OnBackupError(string backupName, Exception ex);
 
-        /// <summary>
-        /// Appelé quand une sauvegarde est en pause
-        /// </summary>
+        /// <summary>Called when a backup is paused.</summary>
         void OnBackupPaused(string backupName);
 
-        /// <summary>
-        /// Appelé quand une sauvegarde reprend
-        /// </summary>
+        /// <summary>Called when a backup resumes.</summary>
         void OnBackupResumed(string backupName);
     }
 }

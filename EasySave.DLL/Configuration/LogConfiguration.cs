@@ -1,58 +1,33 @@
-using System;
-
 namespace EasyLog.Configuration
 {
     /// <summary>
-    /// Configuration centralisée pour EasyLog
-    /// Définit les chemins, formats et comportements
+    /// Centralized configuration for EasyLog.
+    /// Defines paths, formats and behaviors.
     /// </summary>
     public class LogConfiguration
     {
-        /// <summary>
-        /// Répertoire de base pour les logs
-        /// Exemple: \\serveur\logs\ ou /var/logs/ ou ./logs/
-        /// </summary>
+        /// <summary>Base directory for logs.</summary>
         public string LogDirectory { get; set; } = GetDefaultLogDirectory();
 
-        /// <summary>
-        /// Nom du répertoire pour les logs journaliers
-        /// Crée un sous-dossier: {LogDirectory}/daily_logs/{yyyy-MM-dd}.json
-        /// </summary>
+        /// <summary>Subfolder name for daily logs.</summary>
         public string DailyLogsSubfolder { get; set; } = "daily_logs";
 
-        /// <summary>
-        /// Nom du fichier d'état en temps réel
-        /// Chemin complet: {LogDirectory}/state.json
-        /// </summary>
+        /// <summary>State file name (without extension).</summary>
         public string StateFileName { get; set; } = "state";
 
-        /// <summary>
-        /// Format des logs (json, xml, csv, etc.)
-        /// </summary>
+        /// <summary>Log format (json, xml, csv, etc.).</summary>
         public string LogFormat { get; set; } = "json";
 
-        /// <summary>
-        /// Taille maximale d'un fichier log journalier (en MB)
-        /// Si dépassé, crée un nouveau fichier avec suffix
-        /// </summary>
+        /// <summary>Maximum daily log file size in MB.</summary>
         public int MaxDailyLogSizeMB { get; set; } = 100;
 
-        /// <summary>
-        /// Crée automatiquement les répertoires s'ils n'existent pas
-        /// </summary>
+        /// <summary>Auto-create directories if they don't exist.</summary>
         public bool AutoCreateDirectories { get; set; } = true;
 
-        /// <summary>
-        /// Chemin complet du répertoire des logs journaliers
-        /// </summary>
-        public string GetDailyLogsPath()
-        {
-            return Path.Combine(LogDirectory, DailyLogsSubfolder);
-        }
+        /// <summary>Gets the full path to the daily logs directory.</summary>
+        public string GetDailyLogsPath() => Path.Combine(LogDirectory, DailyLogsSubfolder);
 
-        /// <summary>
-        /// Chemin complet du fichier d'état
-        /// </summary>
+        /// <summary>Gets the full path to the state file.</summary>
         public string GetStateFilePath()
         {
             var extension = LogFormat.ToLowerInvariant();
@@ -60,8 +35,10 @@ namespace EasyLog.Configuration
         }
 
         /// <summary>
-        /// Chemin complet du fichier log journalier pour une date
+        /// Gets the full path to the daily log file for a specific date.
         /// </summary>
+        /// <param name="date">Date for the log file.</param>
+        /// <returns>Full path to the log file.</returns>
         public string GetDailyLogPath(DateTime date)
         {
             var filename = date.ToString("yyyy-MM-dd");
@@ -71,7 +48,6 @@ namespace EasyLog.Configuration
 
         private static string GetDefaultLogDirectory()
         {
-            // Utiliser AppData\Roaming sur Windows, /var/log sur Linux
             if (Environment.OSVersion.Platform == PlatformID.Win32NT)
             {
                 return Path.Combine(
@@ -88,7 +64,5 @@ namespace EasyLog.Configuration
                 return Path.Combine(".", "logs");
             }
         }
-
-
     }
 }

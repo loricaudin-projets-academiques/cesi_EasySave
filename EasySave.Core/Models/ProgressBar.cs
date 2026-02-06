@@ -1,14 +1,37 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace EasySave.Core.Models
+﻿namespace EasySave.Core.Models
 {
+    /// <summary>
+    /// Console-based progress bar display.
+    /// </summary>
     internal class ProgressBar
     {
         protected double Percentage;
+
+        public ProgressBar()
+        {
+            this.Percentage = 0;
+        }
+
+        /// <summary>
+        /// Initializes the progress bar with a title message.
+        /// </summary>
+        /// <param name="text">Title to display above the progress bar.</param>
+        public void InitProgressBar(string text)
+        {
+            this.Percentage = 0;
+            Console.WriteLine(text);
+            this.DrawProgressBar(Percentage);
+        }
+
+        /// <summary>
+        /// Updates the progress bar to the specified value.
+        /// </summary>
+        /// <param name="value">Progress value between 0 and 1.</param>
+        public void SetProgressBar(double value)
+        {
+            this.Percentage = value;
+            this.DrawProgressBar(Percentage);
+        }
 
         private void DrawProgressBar(double progress, int barSize = 50)
         {
@@ -18,29 +41,8 @@ namespace EasySave.Core.Models
             int filledBars = (int)Math.Round(progress * barSize);
             int emptyBars = barSize - filledBars;
 
-            // Construire la barre
             string bar = new string('█', filledBars) + new string('░', emptyBars);
-
-            // Afficher sur la même ligne
             Console.Write($"\r[{bar}] {progress * 100:0.0}%");
-        }
-
-        public ProgressBar()
-        {
-            this.Percentage = 0;
-        }
-
-        public void InitProgressBar(string text)
-        {
-            this.Percentage = 0;
-            Console.WriteLine(text);
-            this.DrawProgressBar(Percentage);
-        }
-
-        public void SetProgressBar(double value)
-        {
-            this.Percentage = value;
-            this.DrawProgressBar(Percentage);
         }
     }
 }
