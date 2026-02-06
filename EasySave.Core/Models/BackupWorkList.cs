@@ -1,3 +1,4 @@
+using EasySave.Core.Services;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -9,17 +10,22 @@ namespace EasySave.Core.Models
 {
     public class BackupWorkList
     {
-        // Constructeur par défaut
         public BackupWorkList()
         {
             this.List = new List<BackupWork>();
+            this.jsonFileGestion = JsonFileGestion.GetInstance();
         }
 
-        private List <BackupWork> List { get; set; }
+        private List<BackupWork> List { get; set; }
+
+        private JsonFileGestion jsonFileGestion;
+
+        public static readonly string JSON_FILE_PATH = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "AppData", "Roaming", "ProSoft", "EasySave", "config", "BackupWorks.json");
 
         public BackupWorkList(List<BackupWork> list)
         {
             this.List = list;
+            this.jsonFileGestion = JsonFileGestion.GetInstance();
         }
 
         public void AddBackupWork(BackupWork backupWork)
@@ -30,6 +36,7 @@ namespace EasySave.Core.Models
             }
             // Add the BackupWork object to the list
             this.List.Add(backupWork);
+            this.jsonFileGestion.Save<List<BackupWork>>(JSON_FILE_PATH, this.List);
         }
               
         public bool UpdateBackupWork(BackupWork backupWork, string name, string sourcePath, string destinationPath, BackupType type)
@@ -41,7 +48,8 @@ namespace EasySave.Core.Models
                 backupWork.SetDestinationPath(destinationPath);
                 backupWork.SetType(type);
 
-                // Update succeeded
+                this.jsonFileGestion.Save<List<BackupWork>>(JSON_FILE_PATH, this.List);
+
                 return true;
             }
             catch
@@ -55,6 +63,9 @@ namespace EasySave.Core.Models
             try
             {
                 this.List.Remove(backupWork);
+
+                this.jsonFileGestion.Save<List<BackupWork>>(JSON_FILE_PATH, this.List);
+
                 return true;
             }
             catch
@@ -68,6 +79,9 @@ namespace EasySave.Core.Models
             try
             {
                 this.List.RemoveAt(id);
+
+                this.jsonFileGestion.Save<List<BackupWork>>(JSON_FILE_PATH, this.List);
+
                 return true;
             }
             catch
