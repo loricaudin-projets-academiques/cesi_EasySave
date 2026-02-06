@@ -18,13 +18,15 @@
       "description": "Deletes a backup job",
       "arg_id": "Job ID or name",
       "success": "? Job '{0}' deleted successfully",
-      "error_not_found": "? Job '{0}' not found"
+      "error_not_found": "? Job '{0}' not found",
+      "error": "? Failed to delete job"
     },
     "list": {
       "name": "List",
       "description": "Displays all backup jobs",
       "header": "Configured Backup Jobs",
       "empty": "No jobs configured",
+      "no_works": "No backup jobs configured",
       "column_id": "ID",
       "column_name": "Name",
       "column_source": "Source",
@@ -37,7 +39,9 @@
       "description": "Modifies an existing backup job",
       "arg_id": "Job ID or name",
       "success": "? Job '{0}' modified successfully",
-      "error_not_found": "? Job '{0}' not found"
+      "error_not_found": "? Job '{0}' not found",
+      "no_changes": "? No modifications specified",
+      "error": "? Failed to modify job"
     },
     "run": {
       "name": "Run",
@@ -66,7 +70,13 @@
     "invalid_argument": "? Invalid argument: {0}",
     "file_not_found": "? File not found: {0}",
     "access_denied": "? Access denied: {0}",
-    "invalid_path": "? Invalid path: {0}"
+    "invalid_path": "? Invalid path: {0}",
+    "source_not_found": "? Source path not found: {0}",
+    "destination_not_found": "? Destination path not found: {0}",
+    "work_not_found": "? Backup job {0} not found",
+    "invalid_backup_type": "? Invalid backup type: {0}",
+    "execution_failed": "? Execution failed: {0}",
+    "backup_io_error": "? Error during backup. Make sure folders are accessible and there is enough disk space."
   },
   "backup_types": {
     "full": "Full",

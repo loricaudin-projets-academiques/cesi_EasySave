@@ -1,20 +1,37 @@
 ﻿using EasySave.Core.Settings;
+using EasySave.Core.Services;
 using Spectre.Console;
 using Spectre.Console.Cli;
+using System.ComponentModel;
 
 namespace EasySave.CLI.Commands
 {
-    public class ListCommand : Command<CommandSettings>
+    public class ListSettings : CommandSettings
+    {
+    }
+
+    public class ListCommand : Command<ListSettings>
     {
         private readonly Config _config;
+        private readonly BackupWorkService _backupService;
 
-        public ListCommand(Config config) => _config = config;
+        public ListCommand(Config config, BackupWorkService backupService)
+        {
+            _config = config;
+            _backupService = backupService;
+        }
 
-        public override int Execute(CommandContext context, CommandSettings settings, CancellationToken cancellationToken)
+        public override int Execute(CommandContext context, ListSettings settings, CancellationToken cancellationToken)
         {
             try
             {
-                AnsiConsole.MarkupLine($"[grey]{_config.Localization.Get("messages.loading")}[/]");
+                var works = _backupService.GetAllWorks();
+
+                if (works.Count == 0)
+                {
+                    AnsiConsole.MarkupLine($"[yellow]{_config.Localization.Get("commands.list.no_works")}[/]");
+                    return 0;
+                }
 
                 var table = new Table();
                 table.Title = new TableTitle(_config.Localization.Get("commands.list.header"));
@@ -24,11 +41,21 @@ namespace EasySave.CLI.Commands
                 table.AddColumn(_config.Localization.Get("commands.list.column_destination"));
                 table.AddColumn(_config.Localization.Get("commands.list.column_type"));
 
-                table.AddRow("1", "MonProjet", "C:/Source", "D:/Dest", $"[green]{_config.Localization.Get("backup_types.full")}[/]");
-                table.AddRow("2", "Images", "C:/Photos", "E:/Save", $"[yellow]{_config.Localization.Get("backup_types.diff")}[/]");
+                for (int i = 0; i < works.Count; i++)
+                {
+                    var work = works[i];
+                    var typeColor = work.GetBackupType().ToString().Contains("FULL") ? "green" : "yellow";
+                    table.AddRow(
+                        (i + 1).ToString(),
+                        work.GetName(),
+                        work.GetSourcePath(),
+                        work.GetDestinationPath(),
+                        $"[{typeColor}]{_backupService.GetLocalizedBackupTypeName(work.GetBackupType())}[/]"
+                    );
+                }
 
                 AnsiConsole.Write(table);
-                AnsiConsole.MarkupLine($"[grey]{_config.Localization.Get("commands.list.total", 2)}[/]");
+                AnsiConsole.MarkupLine($"[grey]{_config.Localization.Get("commands.list.total", works.Count)}[/]");
 
                 return 0;
             }

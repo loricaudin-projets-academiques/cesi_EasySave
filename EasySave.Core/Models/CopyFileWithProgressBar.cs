@@ -1,11 +1,18 @@
 ﻿using EasySave.Core.Models;
+using System.Diagnostics;
 
 internal class CopyFileWithProgressBar : ProgressBar
 {
     private long totalBytes;
     private long copiedBytes;
-
-    private BackupState State { get; }
+    private readonly BackupState State;
+    
+    // ✅ Événement pour notifier la progression (fichier courant)
+    public event EventHandler<FileProgressEventArgs>? FileProgress;
+    
+    // ✅ Événement pour notifier quand un fichier est transféré
+    public event EventHandler<FileCopiedEventArgs>? FileTransferred;
+    public event EventHandler<FileCopyErrorEventArgs>? FileTransferError;
 
     public CopyFileWithProgressBar(BackupState backupState)
     {
@@ -35,14 +42,53 @@ internal class CopyFileWithProgressBar : ProgressBar
 
     private void CopyFile(string source, string dest)
     {
-        this.CopyWithProgress(source, dest, bytesCopiedInFile =>
+        var stopwatch = Stopwatch.StartNew();
+        
+        try
         {
-            this.copiedBytes += bytesCopiedInFile;
+            this.CopyWithProgress(source, dest, bytesCopiedInFile =>
+            {
+                this.copiedBytes += bytesCopiedInFile;
 
-            double progress = (double)this.copiedBytes / this.totalBytes;
-            this.SetProgressBar(progress);
-            this.State.SetProgress(progress * 100);
-        });
+                double progress = (double)this.copiedBytes / this.totalBytes;
+                this.SetProgressBar(progress);
+                this.State.SetProgress(progress * 100);
+                
+                // ✅ Émettre l'événement de progression avec les chemins courants
+                OnFileProgress(new FileProgressEventArgs
+                {
+                    SourceFile = source,
+                    DestFile = dest,
+                    CurrentProgress = progress * 100
+                });
+            });
+
+            stopwatch.Stop();
+
+            // ✅ Émettre l'événement de transfert réussi
+            OnFileTransferred(new FileCopiedEventArgs
+            {
+                SourceFile = source,
+                DestFile = dest,
+                FileSize = new FileInfo(source).Length,
+                TransferTimeMs = stopwatch.Elapsed.TotalMilliseconds
+            });
+        }
+        catch (Exception ex)
+        {
+            stopwatch.Stop();
+
+            // ✅ Émettre l'événement d'erreur
+            OnFileTransferError(new FileCopyErrorEventArgs
+            {
+                SourceFile = source,
+                DestFile = dest,
+                FileSize = new FileInfo(source).Length,
+                Exception = ex
+            });
+
+            throw;
+        }
     }
 
     private void CopyWithProgress(string source, string dest, Action<long> onChunkCopied)
@@ -68,4 +114,51 @@ internal class CopyFileWithProgressBar : ProgressBar
             onChunkCopied?.Invoke(read);
         }
     }
+
+    // ============ EVENT EMISSION ============
+
+    protected virtual void OnFileProgress(FileProgressEventArgs e)
+    {
+        FileProgress?.Invoke(this, e);
+    }
+
+    protected virtual void OnFileTransferred(FileCopiedEventArgs e)
+    {
+        FileTransferred?.Invoke(this, e);
+    }
+
+    protected virtual void OnFileTransferError(FileCopyErrorEventArgs e)
+    {
+        FileTransferError?.Invoke(this, e);
+    }
 }
+
+// ============ EVENT ARGS ============
+
+public class FileProgressEventArgs : EventArgs
+{
+    public string SourceFile { get; set; } = string.Empty;
+    public string DestFile { get; set; } = string.Empty;
+    public double CurrentProgress { get; set; }
+}
+
+public class FileCopiedEventArgs : EventArgs
+{
+    public string SourceFile { get; set; } = string.Empty;
+    public string DestFile { get; set; } = string.Empty;
+    public long FileSize { get; set; }
+    public double TransferTimeMs { get; set; }
+}
+
+public class FileCopyErrorEventArgs : EventArgs
+{
+    public string SourceFile { get; set; } = string.Empty;
+    public string DestFile { get; set; } = string.Empty;
+    public long FileSize { get; set; }
+    public Exception Exception { get; set; } = null!;
+}
+
+
+
+
+

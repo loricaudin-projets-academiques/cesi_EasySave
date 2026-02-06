@@ -1,4 +1,4 @@
-ï»¿using Xunit;
+using Xunit;
 using EasySave.Core.Models;
 
 namespace EasySave.Tests
@@ -8,13 +8,13 @@ namespace EasySave.Tests
         [Fact]
         public void BackupWork_Create()
         {
-            // Arrange : prÃ©paration des donnÃ©es
+            // Arrange : préparation des données
             BackupWork backupWork = new BackupWork("Test", @"C:\Test_1", @"C:\Test_2", BackupType.DIFFERENTIAL_BACKUP);
 
-            // Act : exÃ©cution de lâ€™action Ã  tester
+            // Act : exécution de l’action à tester
             var result = backupWork.GetName() == "Test";
 
-            // Assert : vÃ©rification du rÃ©sultat
+            // Assert : vérification du résultat
             Assert.True(result);
         }
     }

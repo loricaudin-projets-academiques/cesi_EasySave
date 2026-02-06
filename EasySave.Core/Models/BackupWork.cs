@@ -11,6 +11,11 @@ namespace EasySave.Core.Models
         public string DestinationPath { get; private set; }
         public BackupType Type { get; private set; }
         public BackupState State { get; private set; }
+        
+        // ? Événements pour transmettre les transferts de fichiers
+        public event EventHandler? FileProgress;
+        public event EventHandler? FileTransferred;
+        public event EventHandler? FileTransferError;
 
         public BackupWork(string name, string sourcePath, string destinationPath, BackupType type)
         {
@@ -88,10 +93,15 @@ namespace EasySave.Core.Models
 
         private void ExecuteFullBackup()
         {
-            // Get all files from the source folder
             string[] files = Directory.GetFiles(this.SourcePath);
 
             CopyFileWithProgressBar cp = new CopyFileWithProgressBar(this.State);
+            
+            // ? Transmettre les événements
+            cp.FileProgress += (sender, args) => FileProgress?.Invoke(sender, args);
+            cp.FileTransferred += (sender, args) => FileTransferred?.Invoke(sender, args);
+            cp.FileTransferError += (sender, args) => FileTransferError?.Invoke(sender, args);
+            
             cp.InitProgressBar($"Full Backup in progress for : {this.Name}");
             cp.CopyFiles(this.SourcePath, this.DestinationPath, files);
         }

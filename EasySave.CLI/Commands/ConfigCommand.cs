@@ -14,32 +14,28 @@ namespace EasySave.CLI.Commands
         {
             try
             {
-                DisplayCurrentConfiguration();
+                DisplayConfig();
                 return 0;
             }
             catch (Exception ex)
             {
-                AnsiConsole.MarkupLine($"[red]{_config.Localization.Get("errors.general", ex.Message)}[/]");
+                AnsiConsole.MarkupLine($"[red]✗ Erreur: {ex.Message}[/]");
                 return 1;
             }
         }
 
-        private void DisplayCurrentConfiguration()
+        private void DisplayConfig()
         {
-            AnsiConsole.MarkupLine("[bold cyan]Configuration Actuelle[/]\n");
+            var table = new Table();
+            table.Title = new TableTitle("[bold cyan]Configuration[/]");
+            table.AddColumn("[yellow]Paramètre[/]");
+            table.AddColumn("[cyan]Valeur[/]");
 
-            AnsiConsole.MarkupLine("[yellow]Localisation:[/]");
-            AnsiConsole.MarkupLine($"  Langue: {_config.Language}");
-            AnsiConsole.WriteLine();
+            table.AddRow("Langue", $"[green]{_config.Language}[/]");
 
-            AnsiConsole.MarkupLine("[yellow]Logs:[/]");
-            AnsiConsole.MarkupLine($"  Chemin: {_config.LogPath}");
-            AnsiConsole.MarkupLine($"  Format: {_config.LogType}");
+            AnsiConsole.Write(table);
             AnsiConsole.WriteLine();
+            AnsiConsole.MarkupLine("[grey]Les logs sont gérés par LogConfiguration (AppData/ProSoft/EasySave/logs)[/]");
         }
-
     }
 }
-
-
-

@@ -1,4 +1,5 @@
 ﻿using EasySave.Core.Settings;
+using EasySave.Core.Services;
 using Spectre.Console;
 using Spectre.Console.Cli;
 using System.ComponentModel;
@@ -15,8 +16,13 @@ namespace EasySave.CLI.Commands
     public class RunCommand : Command<RunSettings>
     {
         private readonly Config _config;
+        private readonly BackupWorkService _backupService;
 
-        public RunCommand(Config config) => _config = config;
+        public RunCommand(Config config, BackupWorkService backupService)
+        {
+            _config = config;
+            _backupService = backupService;
+        }
 
         public override int Execute(CommandContext context, RunSettings settings, CancellationToken cancellationToken)
         {
@@ -32,8 +38,27 @@ namespace EasySave.CLI.Commands
 
                 foreach (var id in indices)
                 {
-                    AnsiConsole.MarkupLine($"[blue]{_config.Localization.Get("commands.run.starting", id.ToString())}[/]");
-                    AnsiConsole.MarkupLine($"[green]{_config.Localization.Get("commands.run.completed")}[/]");
+                    // Convertir l'ID utilisateur (1-basé) en index (0-basé)
+                    int index = id - 1;
+                    var work = _backupService.GetWorkByIndex(index);
+
+                    if (work == null)
+                    {
+                        AnsiConsole.MarkupLine($"[yellow]{_config.Localization.Get("errors.work_not_found", id.ToString())}[/]");
+                        continue;
+                    }
+
+                    AnsiConsole.MarkupLine($"[blue]{_config.Localization.Get("commands.run.starting", work.GetName())}[/]");
+                    
+                    try
+                    {
+                        _backupService.ExecuteWork(index);
+                        AnsiConsole.MarkupLine($"[green]{_config.Localization.Get("commands.run.completed")}[/]");
+                    }
+                    catch (Exception ex)
+                    {
+                        AnsiConsole.MarkupLine($"[red]{_config.Localization.Get("errors.execution_failed", ex.Message)}[/]");
+                    }
                 }
 
                 return 0;

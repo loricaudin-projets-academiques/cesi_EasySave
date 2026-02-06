@@ -1,67 +1,56 @@
-using EasySave.Core.Localization;
+Ôªøusing EasySave.Core.Localization;
 using System.Text.Json;
 
 namespace EasySave.Core.Settings
 {
-    /// <summary>
-    /// Configuration unique - Charge depuis appsettings.json ‡ la racine.
-    /// RÈutilisable pour CLI, Web, Desktop, etc.
-    /// </summary>
     public class Config
     {
         public Language Language { get; set; } = Language.French;
-        public ILocalizationService Localization { get; set; } = null!;
-        public string LogPath { get; set; } = "./logs/";
-        public string LogType { get; set; } = "json";
+        
+        [System.ComponentModel.EditorBrowsable(System.ComponentModel.EditorBrowsableState.Never)]
+        public ILocalizationService Localization => _localization ??= new LocalizationService(Language);
+        private ILocalizationService? _localization;
 
         public static Config Load()
         {
             try
             {
-                // Chercher appsettings.json ‡ la racine du projet
-                // Depuis bin/Debug/net8.0, remonte jusqu'‡ la racine
-                var configPath = Path.Combine(
-                    AppContext.BaseDirectory,
-                    "..", "..", "..",
-                    "appsettings.json"
-                );
-
-                configPath = Path.GetFullPath(configPath);
-
-                if (!File.Exists(configPath))
-                {
-                    throw new FileNotFoundException($"appsettings.json introuvable ‡: {configPath}");
-                }
+                var configPath = FindConfigFile();
+                if (string.IsNullOrEmpty(configPath) || !File.Exists(configPath))
+                    return new Config { Language = Language.French };
 
                 var json = File.ReadAllText(configPath);
                 using var doc = JsonDocument.Parse(json);
                 var appSettings = doc.RootElement.GetProperty("AppSettings");
-
                 var languageStr = appSettings.GetProperty("Language").GetString() ?? "fr";
-                var logPath = appSettings.GetProperty("LogPath").GetString() ?? "./logs/";
-                var logType = appSettings.GetProperty("LogType").GetString() ?? "json";
 
-                var language = languageStr.ToLowerInvariant() switch
-                {
-                    "en" or "english" => Language.English,
-                    _ => Language.French
-                };
-
-                return new Config
-                {
-                    Language = language,
-                    Localization = new LocalizationService(language),
-                    LogPath = logPath,
-                    LogType = logType
+                return new Config 
+                { 
+                    Language = languageStr.ToLowerInvariant() switch 
+                    { 
+                        "en" or "english" => Language.English, 
+                        _ => Language.French 
+                    } 
                 };
             }
             catch (Exception ex)
             {
-                throw new InvalidOperationException("Erreur lors du chargement de appsettings.json", ex);
+                System.Console.WriteLine($"‚ö†Ô∏è  Config: {ex.Message}");
+                return new Config { Language = Language.French };
             }
+        }
+
+        private static string? FindConfigFile()
+        {
+            var paths = new[] { 
+                "appsettings.json",
+                Path.Combine(AppContext.BaseDirectory, "appsettings.json")
+            };
+            return paths.FirstOrDefault(File.Exists);
         }
     }
 }
+
 
 
 

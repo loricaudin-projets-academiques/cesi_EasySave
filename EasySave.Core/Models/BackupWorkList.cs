@@ -1,4 +1,4 @@
-using EasySave.Core.Services;
+﻿using EasySave.Core.Services;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -12,8 +12,9 @@ namespace EasySave.Core.Models
     {
         public BackupWorkList()
         {
-            this.List = new List<BackupWork>();
             this.jsonFileGestion = JsonFileGestion.GetInstance();
+            // ✅ Charger depuis JSON au démarrage, sinon liste vide
+            this.List = LoadFromJson() ?? new List<BackupWork>();
         }
 
         private List<BackupWork> List { get; set; }
@@ -26,6 +27,27 @@ namespace EasySave.Core.Models
         {
             this.List = list;
             this.jsonFileGestion = JsonFileGestion.GetInstance();
+        }
+
+        /// <summary>
+        /// Charge la liste des travaux depuis le fichier JSON
+        /// </summary>
+        private List<BackupWork>? LoadFromJson()
+        {
+            try
+            {
+                if (File.Exists(JSON_FILE_PATH))
+                {
+                    // ✅ Utilise Open() au lieu de Load()
+                    var loaded = jsonFileGestion.Open<List<BackupWork>>(JSON_FILE_PATH);
+                    return loaded;
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Console.WriteLine($"⚠️  Erreur lors du chargement du JSON: {ex.Message}");
+            }
+            return null;
         }
 
         public void AddBackupWork(BackupWork backupWork)
@@ -47,17 +69,17 @@ namespace EasySave.Core.Models
             // 2. Si on le trouve (index n'est pas -1)
             if (index != -1)
             {
-                // On remplace l'ancien objet par le nouveau � cet index pr�cis
+                // On remplace l'ancien objet par le nouveau à cet index précis
                 this.List[index] = newBackupWork;
 
-                // On sauvegarde la liste modifi�e dans le JSON
+                // On sauvegarde la liste modifiée dans le JSON
                 this.jsonFileGestion.Save<List<BackupWork>>(JSON_FILE_PATH, this.List);
 
                 // On retourne le nouveau travail pour confirmer
                 return newBackupWork;
             }
 
-            // 3. Si non trouv�, on retourne null
+            // 3. Si non trouvé, on retourne null
             return null;
         }
 

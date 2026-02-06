@@ -18,13 +18,15 @@
       "description": "Supprime un travail de sauvegarde",
       "arg_id": "ID ou nom du travail",
       "success": "? Travail '{0}' supprim� avec succ�s",
-      "error_not_found": "? Travail '{0}' introuvable"
+      "error_not_found": "? Travail '{0}' introuvable",
+      "error": "? Erreur lors de la suppression du travail"
     },
     "list": {
       "name": "Lister",
       "description": "Affiche tous les travaux de sauvegarde",
       "header": "Travaux de sauvegarde configur�s",
       "empty": "Aucun travail configur�",
+      "no_works": "Aucun travail de sauvegarde configur�",
       "column_id": "ID",
       "column_name": "Nom",
       "column_source": "Source",
@@ -37,7 +39,9 @@
       "description": "Modifie un travail de sauvegarde existant",
       "arg_id": "ID ou nom du travail",
       "success": "? Travail '{0}' modifi� avec succ�s",
-      "error_not_found": "? Travail '{0}' introuvable"
+      "error_not_found": "? Travail '{0}' introuvable",
+      "no_changes": "? Aucune modification sp�cifi�e",
+      "error": "? Erreur lors de la modification du travail"
     },
     "run": {
       "name": "Ex�cuter",
@@ -66,7 +70,13 @@
     "invalid_argument": "? Argument invalide : {0}",
     "file_not_found": "? Fichier introuvable : {0}",
     "access_denied": "? Acc�s refus� : {0}",
-    "invalid_path": "? Chemin invalide : {0}"
+    "invalid_path": "? Chemin invalide : {0}",
+    "source_not_found": "? Chemin source introuvable : {0}",
+    "destination_not_found": "? Chemin destination introuvable : {0}",
+    "work_not_found": "? Travail de sauvegarde {0} non trouv�",
+    "invalid_backup_type": "? Type de sauvegarde invalide : {0}",
+    "execution_failed": "? Erreur d'ex�cution : {0}",
+    "backup_io_error": "? Erreur lors de la sauvegarde. V�rifiez que les dossiers sont accessibles et qu'il y a suffisamment d'espace disque."
   },
   "backup_types": {
     "full": "Complet",
