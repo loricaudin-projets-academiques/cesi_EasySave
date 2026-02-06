@@ -1,0 +1,89 @@
+{
+  "commands": {
+    "add": {
+      "name": "Ajouter",
+      "description": "Ajoute un nouveau travail de sauvegarde",
+      "arg_name": "Nom du travail",
+      "arg_source": "Chemin source",
+      "arg_destination": "Chemin destination",
+      "option_type": "Type de sauvegarde (full/diff)",
+      "success": "? Travail '{0}' ajout� avec succ�s",
+      "error_limit": "? Limite de 5 travaux atteinte",
+      "error_invalid_path": "? Chemin invalide : {0}",
+      "error_duplicate": "? Un travail avec ce nom existe d�j�",
+      "error_invalid_type": "? Type invalide : {0} (utiliser 'full' ou 'diff')"
+    },
+    "delete": {
+      "name": "Supprimer",
+      "description": "Supprime un travail de sauvegarde",
+      "arg_id": "ID ou nom du travail",
+      "success": "? Travail '{0}' supprim� avec succ�s",
+      "error_not_found": "? Travail '{0}' introuvable"
+    },
+    "list": {
+      "name": "Lister",
+      "description": "Affiche tous les travaux de sauvegarde",
+      "header": "Travaux de sauvegarde configur�s",
+      "empty": "Aucun travail configur�",
+      "column_id": "ID",
+      "column_name": "Nom",
+      "column_source": "Source",
+      "column_destination": "Destination",
+      "column_type": "Type",
+      "total": "Total : {0} travail(x)"
+    },
+    "modify": {
+      "name": "Modifier",
+      "description": "Modifie un travail de sauvegarde existant",
+      "arg_id": "ID ou nom du travail",
+      "success": "? Travail '{0}' modifi� avec succ�s",
+      "error_not_found": "? Travail '{0}' introuvable"
+    },
+    "run": {
+      "name": "Ex�cuter",
+      "description": "Ex�cute un ou plusieurs travaux de sauvegarde",
+      "arg_indices": "Indices des travaux (ex: 1-3 ou 1;3)",
+      "starting": "? D�marrage de la sauvegarde '{0}'...",
+      "completed": "? Sauvegarde compl�t�e",
+      "error_not_found": "? Travail '{0}' introuvable",
+      "error_invalid_indices": "? Format d'indices invalide : {0}",
+      "progress": "Progression : {0}%",
+      "files_transferred": "Fichiers transf�r�s : {0}/{1}",
+      "total_size": "Taille totale : {0}",
+      "elapsed_time": "Temps �coul� : {0}ms"
+    },
+    "config": {
+      "name": "Configuration",
+      "description": "G�re la configuration globale",
+      "set_language": "? Langue chang�e en {0}",
+      "current_language": "Langue actuelle : {0}",
+      "available_languages": "Langues disponibles : {0}"
+    }
+  },
+  "errors": {
+    "command_not_found": "? Commande inconnue : {0}",
+    "general": "? Une erreur s'est produite : {0}",
+    "invalid_argument": "? Argument invalide : {0}",
+    "file_not_found": "? Fichier introuvable : {0}",
+    "access_denied": "? Acc�s refus� : {0}",
+    "invalid_path": "? Chemin invalide : {0}"
+  },
+  "backup_types": {
+    "full": "Complet",
+    "diff": "Diff�rentiel"
+  },
+  "status": {
+    "active": "Actif",
+    "inactive": "Inactif",
+    "paused": "En pause",
+    "completed": "Termin�",
+    "error": "Erreur"
+  },
+  "messages": {
+    "welcome": "Bienvenue dans EasySave - Logiciel de sauvegarde",
+    "help": "Utilisez 'help' ou '-h' pour afficher l'aide",
+    "goodbye": "Au revoir !",
+    "loading": "Chargement...",
+    "saving": "Sauvegarde..."
+  }
+}

@@ -21,11 +21,11 @@ namespace EasySave.Core.Models
 
         public string Execute()
         {
-            if (type == BackupType.DIFFERENTIAL_BACKUP)
+            if (this.Type == BackupType.DIFFERENTIAL_BACKUP)
             {
                 return ExecuteDifferentialBackup();
             }
-            else if (type == BackupType.FULL_BACKUP)
+            else if (this.Type == BackupType.FULL_BACKUP)
             {
                 return ExecuteFullBackup();
             }
@@ -37,13 +37,13 @@ namespace EasySave.Core.Models
         private string ExecuteFullBackup()
         {
             //Set the destination folder for full backup
-            destinationPath = @"C:\tmpinst\source\repos\cesi_EassySave\Backups_Complete";
+            this.DestinationPath = @"C:\tmpinst\source\repos\cesi_EassySave\Backups_Complete";
 
             // Create the destination folder if it doesn't exist
-            Directory.CreateDirectory(destinationPath);
+            Directory.CreateDirectory(this.DestinationPath);
 
             // Get all files from the source folder
-            string[] files = Directory.GetFiles(sourcePath);
+            string[] files = Directory.GetFiles(this.SourcePath);
 
             // Loop through each file and copy it to the destination folder
             foreach (string file in files)
@@ -52,7 +52,7 @@ namespace EasySave.Core.Models
                 string fileName = Path.GetFileName(file);
 
                 // Combine destination path with the file name to get full destination path
-                string destFile = Path.Combine(destinationPath, fileName);
+                string destFile = Path.Combine(this.DestinationPath, fileName);
 
                 // Copy the file to the destination folder (overwrite not needed here, all files are copied)
                 File.Copy(file, destFile);
@@ -65,13 +65,13 @@ namespace EasySave.Core.Models
         private string ExecuteDifferentialBackup()
         {
             // Set the destination folder for differential backup
-            destinationPath = @"C:\tmpinst\source\repos\cesi_EassySave\Backups_Differential";
+            this.DestinationPath = @"C:\tmpinst\source\repos\cesi_EassySave\Backups_Differential";
 
             // Create the destination folder if it doesn't exist
-            Directory.CreateDirectory(destinationPath);
+            Directory.CreateDirectory(this.DestinationPath);
 
             // Get all files from the source folder
-            string[] files = Directory.GetFiles(sourcePath);
+            string[] files = Directory.GetFiles(this.SourcePath);
 
             // Loop through each file in the source folder
             foreach (string file in files)
@@ -80,7 +80,7 @@ namespace EasySave.Core.Models
                 string fileName = Path.GetFileName(file);
 
                 // Combine destination path with the file name to get full destination path
-                string destFile = Path.Combine(destinationPath, fileName);
+                string destFile = Path.Combine(this.DestinationPath, fileName);
 
                 // If the file does not exist in the backup, copy it
                 if (!File.Exists(destFile))
