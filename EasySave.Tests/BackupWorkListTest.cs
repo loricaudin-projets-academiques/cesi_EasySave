@@ -45,18 +45,28 @@ namespace EasySave.Tests
         }
 
         [Fact]
-
         public void AddBackupWork_Test()
         {
             BackupWorkList list = new BackupWorkList();
+
+ 
+            Assert.Equal(0, list.GetCount());
+
             for (int i = 0; i < 5; i++)
             {
-                list.AddBackupWork(new BackupWork(@"C:\Source", @"C:\Destination", $"Backup{i}", BackupType.FULL_BACKUP));
+                list.AddBackupWork(new BackupWork($"Backup{i}", @"C:\Source", @"C:\Destination", BackupType.FULL_BACKUP));
             }
+
+
+            Assert.Equal(5, list.GetCount());
+
             Assert.Throws<Exception>(() =>
             {
-                list.AddBackupWork(new BackupWork(@"C:\Source", @"C:\Destination", "Backup6", BackupType.FULL_BACKUP));
+                list.AddBackupWork(new BackupWork("Backup6", @"C:\Source", @"C:\Destination", BackupType.FULL_BACKUP));
             });
+
+
+            Assert.Equal(5, list.GetCount());
         }
 
     }
