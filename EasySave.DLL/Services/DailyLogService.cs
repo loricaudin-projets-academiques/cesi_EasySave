@@ -45,9 +45,8 @@ namespace EasyLog.Services
                     // Sauvegarder
                     SaveEntries(logPath, entries);
                 }
-                catch (Exception ex)
+                catch
                 {
-                    Console.WriteLine($"?? Erreur lors de l'ajout du log: {ex.Message}");
                 }
             }
         }
@@ -112,9 +111,8 @@ namespace EasyLog.Services
                     if (File.Exists(logPath))
                         File.Delete(logPath);
                 }
-                catch (Exception ex)
+                catch
                 {
-                    Console.WriteLine($"?? Erreur lors de la suppression des logs: {ex.Message}");
                 }
             }
         }
@@ -141,27 +139,21 @@ namespace EasyLog.Services
         {
             try
             {
-                System.Console.WriteLine($"?? Sauvegarde log: {logPath}");
-                
                 // S'assurer que le répertoire parent existe
                 var directory = Path.GetDirectoryName(logPath);
                 if (!string.IsNullOrEmpty(directory))
                 {
                     if (!Directory.Exists(directory))
                     {
-                        System.Console.WriteLine($"   Création répertoire: {directory}");
                         Directory.CreateDirectory(directory);
-                        System.Console.WriteLine($"   ? Répertoire créé");
                     }
                 }
                 
                 var content = _formatter.FormatLogEntries(entries);
                 File.WriteAllText(logPath, content);
-                System.Console.WriteLine($"? {entries.Count} entrée(s) sauvegardée(s)");
             }
-            catch (Exception ex)
+            catch
             {
-                Console.WriteLine($"? Erreur lors de la sauvegarde des logs: {ex.Message}");
             }
         }
 
@@ -171,28 +163,20 @@ namespace EasyLog.Services
         {
             if (_config.AutoCreateDirectories)
             {
-                System.Console.WriteLine($"?? Création des répertoires...");
-                System.Console.WriteLine($"   LogDirectory: {_config.LogDirectory}");
-                System.Console.WriteLine($"   DailyLogsPath: {_config.GetDailyLogsPath()}");
-                
                 try
                 {
                     Directory.CreateDirectory(_config.LogDirectory);
-                    System.Console.WriteLine($"? LogDirectory créé");
                 }
-                catch (Exception ex)
+                catch
                 {
-                    System.Console.WriteLine($"? Erreur création LogDirectory: {ex.Message}");
                 }
                 
                 try
                 {
                     Directory.CreateDirectory(_config.GetDailyLogsPath());
-                    System.Console.WriteLine($"? DailyLogsPath créé");
                 }
-                catch (Exception ex)
+                catch
                 {
-                    System.Console.WriteLine($"? Erreur création DailyLogsPath: {ex.Message}");
                 }
             }
         }

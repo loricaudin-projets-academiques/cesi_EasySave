@@ -33,11 +33,23 @@ namespace EasySave.Core.Settings
                     } 
                 };
             }
-            catch (Exception ex)
+            catch
             {
-                System.Console.WriteLine($"⚠️  Config: {ex.Message}");
                 return new Config { Language = Language.French };
             }
+        }
+
+        public void Save()
+        {
+            var configPath = FindConfigFile() ?? "appsettings.json";
+            var json = JsonSerializer.Serialize(new 
+            { 
+                AppSettings = new { Language = Language.GetCode() } 
+            }, new JsonSerializerOptions { WriteIndented = true });
+            File.WriteAllText(configPath, json);
+            
+            // Reset localization to use new language
+            _localization = null;
         }
 
         private static string? FindConfigFile()

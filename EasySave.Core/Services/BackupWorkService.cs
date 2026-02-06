@@ -55,9 +55,8 @@ namespace EasySave.Core.Services
                 {
                     action(observer);
                 }
-                catch (Exception ex)
+                catch
                 {
-                    System.Console.WriteLine($"??  Erreur observer: {ex.Message}");
                 }
             }
         }
@@ -197,6 +196,9 @@ namespace EasySave.Core.Services
                 {
                     if (args is FileCopiedEventArgs fileArgs)
                     {
+                        // ? Logger dans le fichier journalier
+                        _logger.LogFileTransfer(work.Name, fileArgs.SourceFile, fileArgs.DestFile, fileArgs.FileSize, fileArgs.TransferTimeMs);
+                        
                         OnFileTransferred(work.Name, fileArgs.SourceFile, fileArgs.DestFile, fileArgs.FileSize, fileArgs.TransferTimeMs);
                     }
                 };
@@ -205,6 +207,9 @@ namespace EasySave.Core.Services
                 {
                     if (args is FileCopyErrorEventArgs errorArgs)
                     {
+                        // ? Logger l'erreur dans le fichier journalier
+                        _logger.LogFileTransferError(work.Name, errorArgs.SourceFile, errorArgs.DestFile, errorArgs.FileSize);
+                        
                         OnFileTransferError(work.Name, errorArgs.SourceFile, errorArgs.DestFile, errorArgs.FileSize, errorArgs.Exception);
                     }
                 };

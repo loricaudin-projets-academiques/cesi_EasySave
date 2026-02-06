@@ -59,13 +59,20 @@
     "config": {
       "name": "Config",
       "description": "Manages global configuration",
-      "set_language": "? Language changed to {0}",
+      "title": "Configuration",
+      "parameter": "Parameter",
+      "value": "Value",
+      "language": "Language",
+      "language_changed": "Language changed from {0} to {1}",
+      "change_hint": "Use 'config --lang fr' or 'config --lang en' to change the language",
+      "set_language": "Language changed to {0}",
       "current_language": "Current language: {0}",
       "available_languages": "Available languages: {0}"
     }
   },
   "errors": {
-    "command_not_found": "? Unknown command: {0}",
+    "generic": "Error: {0}",
+    "command_not_found": "Unknown command: {0}",
     "general": "? An error occurred: {0}",
     "invalid_argument": "? Invalid argument: {0}",
     "file_not_found": "? File not found: {0}",

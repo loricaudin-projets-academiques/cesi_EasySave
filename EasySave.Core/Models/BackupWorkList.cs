@@ -43,9 +43,8 @@ namespace EasySave.Core.Models
                     return loaded;
                 }
             }
-            catch (Exception ex)
+            catch
             {
-                System.Console.WriteLine($"⚠️  Erreur lors du chargement du JSON: {ex.Message}");
             }
             return null;
         }

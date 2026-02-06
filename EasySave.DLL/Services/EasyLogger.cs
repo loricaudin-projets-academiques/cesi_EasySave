@@ -33,12 +33,9 @@ namespace EasyLog.Services
 
         /// <summary>
         /// Constructeur avec Config (provient de appsettings.json)
-        /// ? PRÉFÉRÉ : Utiliser Config plutôt que LogConfiguration
         /// </summary>
         public EasyLogger(object configObj)
         {
-            System.Console.WriteLine($"?? EasyLogger reçoit config de type: {configObj?.GetType().Name}");
-            
             // Si c'est un objet Config avec LogType et LogPath
             if (configObj != null && configObj.GetType().GetProperty("LogType") != null)
             {
@@ -48,14 +45,8 @@ namespace EasyLog.Services
                 var logType = logTypeProp?.GetValue(configObj)?.ToString() ?? "json";
                 var logPath = logPathProp?.GetValue(configObj)?.ToString() ?? "./logs/";
                 
-                System.Console.WriteLine($"? LogPath avant: {logPath}");
-                
                 // Normaliser le chemin
                 logPath = Path.GetFullPath(logPath);
-                
-                System.Console.WriteLine($"? LogPath après: {logPath}");
-                System.Console.WriteLine($"? LogType: {logType}");
-                System.Console.WriteLine($"? Répertoire existe? {Directory.Exists(logPath)}");
                 
                 var logConfig = new LogConfiguration 
                 { 
@@ -63,15 +54,11 @@ namespace EasyLog.Services
                     LogDirectory = logPath
                 };
                 
-                System.Console.WriteLine($"? LogConfiguration créée avec LogDirectory: {logConfig.LogDirectory}");
-                System.Console.WriteLine($"? DailyLogsPath: {logConfig.GetDailyLogsPath()}");
-                
                 _dailyLogService = new DailyLogService(logConfig);
                 _stateService = new StateLogService(logConfig);
             }
             else
             {
-                System.Console.WriteLine("??  Config invalide, utilisation des valeurs par défaut");
                 var logConfig = new LogConfiguration();
                 _dailyLogService = new DailyLogService(logConfig);
                 _stateService = new StateLogService(logConfig);

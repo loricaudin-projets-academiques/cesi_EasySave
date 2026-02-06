@@ -58,9 +58,8 @@ namespace EasyLog.Services
                     SaveState();
 
                 }
-                catch (Exception ex)
+                catch
                 {
-                    Console.WriteLine($"?? Erreur lors de la mise à jour de l'état: {ex.Message}");
                 }
             }
         }
@@ -121,9 +120,8 @@ namespace EasyLog.Services
                     _states.RemoveAll(s => s.Name == backupName);
                     SaveState();
                 }
-                catch (Exception ex)
+                catch
                 {
-                    Console.WriteLine($"?? Erreur lors de la suppression de l'état: {ex.Message}");
                 }
             }
         }
@@ -141,9 +139,8 @@ namespace EasyLog.Services
                     _states.RemoveAll(s => s.WorkIndex == workIndex);
                     SaveState();
                 }
-                catch (Exception ex)
+                catch
                 {
-                    Console.WriteLine($"?? Erreur lors de la suppression de l'état: {ex.Message}");
                 }
             }
         }
@@ -160,9 +157,8 @@ namespace EasyLog.Services
                     _states.Clear();
                     SaveState();
                 }
-                catch (Exception ex)
+                catch
                 {
-                    Console.WriteLine($"?? Erreur lors de la suppression des états: {ex.Message}");
                 }
             }
         }
@@ -198,9 +194,8 @@ namespace EasyLog.Services
                 var content = _formatter.FormatStateEntries(_states);
                 File.WriteAllText(stateFile, content);
             }
-            catch (Exception ex)
+            catch
             {
-                Console.WriteLine($"?? Erreur lors de la sauvegarde de l'état: {ex.Message}");
             }
         }
 
