@@ -6,11 +6,11 @@ namespace EasySave.Core.Models
 {
     public class BackupWork
     {
-        private string Name { get; set; }
-        private string SourcePath { get; set; }
-        private string DestinationPath { get; set; }
-        private BackupType Type { get; set; }
-        private BackupState State { get; set; }
+        public string Name { get; private set; }
+        public string SourcePath { get; private set; }
+        public string DestinationPath { get; private set; }
+        public BackupType Type { get; private set; }
+        public BackupState State { get; private set; }
 
         public BackupWork(string name, string sourcePath, string destinationPath, BackupType type)
         {
