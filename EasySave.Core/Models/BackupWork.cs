@@ -1,4 +1,4 @@
-﻿using System.Diagnostics;
+using System.Diagnostics;
 using System.Reflection;
 using System.Xml.Linq;
 
@@ -6,96 +6,119 @@ namespace EasySave.Core.Models
 {
     public class BackupWork
     {
-        private string Name { get; set; }
-        private string SourcePath { get; set; }
-        private string DestinationPath { get; set; }
-        private BackupType Type { get; set; }
+        public string Name { get; private set; }
+        public string SourcePath { get; private set; }
+        public string DestinationPath { get; private set; }
+        public BackupType Type { get; private set; }
+        public BackupState State { get; private set; }
 
-        public BackupWork(string sourcePath, string destinationPath, string name, BackupType type)
+        public BackupWork(string name, string sourcePath, string destinationPath, BackupType type)
         {
             this.Name = name;
             this.SourcePath = sourcePath;
             this.DestinationPath = destinationPath;
             this.Type = type;
+            this.State = new BackupState(this.Name, DateTime.UtcNow, 0, 0.0, 0, this.SourcePath, this.DestinationPath);
+        }
+      
+        public string GetName()
+        {
+            return this.Name;
         }
 
-        public string Execute()
+        public string GetDestinationPath()
         {
+            return this.DestinationPath;
+        }
+
+        public string GetSourcePath()
+        {
+            return this.SourcePath;
+        }
+
+        public BackupType GetBackupType()
+        {
+            return this.Type;
+        }
+
+        public void SetName(string name)
+        {
+            Name = name;
+        }
+
+        public void SetDestinationPath(string destinationPath)
+        {
+            DestinationPath = destinationPath;
+        }
+
+        public void SetSourcePath(string sourcePath)
+        {
+            SourcePath = sourcePath;
+        }
+
+        public void SetType(BackupType type)
+        {
+            Type = type;
+        }
+
+        public void Execute()
+        {
+            if (!Directory.Exists(this.SourcePath))
+            {
+                throw new Exception($"Source path is invalid or not accessible: {this.SourcePath}");
+            }
+            if (!Directory.Exists(this.DestinationPath))
+            {
+                throw new Exception($"Destination path is invalid or not accessible: {this.DestinationPath}");
+            }
+
             if (this.Type == BackupType.DIFFERENTIAL_BACKUP)
             {
-                return ExecuteDifferentialBackup();
+                ExecuteDifferentialBackup();
             }
             else if (this.Type == BackupType.FULL_BACKUP)
             {
-                return ExecuteFullBackup();
+                ExecuteFullBackup();
             }
-
-
-            return "Unknown backup type.";
+            else
+            {
+                throw new Exception("Unknown backup type.");
+            }
         }
 
-        private string ExecuteFullBackup()
+        private void ExecuteFullBackup()
         {
-            //Set the destination folder for full backup
-            this.DestinationPath = @"C:\tmpinst\source\repos\cesi_EassySave\Backups_Complete";
-
-            // Create the destination folder if it doesn't exist
-            Directory.CreateDirectory(this.DestinationPath);
-
             // Get all files from the source folder
             string[] files = Directory.GetFiles(this.SourcePath);
 
-            // Loop through each file and copy it to the destination folder
-            foreach (string file in files)
-            {
-                // Get the file name from the full path
-                string fileName = Path.GetFileName(file);
-
-                // Combine destination path with the file name to get full destination path
-                string destFile = Path.Combine(this.DestinationPath, fileName);
-
-                // Copy the file to the destination folder (overwrite not needed here, all files are copied)
-                File.Copy(file, destFile);
-            }
-
-            // Return a success message
-            return "Full backup completed successfully.";
+            CopyFileWithProgressBar cp = new CopyFileWithProgressBar(this.State);
+            cp.InitProgressBar($"Full Backup in progress for : {this.Name}");
+            cp.CopyFiles(this.SourcePath, this.DestinationPath, files);
         }
 
-        private string ExecuteDifferentialBackup()
+        private void ExecuteDifferentialBackup()
         {
-            // Set the destination folder for differential backup
-            this.DestinationPath = @"C:\tmpinst\source\repos\cesi_EassySave\Backups_Differential";
-
-            // Create the destination folder if it doesn't exist
-            Directory.CreateDirectory(this.DestinationPath);
-
             // Get all files from the source folder
             string[] files = Directory.GetFiles(this.SourcePath);
+            List<string> filesToUpdate = new List<string>();
 
-            // Loop through each file in the source folder
+            CopyFileWithProgressBar cp = new CopyFileWithProgressBar(this.State);
+            cp.InitProgressBar($"Differential Backup in progress for: {this.Name}");
+
             foreach (string file in files)
             {
-                // Get the file name from the full path
                 string fileName = Path.GetFileName(file);
-
-                // Combine destination path with the file name to get full destination path
+                string sourceFile = Path.Combine(this.SourcePath, fileName);
                 string destFile = Path.Combine(this.DestinationPath, fileName);
 
-                // If the file does not exist in the backup, copy it
-                if (!File.Exists(destFile))
+                if (!File.Exists(destFile) || File.GetLastWriteTime(file) > File.GetLastWriteTime(destFile) || new FileInfo(sourceFile).Length != new FileInfo(destFile).Length)
                 {
-                    File.Copy(file, destFile);
-                }
-                // If the file exists but the source file is newer, overwrite it
-                else if (File.GetLastWriteTime(file) > File.GetLastWriteTime(destFile))
-                {
-                    File.Copy(file, destFile, true); // true = overwrite the old file
+                    filesToUpdate.Add(file);
                 }
             }
+            files = filesToUpdate.ToArray();
 
-            //  Return a success message
-            return "Differential backup completed successfully.";
+            cp.CopyFiles(this.SourcePath, this.DestinationPath, files);
         }
     }
 }
