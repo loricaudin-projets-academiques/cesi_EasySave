@@ -55,12 +55,8 @@ namespace EasySave.Core.Models
         /// Adds a new backup work to the list.
         /// </summary>
         /// <param name="backupWork">The backup work to add.</param>
-        /// <exception cref="Exception">Thrown when maximum of 5 works is reached.</exception>
         public void AddBackupWork(BackupWork backupWork)
         {
-            if (List.Count >= 5)
-                throw new Exception("Cannot add more than 5 backup works.");
-            
             this.List.Add(backupWork);
             this.jsonFileGestion.Save(JSON_FILE_PATH, this.List);
         }
