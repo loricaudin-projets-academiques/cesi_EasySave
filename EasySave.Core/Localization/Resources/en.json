@@ -102,5 +102,19 @@
     "goodbye": "Goodbye!",
     "loading": "Loading...",
     "saving": "Saving..."
+  },
+  "gui": {
+    "buttons": {
+      "refresh": "Refresh",
+      "run_all": "Run All"
+    },
+    "labels": {
+      "language": "Language:"
+    },
+    "status": {
+      "ready": "Ready",
+      "running": "Running...",
+      "completed": "Completed!"
+    }
   }
 }

@@ -102,5 +102,19 @@
     "goodbye": "Au revoir !",
     "loading": "Chargement...",
     "saving": "Sauvegarde..."
+  },
+  "gui": {
+    "buttons": {
+      "refresh": "Rafraîchir",
+      "run_all": "Tout exécuter"
+    },
+    "labels": {
+      "language": "Langue :"
+    },
+    "status": {
+      "ready": "Prêt",
+      "running": "Exécution en cours...",
+      "completed": "Terminé !"
+    }
   }
 }
