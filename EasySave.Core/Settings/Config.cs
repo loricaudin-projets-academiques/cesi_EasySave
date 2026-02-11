@@ -11,6 +11,9 @@ namespace EasySave.Core.Settings
         /// <summary>Current language setting.</summary>
         public Language Language { get; set; } = Language.French;
         
+        /// <summary>Log format type (json or xml).</summary>
+        public string LogType { get; set; } = "json";
+        
         /// <summary>Localization service instance.</summary>
         [System.ComponentModel.EditorBrowsable(System.ComponentModel.EditorBrowsableState.Never)]
         public ILocalizationService Localization => _localization ??= new LocalizationService(Language);
@@ -26,12 +29,16 @@ namespace EasySave.Core.Settings
             {
                 var configPath = FindConfigFile();
                 if (string.IsNullOrEmpty(configPath) || !File.Exists(configPath))
-                    return new Config { Language = Language.French };
+                    return new Config();
 
                 var json = File.ReadAllText(configPath);
                 using var doc = JsonDocument.Parse(json);
                 var appSettings = doc.RootElement.GetProperty("AppSettings");
-                var languageStr = appSettings.GetProperty("Language").GetString() ?? "fr";
+                
+                var languageStr = appSettings.TryGetProperty("Language", out var langProp) 
+                    ? langProp.GetString() ?? "fr" : "fr";
+                var logType = appSettings.TryGetProperty("LogType", out var logProp) 
+                    ? logProp.GetString() ?? "json" : "json";
 
                 return new Config 
                 { 
@@ -39,12 +46,13 @@ namespace EasySave.Core.Settings
                     { 
                         "en" or "english" => Language.English, 
                         _ => Language.French 
-                    } 
+                    },
+                    LogType = logType.ToLowerInvariant()
                 };
             }
             catch
             {
-                return new Config { Language = Language.French };
+                return new Config();
             }
         }
 
@@ -56,7 +64,11 @@ namespace EasySave.Core.Settings
             var configPath = FindConfigFile() ?? "appsettings.json";
             var json = JsonSerializer.Serialize(new 
             { 
-                AppSettings = new { Language = Language.GetCode() } 
+                AppSettings = new 
+                { 
+                    Language = Language.GetCode(),
+                    LogType = LogType
+                } 
             }, new JsonSerializerOptions { WriteIndented = true });
             File.WriteAllText(configPath, json);
             
