@@ -50,12 +50,6 @@ namespace EasySave.CLI.Commands
 
                 if (!hasChanges)
                 {
-                    ChangeLogType(settings.LogType);
-                    hasChanges = true;
-                }
-
-                if (!hasChanges)
-                {
                     DisplayConfig();
                 }
 

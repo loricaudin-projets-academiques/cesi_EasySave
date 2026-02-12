@@ -68,6 +68,7 @@
       "logtype_changed": "Format des logs changé de {0} à {1}",
       "invalid_logtype": "Format invalide : {0}. Formats disponibles : {1}",
       "change_hint": "Utilisez 'config --lang fr/en' ou 'config --logtype json/xml'",
+      "file_path": "Fichier de configuration : {0}",
       "set_language": "Langue changée en {0}",
       "current_language": "Langue actuelle : {0}",
       "available_languages": "Langues disponibles : {0}"
