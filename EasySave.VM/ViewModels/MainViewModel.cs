@@ -49,15 +49,21 @@ public partial class MainViewModel : ObservableObject
     private string _statusMessage = string.Empty;
 
     // ========== TEXTES LOCALISÉS (bindés dans le XAML) ==========
-    
+
     [ObservableProperty]
-    private string _refreshButtonText = "Rafraîchir";
+    private string _selectAllButtonText = "Tout sélectionner";
+
+    [ObservableProperty]
+    private string _addButtonText = "Ajouter";
 
     [ObservableProperty]
     private string _runAllButtonText = "Tout exécuter";
 
     [ObservableProperty]
     private string _languageLabel = "Langue :";
+
+    [ObservableProperty]
+    private string _logFormatLabel = "Format des logs :";
 
     public MainViewModel()
     {
@@ -77,9 +83,11 @@ public partial class MainViewModel : ObservableObject
     /// </summary>
     private void UpdateLocalizedTexts()
     {
-        RefreshButtonText = _localization.Get("gui.buttons.refresh");
+        SelectAllButtonText = _localization.Get("gui.buttons.select_all");
+        AddButtonText = _localization.Get("gui.buttons.add");
         RunAllButtonText = _localization.Get("gui.buttons.run_all");
         LanguageLabel = _localization.Get("gui.labels.language");
+        LogFormatLabel = _localization.Get("gui.labels.log_format");
         StatusMessage = _localization.Get("gui.status.ready");
     }
 

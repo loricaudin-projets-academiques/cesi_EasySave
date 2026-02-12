@@ -105,11 +105,13 @@
   },
   "gui": {
     "buttons": {
-      "refresh": "Refresh",
+      "select_all": "Select all",
+      "add": "Add",
       "run_all": "Run All"
     },
     "labels": {
-      "language": "Language:"
+      "language": "Language:",
+      "log_format": "Log format:"
     },
     "status": {
       "ready": "Ready",

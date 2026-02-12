@@ -22,34 +22,72 @@
         <!-- Barre d'outils avec sélecteur de langue -->
         <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,10">
             <!-- Boutons avec texte bindé -->
-            <Button Content="{Binding RefreshButtonText}" 
-                    Command="{Binding RefreshCommand}" 
+            <Button Content="{Binding SelectAllButtonText}"
+                    Command="{Binding RunAllCommand}"
                     Margin="0,0,5,0" Padding="10,5"/>
-            <Button Content="{Binding RunAllButtonText}" 
-                    Command="{Binding RunAllCommand}" 
-                    Margin="0,0,20,0" Padding="10,5"/>
+            <Button Content="{Binding AddButtonText}"
+                    Command="{Binding RunAllCommand}"
+                    Margin="0,0,5,0" Padding="10,5"/>
 
-            <!-- 🔥 SÉLECTEUR DE LANGUE - Exemple concret de binding -->
-            <TextBlock Text="{Binding LanguageLabel}" 
-                       VerticalAlignment="Center" 
-                       Margin="0,0,5,0"/>
-            <ComboBox ItemsSource="{Binding AvailableLanguages}"
-                      SelectedItem="{Binding SelectedLanguage}"
-                      DisplayMemberPath="DisplayName"
-                      Width="120"/>
+            <Button Content="Supprimer la sélection"
+                    Command="{Binding RunAllCommand}"
+                    Margin="0,0,5,0" Padding="10,5"/>
+
+            <Button Content="Exécuter la sélection"
+                    Command="{Binding RunAllCommand}"
+                    Margin="0,0,5,0" Padding="10,5"/>
+
+            <Button Content="Options">
+                <Button.ContextMenu>
+                    <ContextMenu Placement="Bottom"
+                     PlacementTarget="{Binding RelativeSource={RelativeSource AncestorType=Button}}">
+
+                        <MenuItem>
+                            <MenuItem.Header>
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="{Binding LanguageLabel}" Margin="0,0,10,0"/>
+                                    <ComboBox ItemsSource="{Binding AvailableLanguages}"
+                                              SelectedItem="{Binding SelectedLanguage}"
+                                              DisplayMemberPath="DisplayName"
+                                              Width="120"/>
+                                </StackPanel>
+                            </MenuItem.Header>
+                        </MenuItem>
+                        <MenuItem>
+                            <MenuItem.Header>
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="{Binding LogFormatLabel}" Margin="0,0,10,0"/>
+                                    <ComboBox ItemsSource="{Binding AvailableLanguages}"
+                                              SelectedItem="{Binding SelectedLanguage}"
+                                              DisplayMemberPath="DisplayName"
+                                              Width="120"/>
+                                </StackPanel>
+                            </MenuItem.Header>
+                        </MenuItem>
+
+                        <MenuItem Header="Format des logs"/>
+                        <MenuItem Header="À propos de nous"/>
+
+                    </ContextMenu>
+                </Button.ContextMenu>
+            </Button>
+
+
         </StackPanel>
 
         <!-- Liste des sauvegardes -->
         <ListBox Grid.Row="1" 
                  ItemsSource="{Binding Backups}" 
                  SelectedItem="{Binding SelectedBackup}"
-                 HorizontalContentAlignment="Stretch">
+                 HorizontalContentAlignment="Stretch" SelectionChanged="ListBox_SelectionChanged">
             <ListBox.ItemTemplate>
                 <DataTemplate>
                     <Border BorderBrush="LightGray" BorderThickness="1" Padding="10" Margin="2">
                         <Grid>
                             <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
                                 <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
                                 <ColumnDefinition Width="Auto"/>
                             </Grid.ColumnDefinitions>
                             <Grid.RowDefinitions>
@@ -57,25 +95,52 @@
                                 <RowDefinition Height="Auto"/>
                                 <RowDefinition Height="Auto"/>
                             </Grid.RowDefinitions>
+                            
+                            <!-- Case à cocher -->
+                            <CheckBox Grid.Row="1"
+                                  Grid.Column="0"
+                                  Content=""
+                                  HorizontalAlignment="Left"
+                                  VerticalAlignment="Top"
+                                  Margin="0,0,5,0"/>
 
                             <!-- Nom et Type -->
-                            <TextBlock Grid.Row="0" Grid.Column="0" FontWeight="Bold" FontSize="14">
+                            <TextBlock Grid.Row="0" Grid.Column="1" FontWeight="Bold" FontSize="14">
                                 <Run Text="{Binding Name, Mode=OneWay}"/>
                                 <Run Text=" - "/>
                                 <Run Text="{Binding Type, Mode=OneWay}"/>
                             </TextBlock>
+                            
+                            <!-- Barre de progression -->
+                            <ProgressBar Grid.Row="0" Grid.Column="2"
+                                         Height="20" Width="100"
+                                         Margin="10,3"/>
+                            
 
                             <!-- Bouton Exécuter -->
-                            <Button Grid.Row="0" Grid.Column="1" 
+                            <Button Grid.Row="0" Grid.Column="3" 
                                     Content="▶ Exécuter" 
                                     Command="{Binding RunCommand}"
-                                    Padding="10,3"/>
+                                    Padding="10,3"
+                                    Margin="0,5"/>
+
+                            <!-- Bouton Modifier -->
+                            <Button Grid.Row="1" Grid.Column="3" 
+                                    Content="🛠 Modifier" 
+                                    Padding="10,3"
+                                    Margin="0,5"/>
+
+                            <!-- Bouton Supprimer -->
+                            <Button Grid.Row="2" Grid.Column="3" 
+                                    Content="❌ Supprimer" 
+                                    Padding="10,3"
+                                    Margin="0,5"/>
 
                             <!-- Chemins -->
-                            <TextBlock Grid.Row="1" Grid.ColumnSpan="2" Foreground="Gray" FontSize="11">
+                            <TextBlock Grid.Row="1" Grid.Column="1" Foreground="Gray" FontSize="11">
                                 <Run Text="Source: "/><Run Text="{Binding SourcePath, Mode=OneWay}"/>
                             </TextBlock>
-                            <TextBlock Grid.Row="2" Grid.ColumnSpan="2" Foreground="Gray" FontSize="11">
+                            <TextBlock Grid.Row="2" Grid.Column="1" Foreground="Gray" FontSize="11">
                                 <Run Text="Destination: "/><Run Text="{Binding DestinationPath, Mode=OneWay}"/>
                             </TextBlock>
                         </Grid>

@@ -105,11 +105,13 @@
   },
   "gui": {
     "buttons": {
-      "refresh": "Rafraîchir",
+      "select_all": "Tout sélectionner",
+      "add": "Ajouter",
       "run_all": "Tout exécuter"
     },
     "labels": {
-      "language": "Langue :"
+      "language": "Langue :",
+      "log_format": "Format des logs :"
     },
     "status": {
       "ready": "Prêt",
