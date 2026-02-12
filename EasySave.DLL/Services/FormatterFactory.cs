@@ -1,26 +1,24 @@
-using System;
 using EasyLog.Formatters;
 
 namespace EasyLog.Services
 {
     /// <summary>
-    /// Usine (Factory) pour créer les formatters
-    /// Pattern Factory: centralise la création des formatters
-    /// Facile d'ajouter de nouveaux formats sans modifier le code existant
+    /// Factory for creating log formatters.
+    /// Pattern Factory: centralizes formatter creation.
     /// </summary>
-    public class FormatterFactory
+    public static class FormatterFactory
     {
         private static readonly Dictionary<string, ILogFormatter> _formatters = new()
         {
             { "json", new JsonLogFormatter() },
-            // Prêt pour XML, CSV, etc.
-            // { "xml", new XmlLogFormatter() },
-            // { "csv", new CsvLogFormatter() }
+            { "xml", new XmlLogFormatter() }
         };
 
         /// <summary>
-        /// Obtient un formatter pour un format donné
+        /// Gets a formatter for the specified format.
         /// </summary>
+        /// <param name="format">Format name (json, xml).</param>
+        /// <returns>The log formatter instance.</returns>
         public static ILogFormatter GetFormatter(string format)
         {
             var normalizedFormat = format.ToLowerInvariant();
@@ -29,12 +27,12 @@ namespace EasyLog.Services
                 return formatter;
 
             throw new NotSupportedException(
-                $"Format '{format}' non supporté. Formats disponibles: {string.Join(", ", _formatters.Keys)}"
+                $"Format '{format}' not supported. Available: {string.Join(", ", _formatters.Keys)}"
             );
         }
 
         /// <summary>
-        /// Enregistre un nouveau formatter (extensibilité)
+        /// Registers a new formatter.
         /// </summary>
         public static void RegisterFormatter(string format, ILogFormatter formatter)
         {
@@ -42,7 +40,7 @@ namespace EasyLog.Services
         }
 
         /// <summary>
-        /// Retourne les formats disponibles
+        /// Gets all available format names.
         /// </summary>
         public static IEnumerable<string> GetAvailableFormats() => _formatters.Keys;
     }
