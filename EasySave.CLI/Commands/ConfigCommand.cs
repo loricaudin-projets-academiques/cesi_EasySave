@@ -50,6 +50,12 @@ namespace EasySave.CLI.Commands
 
                 if (!hasChanges)
                 {
+                    ChangeLogType(settings.LogType);
+                    hasChanges = true;
+                }
+
+                if (!hasChanges)
+                {
                     DisplayConfig();
                 }
 
@@ -103,6 +109,7 @@ namespace EasySave.CLI.Commands
             AnsiConsole.Write(table);
             AnsiConsole.WriteLine();
             AnsiConsole.MarkupLine($"[grey]{_localization.Get("commands.config.change_hint")}[/]");
+            AnsiConsole.MarkupLine($"[grey dim]{_localization.Get("commands.config.file_path", _config.ConfigFilePath)}[/]");
         }
     }
 }
