@@ -1,49 +1,34 @@
-using System;
-
 namespace EasyLog.Models
 {
     /// <summary>
-    /// Représente une entrée du log journalier
-    /// Enregistre les actions de transfert de fichiers durant les sauvegardes
+    /// Represents a daily log entry for file transfer actions during backups.
     /// </summary>
     public class LogEntry
     {
-        /// <summary>
-        /// Nom du travail de sauvegarde
-        /// </summary>
+        /// <summary>Backup job name.</summary>
         public string Name { get; set; } = string.Empty;
 
-        /// <summary>
-        /// Chemin complet du fichier source (format UNC)
-        /// Ex: \\serveur\share\dossier\fichier.txt
-        /// </summary>
+        /// <summary>Source file full path (UNC format).</summary>
         public string FileSource { get; set; } = string.Empty;
 
-        /// <summary>
-        /// Chemin complet du fichier destination (format UNC)
-        /// Ex: \\serveur\share\backup\dossier\fichier.txt
-        /// </summary>
+        /// <summary>Target file full path (UNC format).</summary>
         public string FileTarget { get; set; } = string.Empty;
 
-        /// <summary>
-        /// Taille du fichier en octets
-        /// </summary>
+        /// <summary>File size in bytes.</summary>
         public long FileSize { get; set; }
 
-        /// <summary>
-        /// Temps de transfert du fichier en millisecondes
-        /// Négatif si erreur
-        /// </summary>
+        /// <summary>File transfer time in milliseconds. Negative if error.</summary>
         public double FileTransferTime { get; set; }
 
-        /// <summary>
-        /// Horodatage de l'action (format: dd/MM/yyyy HH:mm:ss)
-        /// </summary>
+        /// <summary>Timestamp of the action (format: dd/MM/yyyy HH:mm:ss).</summary>
         public string Time { get; set; } = DateTime.Now.ToString("dd/MM/yyyy HH:mm:ss");
+
+        /// <summary>Backup type (Full or Differential).</summary>
+        public string BackupType { get; set; } = string.Empty;
 
         public override string ToString()
         {
-            return $"{Name} | {FileSource} ? {FileTarget} | {FileSize} bytes | {FileTransferTime}ms";
+            return $"{Name} ({BackupType}) | {FileSource} -> {FileTarget} | {FileSize} bytes | {FileTransferTime}ms";
         }
     }
 }
