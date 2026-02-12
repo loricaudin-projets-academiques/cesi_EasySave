@@ -83,6 +83,7 @@ namespace EasySave.CLI.Commands
                 return;
             }
 
+
             var oldType = _config.LogType;
             _config.LogType = normalizedType;
             _config.Save();
@@ -103,6 +104,7 @@ namespace EasySave.CLI.Commands
             AnsiConsole.Write(table);
             AnsiConsole.WriteLine();
             AnsiConsole.MarkupLine($"[grey]{_localization.Get("commands.config.change_hint")}[/]");
+            AnsiConsole.MarkupLine($"[grey dim]{_localization.Get("commands.config.file_path", _config.ConfigFilePath)}[/]");
         }
     }
 }
