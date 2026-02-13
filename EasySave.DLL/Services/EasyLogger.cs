@@ -58,13 +58,14 @@ namespace EasyLog.Services
             }
         }
 
+
         #region Daily Logs
 
         /// <summary>
         /// Logs a file transfer action.
         /// </summary>
         public void LogFileTransfer(string backupName, string sourceFile, string targetFile, 
-                                   long fileSize, double transferTimeMs, string backupType = "")
+                                   long fileSize, double transferTimeMs, double encryptionTimeMs = 0, string backupType = "")
         {
             var entry = new LogEntry
             {
@@ -73,6 +74,7 @@ namespace EasyLog.Services
                 FileTarget = targetFile,
                 FileSize = fileSize,
                 FileTransferTime = transferTimeMs,
+                EncryptionTime = encryptionTimeMs,
                 Time = DateTime.Now.ToString("dd/MM/yyyy HH:mm:ss"),
                 BackupType = backupType
             };
@@ -86,7 +88,47 @@ namespace EasyLog.Services
         public void LogFileTransferError(string backupName, string sourceFile, string targetFile, 
                                         long fileSize, string backupType = "")
         {
-            LogFileTransfer(backupName, sourceFile, targetFile, fileSize, -1, backupType);
+            LogFileTransfer(backupName, sourceFile, targetFile, fileSize, -1, 0, backupType);
+        }
+
+        /// <summary>
+        /// Logs when backup is blocked due to business software.
+        /// </summary>
+        public void LogBackupBlocked(int workIndex, string backupName, string softwareName)
+        {
+            var entry = new LogEntry
+            {
+                Name = backupName,
+                FileSource = $"BLOCKED: {softwareName} is running",
+                FileTarget = "",
+                FileSize = 0,
+                FileTransferTime = -1,
+                EncryptionTime = 0,
+                Time = DateTime.Now.ToString("dd/MM/yyyy HH:mm:ss"),
+                BackupType = "BLOCKED"
+            };
+
+            _dailyLogService.AddLogEntry(entry);
+        }
+
+        /// <summary>
+        /// Logs when backup is stopped mid-execution due to business software.
+        /// </summary>
+        public void LogBackupStopped(int workIndex, string backupName, string softwareName)
+        {
+            var entry = new LogEntry
+            {
+                Name = backupName,
+                FileSource = $"STOPPED: {softwareName} launched during backup",
+                FileTarget = "",
+                FileSize = 0,
+                FileTransferTime = -2,
+                EncryptionTime = 0,
+                Time = DateTime.Now.ToString("dd/MM/yyyy HH:mm:ss"),
+                BackupType = "STOPPED"
+            };
+
+            _dailyLogService.AddLogEntry(entry);
         }
 
         /// <summary>Gets today's logs.</summary>

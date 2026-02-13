@@ -1,79 +1,81 @@
-using CommunityToolkit.Mvvm.ComponentModel;
+ï»¿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using EasySave.Core.Localization;
 using EasySave.Core.Models;
+using EasySave.Core.Services;
 using EasySave.Core.Settings;
 using System.Collections.ObjectModel;
 
 namespace EasySave.VM.ViewModels;
 
 /// <summary>
-/// ViewModel principal de l'application.
+/// Main application ViewModel.
 /// </summary>
 public partial class MainViewModel : ObservableObject
 {
-    private readonly BackupWorkList _backupWorkList;
     private readonly Config _config;
+    private readonly BackupWorkService _backupService;
     private readonly ILocalizationService _localization;
 
     /// <summary>
-    /// Liste des sauvegardes affichées.
+    /// Displayed backups list.
     /// </summary>
     public ObservableCollection<BackupWorkViewModel> Backups { get; } = new();
 
     /// <summary>
-    /// Langues disponibles pour le ComboBox.
+    /// Available languages for ComboBox.
     /// </summary>
     public ObservableCollection<LanguageOption> AvailableLanguages { get; } = new()
     {
-        new LanguageOption(Language.French, "Français"),
+        new LanguageOption(Language.French, "FranÃ§ais"),
         new LanguageOption(Language.English, "English")
     };
 
     /// <summary>
-    /// Langue sélectionnée - BINDÉE au ComboBox.
+    /// Selected language - bound to ComboBox.
     /// </summary>
     [ObservableProperty]
     private LanguageOption _selectedLanguage = null!;
 
     /// <summary>
-    /// Sauvegarde actuellement sélectionnée.
+    /// Currently selected backup.
     /// </summary>
     [ObservableProperty]
     private BackupWorkViewModel? _selectedBackup;
 
     /// <summary>
-    /// Message de statut affiché à l'utilisateur.
+    /// Status message displayed to user.
     /// </summary>
     [ObservableProperty]
     private string _statusMessage = string.Empty;
 
-    // ========== TEXTES LOCALISÉS (bindés dans le XAML) ==========
+    // ========== LOCALIZED TEXTS (bound in XAML) ==========
     
     [ObservableProperty]
-    private string _refreshButtonText = "Rafraîchir";
+    private string _refreshButtonText = "Refresh";
 
     [ObservableProperty]
-    private string _runAllButtonText = "Tout exécuter";
+    private string _runAllButtonText = "Run All";
 
     [ObservableProperty]
-    private string _languageLabel = "Langue :";
+    private string _languageLabel = "Language:";
 
-    public MainViewModel()
+    /// <summary>
+    /// Creates a new MainViewModel with DI.
+    /// </summary>
+    public MainViewModel(Config config, BackupWorkService backupService, ILocalizationService localization)
     {
-        _config = Config.Load();
-        _localization = _config.Localization;
-        _backupWorkList = new BackupWorkList();
+        _config = config;
+        _backupService = backupService;
+        _localization = localization;
 
-        // Charger la langue depuis la config persistée
         _selectedLanguage = AvailableLanguages.First(l => l.Value == _config.Language);
-
         UpdateLocalizedTexts();
         LoadBackups();
     }
-
+    
     /// <summary>
-    /// Met à jour tous les textes quand la langue change.
+    /// Updates all texts when language changes.
     /// </summary>
     private void UpdateLocalizedTexts()
     {
@@ -84,41 +86,41 @@ public partial class MainViewModel : ObservableObject
     }
 
     /// <summary>
-    /// ?? Appelé automatiquement quand SelectedLanguage change via le binding !
+    /// Called automatically when SelectedLanguage changes via binding.
     /// </summary>
     partial void OnSelectedLanguageChanged(LanguageOption value)
     {
         if (value == null) return;
 
-        // 1. Sauvegarder dans la config
+        // 1. Save to config
         _config.Language = value.Value;
-        _config.Save();  // Persiste dans appsettings.json
+        _config.Save();
 
-        // 2. Changer la langue du service
+        // 2. Change service language
         _localization.SetLanguage(value.Value);
 
-        // 3. Rafraîchir l'interface
+        // 3. Refresh UI
         UpdateLocalizedTexts();
 
-        // 4. Message de confirmation
-        StatusMessage = $"? Langue changée : {value.DisplayName}";
+        // 4. Confirmation message
+        StatusMessage = _localization.Get("gui.status.language_changed", value.DisplayName);
     }
 
     /// <summary>
-    /// Charge les sauvegardes depuis le fichier JSON.
+    /// Loads backups from service.
     /// </summary>
     private void LoadBackups()
     {
         Backups.Clear();
-        foreach (var backup in _backupWorkList.GetAllWorks())
+        foreach (var work in _backupService.GetAllWorks())
         {
-            Backups.Add(new BackupWorkViewModel(backup));
+            Backups.Add(new BackupWorkViewModel(work));
         }
-        StatusMessage = $"{Backups.Count} sauvegarde(s) chargée(s)";
+        StatusMessage = _localization.Get("gui.status.loaded", Backups.Count);
     }
 
     /// <summary>
-    /// Rafraîchit la liste des sauvegardes.
+    /// Refreshes the backup list.
     /// </summary>
     [RelayCommand]
     private void Refresh()
@@ -127,22 +129,25 @@ public partial class MainViewModel : ObservableObject
     }
 
     /// <summary>
-    /// Exécute toutes les sauvegardes.
+    /// Runs all backups sequentially.
     /// </summary>
     [RelayCommand]
     private async Task RunAllAsync()
     {
         StatusMessage = _localization.Get("gui.status.running");
-        foreach (var backup in Backups)
+        
+        for (int i = 0; i < Backups.Count; i++)
         {
-            await backup.RunAsync();
+            await Backups[i].RunAsync();
         }
+        
         StatusMessage = _localization.Get("gui.status.completed");
+        LoadBackups();
     }
 }
 
 /// <summary>
-/// Option de langue pour le ComboBox.
+/// Language option for ComboBox.
 /// </summary>
 public class LanguageOption
 {

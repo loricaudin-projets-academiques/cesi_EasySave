@@ -108,17 +108,19 @@
     "saving": "Sauvegarde..."
   },
   "gui": {
-    "buttons": {
-      "refresh": "Rafraîchir",
-      "run_all": "Tout exécuter"
-    },
-    "labels": {
-      "language": "Langue :"
-    },
-    "status": {
-      "ready": "Prêt",
-      "running": "Exécution en cours...",
-      "completed": "Terminé !"
+      "buttons": {
+        "refresh": "Rafraîchir",
+        "run_all": "Tout exécuter"
+      },
+      "labels": {
+        "language": "Langue :"
+      },
+      "status": {
+        "ready": "Prêt",
+        "running": "Exécution en cours...",
+        "completed": "Terminé !",
+        "language_changed": "Langue changée : {0}",
+        "loaded": "{0} sauvegarde(s) chargée(s)"
+      }
     }
   }
-}

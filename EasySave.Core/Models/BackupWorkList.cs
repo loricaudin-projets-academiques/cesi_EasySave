@@ -1,4 +1,4 @@
-﻿using EasySave.Core.Services;
+﻿using EasySave.Core.Services.Serialization;
 
 namespace EasySave.Core.Models
 {
