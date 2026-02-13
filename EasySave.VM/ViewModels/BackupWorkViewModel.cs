@@ -1,6 +1,8 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using EasySave.Core.Localization;
 using EasySave.Core.Models;
+using EasySave.Core.Settings;
 
 namespace EasySave.VM.ViewModels;
 
@@ -10,6 +12,10 @@ namespace EasySave.VM.ViewModels;
 public partial class BackupWorkViewModel : ObservableObject
 {
     private readonly BackupWork _model;
+    //private readonly IDialogService _dialogService;
+
+    private readonly Config _config;
+    private readonly ILocalizationService _localization;
 
     /// <summary>Nom de la sauvegarde.</summary>
     public string Name => _model.Name;
@@ -41,9 +47,27 @@ public partial class BackupWorkViewModel : ObservableObject
     [ObservableProperty]
     private string _status = "En attente";
 
+    [ObservableProperty]
+    private string _aboutButtonText = "À propos";
+
+    [ObservableProperty]
+    private string _executeButtonText = "Exécuter";
+
+    [ObservableProperty]
+    private string _editButtonText = "Modifier";
+
+    [ObservableProperty]
+    private string _deleteButtonText = "Supprimer";
+
     public BackupWorkViewModel(BackupWork model)
     {
         _model = model;
+
+        _config = Config.Load();
+        _localization = _config.Localization;
+
+
+        UpdateLocalizedTexts();
     }
 
     /// <summary>
@@ -76,5 +100,12 @@ public partial class BackupWorkViewModel : ObservableObject
         {
             IsRunning = false;
         }
+    }
+
+    public void UpdateLocalizedTexts()
+    {
+        ExecuteButtonText = _localization.Get("gui.buttons.execute");
+        EditButtonText = _localization.Get("gui.buttons.edit");
+        DeleteButtonText = _localization.Get("gui.buttons.delete");
     }
 }

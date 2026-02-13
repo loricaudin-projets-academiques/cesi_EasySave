@@ -107,7 +107,13 @@
     "buttons": {
       "select_all": "Select all",
       "add": "Add",
-      "run_all": "Run All"
+      "delete_selection": "Delete selection",
+      "run_section": "Run selection",
+      "options": "Options",
+      "about": "About",
+      "execute": "▶ Run",
+      "edit": "🛠 Edit",
+      "delete": "❌ Delete"
     },
     "labels": {
       "language": "Language:",

@@ -57,6 +57,9 @@ public partial class MainViewModel : ObservableObject
     private string _addButtonText = "Ajouter";
 
     [ObservableProperty]
+    private string _deleteSelectionText = "Supprimer la sélection";
+
+    [ObservableProperty]
     private string _runAllButtonText = "Tout exécuter";
 
     [ObservableProperty]
@@ -64,6 +67,18 @@ public partial class MainViewModel : ObservableObject
 
     [ObservableProperty]
     private string _logFormatLabel = "Format des logs :";
+
+    [ObservableProperty]
+    private string _aboutButtonText = "À propos";
+
+    //[ObservableProperty]
+    //private string _executeButtonText = "Exécuter";
+
+    //[ObservableProperty]
+    //private string _editButtonText = "Modifier";
+
+    //[ObservableProperty]
+    //private string _deleteButtonText = "Supprimer";
 
     public MainViewModel()
     {
@@ -85,10 +100,18 @@ public partial class MainViewModel : ObservableObject
     {
         SelectAllButtonText = _localization.Get("gui.buttons.select_all");
         AddButtonText = _localization.Get("gui.buttons.add");
-        RunAllButtonText = _localization.Get("gui.buttons.run_all");
+        DeleteSelectionText = _localization.Get("gui.buttons.delete_selection");
+        RunAllButtonText = _localization.Get("gui.buttons.run_section");
         LanguageLabel = _localization.Get("gui.labels.language");
         LogFormatLabel = _localization.Get("gui.labels.log_format");
         StatusMessage = _localization.Get("gui.status.ready");
+        AboutButtonText = _localization.Get("gui.buttons.about");
+        _selectedBackup.ExecuteButtonText = _localization.Get("gui.buttons.execute");
+        _selectedBackup.EditButtonText = _localization.Get("gui.buttons.execute");
+        _selectedBackup.DeleteButtonText = _localization.Get("gui.buttons.execute");
+        //ExecuteButtonText = _localization.Get("gui.buttons.execute");
+        //EditButtonText = _localization.Get("gui.buttons.edit");
+        //DeleteButtonText = _localization.Get("gui.buttons.delete");
     }
 
     /// <summary>
@@ -107,6 +130,7 @@ public partial class MainViewModel : ObservableObject
 
         // 3. Rafraîchir l'interface
         UpdateLocalizedTexts();
+        //SelectedBackup.UpdateLocalizedTexts();
 
         // 4. Message de confirmation
         StatusMessage = $"? Langue changée : {value.DisplayName}";
@@ -146,6 +170,15 @@ public partial class MainViewModel : ObservableObject
             await backup.RunAsync();
         }
         StatusMessage = _localization.Get("gui.status.completed");
+    }
+
+    /// <summary>
+    /// Affiche la page "à propos".
+    /// </summary>
+    [RelayCommand]
+    private async Task AboutAsync()
+    {
+        //_dialogService.ShowAbout();
     }
 }
 

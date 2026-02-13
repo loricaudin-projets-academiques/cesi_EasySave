@@ -29,11 +29,11 @@
                     Command="{Binding RunAllCommand}"
                     Margin="0,0,5,0" Padding="10,5"/>
 
-            <Button Content="Supprimer la sélection"
+            <Button Content="{Binding DeleteSelectionText}"
                     Command="{Binding RunAllCommand}"
                     Margin="0,0,5,0" Padding="10,5"/>
 
-            <Button Content="Exécuter la sélection"
+            <Button Content="{Binding RunAllButtonText}"
                     Command="{Binding RunAllCommand}"
                     Margin="0,0,5,0" Padding="10,5"/>
 
@@ -65,8 +65,7 @@
                             </MenuItem.Header>
                         </MenuItem>
 
-                        <MenuItem Header="Format des logs"/>
-                        <MenuItem Header="À propos de nous"/>
+                        <MenuItem Header="{Binding AboutButtonText}" Command="{Binding AboutCommand}"/>
 
                     </ContextMenu>
                 </Button.ContextMenu>
@@ -119,20 +118,20 @@
 
                             <!-- Bouton Exécuter -->
                             <Button Grid.Row="0" Grid.Column="3" 
-                                    Content="▶ Exécuter" 
+                                    Content="{Binding ExecuteButtonText}" 
                                     Command="{Binding RunCommand}"
                                     Padding="10,3"
                                     Margin="0,5"/>
 
                             <!-- Bouton Modifier -->
                             <Button Grid.Row="1" Grid.Column="3" 
-                                    Content="🛠 Modifier" 
+                                    Content="{Binding EditButtonText}" 
                                     Padding="10,3"
                                     Margin="0,5"/>
 
                             <!-- Bouton Supprimer -->
                             <Button Grid.Row="2" Grid.Column="3" 
-                                    Content="❌ Supprimer" 
+                                    Content="{Binding DeleteButtonText}" 
                                     Padding="10,3"
                                     Margin="0,5"/>
 

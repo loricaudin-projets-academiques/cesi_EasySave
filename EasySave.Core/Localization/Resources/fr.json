@@ -107,7 +107,13 @@
     "buttons": {
       "select_all": "Tout sélectionner",
       "add": "Ajouter",
-      "run_all": "Tout exécuter"
+      "delete_selection": "Supprimer la sélection",
+      "run_section": "Exécuter la sélection",
+      "options": "Options",
+      "about": "À propos",
+      "execute": "▶ Exécuter",
+      "edit": "🛠 Modifier",
+      "delete": "❌ Supprimer"
     },
     "labels": {
       "language": "Langue :",
