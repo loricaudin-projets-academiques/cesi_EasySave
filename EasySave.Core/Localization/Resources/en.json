@@ -111,13 +111,13 @@
     "buttons": {
       "select_all": "Select all",
       "add": "Add",
-      "delete_selection": "Delete selection",
-      "run_section": "Run selection",
+      "delete": "Delete",
+      "edit": "Edit",
+      "execute": "Run",
+      "run_all": "Run all",
+      "refresh": "Refresh",
       "options": "Options",
-      "about": "About",
-      "execute": "▶ Run",
-      "edit": "🛠 Edit",
-      "delete": "❌ Delete"
+      "about": "About"
     },
     "labels": {
       "language": "Language:",
@@ -126,7 +126,13 @@
     "status": {
       "ready": "Ready",
       "running": "Running...",
-      "completed": "Completed!"
+      "running_backup": "Running {0}...",
+      "completed": "Completed!",
+      "backup_completed": "Backup {0} completed",
+      "loaded": "{0} backup(s) loaded",
+      "deleted": "Backup {0} deleted",
+      "error": "Error: {0}",
+      "language_changed": "Language changed to {0}"
     }
   }
 }

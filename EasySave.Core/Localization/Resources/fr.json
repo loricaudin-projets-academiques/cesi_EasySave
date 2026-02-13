@@ -111,13 +111,13 @@
     "buttons": {
       "select_all": "Tout sélectionner",
       "add": "Ajouter",
-      "delete_selection": "Supprimer la sélection",
-      "run_section": "Exécuter la sélection",
+      "delete": "Supprimer",
+      "edit": "Modifier",
+      "execute": "Exécuter",
+      "run_all": "Tout exécuter",
+      "refresh": "Rafraîchir",
       "options": "Options",
-      "about": "À propos",
-      "execute": "▶ Exécuter",
-      "edit": "🛠 Modifier",
-      "delete": "❌ Supprimer"
+      "about": "À propos"
     },
     "labels": {
       "language": "Langue :",
@@ -126,7 +126,13 @@
     "status": {
       "ready": "Prêt",
       "running": "Exécution en cours...",
-      "completed": "Terminé !"
+      "running_backup": "Exécution de {0}...",
+      "completed": "Terminé !",
+      "backup_completed": "Sauvegarde {0} terminée",
+      "loaded": "{0} sauvegarde(s) chargée(s)",
+      "deleted": "Sauvegarde {0} supprimée",
+      "error": "Erreur : {0}",
+      "language_changed": "Langue changée en {0}"
     }
   }
 }
