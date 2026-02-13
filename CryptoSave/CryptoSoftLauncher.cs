@@ -1,14 +1,18 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Diagnostics;
 
-namespace cesi_EasySave.CryptoSave
+namespace CryptoSave
 {
+    /// <summary>
+    /// Launches CryptoSoft executable to encrypt files.
+    /// Used by EasySave.Core to delegate encryption.
+    /// </summary>
     class CryptoSoftLauncher
     {
+        /// <summary>
+        /// Encrypts a file by launching CryptoSoft.exe.
+        /// </summary>
+        /// <param name="filePath">Path to the file to encrypt.</param>
+        /// <returns>CryptoSoft exit code (0 = success).</returns>
         public int EncryptFile(string filePath)
         {
             ProcessStartInfo psi = new ProcessStartInfo
@@ -19,7 +23,7 @@ namespace cesi_EasySave.CryptoSave
                 CreateNoWindow = true
             };
 
-            using Process process = Process.Start(psi);
+            using Process process = Process.Start(psi)!;
             process.WaitForExit();
 
             return process.ExitCode;

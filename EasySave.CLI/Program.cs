@@ -1,13 +1,9 @@
-﻿using EasySave.Core.Settings;
+﻿using EasySave.Core.DependencyInjection;
+using EasySave.Core.Settings;
 using EasySave.CLI.Commands;
-using EasySave.Core.Services;
-using EasySave.Core.Services.Logging;
-using EasySave.Core.Models;
-using EasySave.Core.Localization;
+using EasySave.CLI.Infrastructure;
 using Microsoft.Extensions.DependencyInjection;
 using Spectre.Console.Cli;
-
-//System.Diagnostics.Debugger.Launch();
 
 // ============ CONFIGURATION ============
 
@@ -15,47 +11,19 @@ var config = Config.Load();
 
 // ============ INJECTION DE DÉPENDANCES ============
 
-var services = new ServiceCollection();
-services.AddSingleton(config);
+var services = new ServiceCollection()
+    .AddEasySaveCore(config)
+    .AddEasySaveLogging(config)
+    .AddCliCommands();
 
-// ✅ Créer LocalizationService INDÉPENDAMMENT (pas dans Config!)
-services.AddSingleton<ILocalizationService>(sp => new LocalizationService(config.Language));
-
-services.AddSingleton<BackupWorkList>();
-
-// ✅ EasyLogger prend Config directement (pas LogConfiguration)
-var easyLogger = new EasyLog.Services.EasyLogger(config);
-services.AddSingleton(easyLogger);
-services.AddSingleton<BackupWorkService>();
-
-// ✅ FileTransferLogger écoute les événements de BackupWorkService
-services.AddSingleton<FileTransferLogger>();
-
-services.AddSingleton<IBackupEventObserver>(sp => new EasyLogObserver());
-
-services.AddSingleton<AddCommand>();
-services.AddSingleton<DeleteCommand>();
-services.AddSingleton<ListCommand>();
-services.AddSingleton<ModifyCommand>();
-services.AddSingleton<RunCommand>();
-services.AddSingleton<ConfigCommand>();
-
-// ============ WIRER LES SERVICES ============
+// ============ CONSTRUCTION DU PROVIDER (une seule fois) ============
 
 var provider = services.BuildServiceProvider();
-var backupService = provider.GetRequiredService<BackupWorkService>();
-var fileTransferLogger = provider.GetRequiredService<FileTransferLogger>();
-var observer = provider.GetRequiredService<IBackupEventObserver>();
-
-// ✅ Abonner FileTransferLogger aux événements de transfert
-fileTransferLogger.Subscribe(backupService);
-
-// ✅ Abonner l'observer au temps réel
-backupService.AddObserver(observer);
+provider.WireEasySaveServices();
 
 // ============ APPLICATION ============
 
-var app = new CommandApp(new TypeRegistrar(services));
+var app = new CommandApp(new TypeRegistrar(provider));
 
 app.Configure(c =>
 {
@@ -74,26 +42,27 @@ return app.Run(args);
 
 internal class TypeRegistrar : ITypeRegistrar
 {
-    private readonly IServiceCollection _services;
+    private readonly IServiceProvider _provider;
 
-    public TypeRegistrar(IServiceCollection services) => _services = services;
+    public TypeRegistrar(IServiceProvider provider) => _provider = provider;
 
-    public ITypeResolver Build() => new TypeResolver(_services.BuildServiceProvider());
+    public ITypeResolver Build() => new TypeResolver(_provider);
 
-    public void Register(Type service, Type implementation) => _services.AddSingleton(service, implementation);
-    public void Register(Type service) => _services.AddSingleton(service);
-    public void RegisterInstance(Type service, object implementation) => _services.AddSingleton(service, implementation);
-    public void RegisterLazy(Type service, Func<object> factory) => _services.AddSingleton(service, _ => factory());
+    // Ces méthodes ne sont plus utilisées car le provider est déjà construit
+    public void Register(Type service, Type implementation) { }
+    public void Register(Type service) { }
+    public void RegisterInstance(Type service, object implementation) { }
+    public void RegisterLazy(Type service, Func<object> factory) { }
 }
 
 internal class TypeResolver : ITypeResolver
 {
-    private readonly ServiceProvider _provider;
+    private readonly IServiceProvider _provider;
 
-    public TypeResolver(ServiceProvider provider) => _provider = provider;
+    public TypeResolver(IServiceProvider provider) => _provider = provider;
 
-    public object? Resolve(Type? type) => _provider.GetService(type);
+    public object? Resolve(Type? type) => type is not null ? _provider.GetService(type) : null;
 
-    public void Dispose() => _provider?.Dispose();
+    public void Dispose() { }
 }
 

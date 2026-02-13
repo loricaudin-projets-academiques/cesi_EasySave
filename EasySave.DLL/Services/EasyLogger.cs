@@ -4,94 +4,68 @@ using EasyLog.Models;
 namespace EasyLog.Services
 {
     /// <summary>
-    /// Service principal EasyLog
-    /// Point d'entrée unique pour la gestion des logs
-    /// Façade qui expose les deux services (daily logs + state)
-    /// ? Utilise workIndex comme clé pour les IDs (pas le nom!)
-    /// ? Accepte Config ou LogConfiguration
+    /// Main EasyLog service.
+    /// Facade exposing daily logs and real-time state services.
+    /// Uses workIndex as key for IDs (not backup name).
     /// </summary>
     public class EasyLogger
     {
         private readonly DailyLogService _dailyLogService;
         private readonly StateLogService _stateService;
-        
-        // ? Mapper workIndex ? StateEntry.Id (pas backupName!)
         private readonly Dictionary<int, string> _workIndexToStateId = new();
 
         /// <summary>
-        /// Constructeur avec LogConfiguration
+        /// Creates a new EasyLogger with LogConfiguration.
         /// </summary>
         public EasyLogger(LogConfiguration? config = null)
         {
             var logConfig = config ?? new LogConfiguration();
             _dailyLogService = new DailyLogService(logConfig);
             _stateService = new StateLogService(logConfig);
-            
-            // ? Charger les IDs existants depuis state.json
             LoadExistingStateIds();
         }
 
         /// <summary>
-        /// Constructeur avec Config (provient de appsettings.json)
+        /// Creates a new EasyLogger from application Config object.
+        /// Reads LogType property to determine format (json/xml).
         /// </summary>
         public EasyLogger(object configObj)
         {
-            // Si c'est un objet Config avec LogType et LogPath
-            if (configObj != null && configObj.GetType().GetProperty("LogType") != null)
+            var logConfig = new LogConfiguration();
+            
+            if (configObj != null)
             {
                 var logTypeProp = configObj.GetType().GetProperty("LogType");
-                var logPathProp = configObj.GetType().GetProperty("LogPath");
-                
-                var logType = logTypeProp?.GetValue(configObj)?.ToString() ?? "json";
-                var logPath = logPathProp?.GetValue(configObj)?.ToString() ?? "./logs/";
-                
-                // Normaliser le chemin
-                logPath = Path.GetFullPath(logPath);
-                
-                var logConfig = new LogConfiguration 
-                { 
-                    LogFormat = logType,
-                    LogDirectory = logPath
-                };
-                
-                _dailyLogService = new DailyLogService(logConfig);
-                _stateService = new StateLogService(logConfig);
-            }
-            else
-            {
-                var logConfig = new LogConfiguration();
-                _dailyLogService = new DailyLogService(logConfig);
-                _stateService = new StateLogService(logConfig);
+                if (logTypeProp != null)
+                {
+                    var logType = logTypeProp.GetValue(configObj)?.ToString() ?? "json";
+                    logConfig.LogFormat = logType.ToLowerInvariant();
+                }
             }
             
+            _dailyLogService = new DailyLogService(logConfig);
+            _stateService = new StateLogService(logConfig);
             LoadExistingStateIds();
         }
 
-
-
-        /// <summary>
-        /// Charge les mappages workIndex ? StateId depuis le fichier state.json
-        /// ? Permet de reconnaître les travaux entre les exécutions
-        /// </summary>
         private void LoadExistingStateIds()
         {
             var allStates = _stateService.GetAllStates();
             foreach (var state in allStates)
             {
                 if (state.WorkIndex >= 0)
-                {
                     _workIndexToStateId[state.WorkIndex] = state.Id;
-                }
             }
         }
 
-        // ============ LOGS JOURNALIERS ============
+
+        #region Daily Logs
 
         /// <summary>
-        /// Enregistre une action de sauvegarde (transfert de fichier)
+        /// Logs a file transfer action.
         /// </summary>
         public void LogFileTransfer(string backupName, string sourceFile, string targetFile, 
-                                   long fileSize, double transferTimeMs)
+                                   long fileSize, double transferTimeMs, double encryptionTimeMs = 0, string backupType = "")
         {
             var entry = new LogEntry
             {
@@ -100,52 +74,85 @@ namespace EasyLog.Services
                 FileTarget = targetFile,
                 FileSize = fileSize,
                 FileTransferTime = transferTimeMs,
-                Time = DateTime.Now.ToString("dd/MM/yyyy HH:mm:ss")
+                EncryptionTime = encryptionTimeMs,
+                Time = DateTime.Now.ToString("dd/MM/yyyy HH:mm:ss"),
+                BackupType = backupType
             };
 
             _dailyLogService.AddLogEntry(entry);
         }
 
         /// <summary>
-        /// Enregistre une erreur de transfert
+        /// Logs a file transfer error.
         /// </summary>
         public void LogFileTransferError(string backupName, string sourceFile, string targetFile, 
-                                        long fileSize)
+                                        long fileSize, string backupType = "")
         {
-            LogFileTransfer(backupName, sourceFile, targetFile, fileSize, -1);
+            LogFileTransfer(backupName, sourceFile, targetFile, fileSize, -1, 0, backupType);
         }
 
         /// <summary>
-        /// Récupère les logs du jour
+        /// Logs when backup is blocked due to business software.
         /// </summary>
+        public void LogBackupBlocked(int workIndex, string backupName, string softwareName)
+        {
+            var entry = new LogEntry
+            {
+                Name = backupName,
+                FileSource = $"BLOCKED: {softwareName} is running",
+                FileTarget = "",
+                FileSize = 0,
+                FileTransferTime = -1,
+                EncryptionTime = 0,
+                Time = DateTime.Now.ToString("dd/MM/yyyy HH:mm:ss"),
+                BackupType = "BLOCKED"
+            };
+
+            _dailyLogService.AddLogEntry(entry);
+        }
+
+        /// <summary>
+        /// Logs when backup is stopped mid-execution due to business software.
+        /// </summary>
+        public void LogBackupStopped(int workIndex, string backupName, string softwareName)
+        {
+            var entry = new LogEntry
+            {
+                Name = backupName,
+                FileSource = $"STOPPED: {softwareName} launched during backup",
+                FileTarget = "",
+                FileSize = 0,
+                FileTransferTime = -2,
+                EncryptionTime = 0,
+                Time = DateTime.Now.ToString("dd/MM/yyyy HH:mm:ss"),
+                BackupType = "STOPPED"
+            };
+
+            _dailyLogService.AddLogEntry(entry);
+        }
+
+        /// <summary>Gets today's logs.</summary>
         public List<LogEntry> GetTodayLogs() => _dailyLogService.GetDayLogs(DateTime.Today);
 
-        /// <summary>
-        /// Récupère les logs d'une date
-        /// </summary>
+        /// <summary>Gets logs for a specific date.</summary>
         public List<LogEntry> GetDateLogs(DateTime date) => _dailyLogService.GetDayLogs(date);
 
-        /// <summary>
-        /// Récupère les logs d'une plage
-        /// </summary>
-        public List<LogEntry> GetLogs(DateTime start, DateTime end) => 
-            _dailyLogService.GetLogs(start, end);
+        /// <summary>Gets logs for a date range.</summary>
+        public List<LogEntry> GetLogs(DateTime start, DateTime end) => _dailyLogService.GetLogs(start, end);
 
-        // ============ ÉTAT EN TEMPS RÉEL (avec index) ============
+        #endregion
+
+        #region Real-time State
 
         /// <summary>
-        /// Marque un travail comme actif (par index)
-        /// ? L'index est stocké dans StateEntry pour la persistance
-        /// ? Re-run même index = même ID (pas de dédoublement)
+        /// Marks a backup as active (by index).
         /// </summary>
         public void StartBackup(int workIndex, string backupName, long totalFiles, long totalSize)
         {
-            // ? Chercher si un state existe déjà pour ce workIndex
             StateEntry state;
             
             if (_workIndexToStateId.TryGetValue(workIndex, out var existingStateId))
             {
-                // ? État existe déjà ? le réutiliser
                 var existingState = _stateService.GetStateById(existingStateId);
                 if (existingState != null)
                 {
@@ -160,47 +167,39 @@ namespace EasyLog.Services
                 }
                 else
                 {
-                    // État supprimé? En créer un nouveau
-                    state = new StateEntry
-                    {
-                        WorkIndex = workIndex,  // ? Stocker l'index!
-                        Name = backupName,
-                        State = BackupState.ACTIVE.ToString(),
-                        TotalFilesToCopy = totalFiles,
-                        TotalFilesSize = totalSize,
-                        NbFilesLeftToDo = totalFiles,
-                        Progression = 0
-                    };
-                    _workIndexToStateId[workIndex] = state.Id;
+                    state = CreateNewState(workIndex, backupName, totalFiles, totalSize);
                 }
             }
             else
             {
-                // ? État n'existe pas ? le créer
-                state = new StateEntry
-                {
-                    WorkIndex = workIndex,  // ? Stocker l'index!
-                    Name = backupName,
-                    State = BackupState.ACTIVE.ToString(),
-                    TotalFilesToCopy = totalFiles,
-                    TotalFilesSize = totalSize,
-                    NbFilesLeftToDo = totalFiles,
-                    Progression = 0
-                };
-
-                _workIndexToStateId[workIndex] = state.Id;
+                state = CreateNewState(workIndex, backupName, totalFiles, totalSize);
             }
 
             _stateService.UpdateState(state);
         }
 
+        private StateEntry CreateNewState(int workIndex, string backupName, long totalFiles, long totalSize)
+        {
+            var state = new StateEntry
+            {
+                WorkIndex = workIndex,
+                Name = backupName,
+                State = BackupState.ACTIVE.ToString(),
+                TotalFilesToCopy = totalFiles,
+                TotalFilesSize = totalSize,
+                NbFilesLeftToDo = totalFiles,
+                Progression = 0
+            };
+            _workIndexToStateId[workIndex] = state.Id;
+            return state;
+        }
+
         /// <summary>
-        /// Met à jour la progression d'un travail (par index)
+        /// Updates backup progress (by index).
         /// </summary>
         public void UpdateProgress(int workIndex, string currentSource, string currentTarget,
                                   long filesLeft, long sizeLeft, double progression)
         {
-            // ? Chercher par index
             if (!_workIndexToStateId.TryGetValue(workIndex, out var stateId))
                 return;
 
@@ -217,63 +216,53 @@ namespace EasyLog.Services
         }
 
         /// <summary>
-        /// Marque un travail comme terminé (par index)
+        /// Marks a backup as completed (by index).
         /// </summary>
         public void CompleteBackup(int workIndex)
         {
-            if (!_workIndexToStateId.TryGetValue(workIndex, out var stateId))
-                return;
-
-            var state = _stateService.GetStateById(stateId);
-            if (state == null)
-                return;
-
-            state.State = BackupState.COMPLETED.ToString();
-            state.SourceFilePath = string.Empty;
-            state.TargetFilePath = string.Empty;
-            state.NbFilesLeftToDo = 0;
-            state.Progression = 100;
-
-            _stateService.UpdateState(state);
+            UpdateBackupState(workIndex, BackupState.COMPLETED, clearPaths: true, progression: 100);
         }
 
         /// <summary>
-        /// Marque un travail en erreur (par index)
+        /// Marks a backup as error (by index).
         /// </summary>
         public void ErrorBackup(int workIndex)
         {
-            if (!_workIndexToStateId.TryGetValue(workIndex, out var stateId))
-                return;
-
-            var state = _stateService.GetStateById(stateId);
-            if (state == null)
-                return;
-
-            state.State = BackupState.ERROR.ToString();
-            _stateService.UpdateState(state);
+            UpdateBackupState(workIndex, BackupState.ERROR);
         }
 
         /// <summary>
-        /// Marque un travail en pause (par index)
+        /// Marks a backup as paused (by index).
         /// </summary>
         public void PauseBackup(int workIndex)
         {
-            if (!_workIndexToStateId.TryGetValue(workIndex, out var stateId))
-                return;
-
-            var state = _stateService.GetStateById(stateId);
-            if (state == null)
-                return;
-
-            state.State = BackupState.PAUSED.ToString();
-            _stateService.UpdateState(state);
+            UpdateBackupState(workIndex, BackupState.PAUSED);
         }
 
         /// <summary>
-        /// Reprend un travail (par index)
+        /// Resumes a backup (by index).
         /// </summary>
         public void ResumeBackup(int workIndex)
         {
+            UpdateBackupState(workIndex, BackupState.ACTIVE);
+        }
+
+        /// <summary>
+        /// Removes backup state (by index).
+        /// </summary>
+        public void RemoveBackupState(int workIndex)
+        {
+            _stateService.RemoveStateByWorkIndex(workIndex);
+            _workIndexToStateId.Remove(workIndex);
+        }
+
+        /// <summary>
+        /// Gets all current states.
+        /// </summary>
+        public List<StateEntry> GetAllStates() => _stateService.GetAllStates();
+
+        private void UpdateBackupState(int workIndex, BackupState newState, bool clearPaths = false, double? progression = null)
+        {
             if (!_workIndexToStateId.TryGetValue(workIndex, out var stateId))
                 return;
 
@@ -281,33 +270,21 @@ namespace EasyLog.Services
             if (state == null)
                 return;
 
-            state.State = BackupState.ACTIVE.ToString();
+            state.State = newState.ToString();
+            
+            if (clearPaths)
+            {
+                state.SourceFilePath = string.Empty;
+                state.TargetFilePath = string.Empty;
+                state.NbFilesLeftToDo = 0;
+            }
+            
+            if (progression.HasValue)
+                state.Progression = progression.Value;
+
             _stateService.UpdateState(state);
         }
 
-        /// <summary>
-        /// Récupère l'état d'un travail par nom
-        /// </summary>
-        public StateEntry? GetState(string backupName) => _stateService.GetState(backupName);
-
-        /// <summary>
-        /// Récupère tous les états
-        /// </summary>
-        public List<StateEntry> GetAllStates() => _stateService.GetAllStates();
-
-        /// <summary>
-        /// Supprime l'état d'un travail (par index)
-        /// ? Appelé lors de la suppression d'un travail
-        /// </summary>
-        public void RemoveBackupState(int workIndex)
-        {
-            // Nettoyer le cache
-            _workIndexToStateId.Remove(workIndex);
-            
-            // Supprimer du state.json
-            _stateService.RemoveStateByWorkIndex(workIndex);
-        }
+        #endregion
     }
 }
-
-

@@ -1,9 +1,11 @@
+using EasySave.Core.ProgressBar;
 using System.Text.Json.Serialization;
 
 namespace EasySave.Core.Models
 {
     /// <summary>
     /// Represents a backup work/job with source, destination and backup type.
+    /// Pure model - no service dependencies.
     /// </summary>
     public class BackupWork
     {
@@ -99,6 +101,11 @@ namespace EasySave.Core.Models
             var filesToUpdate = new List<string>();
 
             var cp = new CopyFileWithProgressBar(this.State);
+            
+            cp.FileProgress += (sender, args) => FileProgress?.Invoke(sender, args);
+            cp.FileTransferred += (sender, args) => FileTransferred?.Invoke(sender, args);
+            cp.FileTransferError += (sender, args) => FileTransferError?.Invoke(sender, args);
+            
             cp.InitProgressBar($"Differential Backup in progress for: {this.Name}");
 
             foreach (string file in files)
