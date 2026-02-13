@@ -8,22 +8,35 @@ namespace EasySave.Core.Models
     /// </summary>
     internal class CopyFileWithProgressBar : ProgressBar
     {
-        private long totalBytes;
-        private long copiedBytes;
+        private long totalBytesLocal;      // Taille des fichiers du dossier courant
+        private long copiedBytesLocal;     // Bytes copiés dans le dossier courant
+
+        private long totalBytesGlobal;     // Taille totale de tous les fichiers du backup
+        private long copiedBytesGlobal;    // Bytes copiés depuis le début du backup
+
         private readonly BackupState State;
-        
+
         /// <summary>Event raised when file copy progress updates.</summary>
         public event EventHandler<FileProgressEventArgs>? FileProgress;
-        
+
         /// <summary>Event raised when a file is successfully transferred.</summary>
         public event EventHandler<FileCopiedEventArgs>? FileTransferred;
-        
+
         /// <summary>Event raised when a file transfer fails.</summary>
         public event EventHandler<FileCopyErrorEventArgs>? FileTransferError;
 
         public CopyFileWithProgressBar(BackupState backupState)
         {
             this.State = backupState;
+        }
+
+        /// <summary>
+        /// Sets the total number of bytes for the entire backup (global progress).
+        /// </summary>
+        public void SetGlobalTotalBytes(long total)
+        {
+            this.totalBytesGlobal = total;
+            this.copiedBytesGlobal = 0;
         }
 
         /// <summary>
@@ -34,12 +47,13 @@ namespace EasySave.Core.Models
         /// <param name="files">Array of file paths to copy.</param>
         public void CopyFiles(string source, string dest, string[] files)
         {
-            this.totalBytes = files.Sum(f => new FileInfo(f).Length);
-            this.copiedBytes = 0;
+            // Progression locale (dossier courant)
+            this.totalBytesLocal = files.Sum(f => new FileInfo(f).Length);
+            this.copiedBytesLocal = 0;
 
             this.State.SetLastActionTimestamp(DateTime.UtcNow);
             this.State.SetTotalFiles(files.Length);
-            this.State.SetFileSize(this.totalBytes);
+            this.State.SetFileSize(this.totalBytesLocal);
 
             foreach (string file in files)
             {
@@ -56,17 +70,23 @@ namespace EasySave.Core.Models
         private void CopyFile(string source, string dest)
         {
             var stopwatch = Stopwatch.StartNew();
-            
+
             try
             {
                 this.CopyWithProgress(source, dest, bytesCopiedInFile =>
                 {
-                    this.copiedBytes += bytesCopiedInFile;
+                    // Mise à jour locale
+                    this.copiedBytesLocal += bytesCopiedInFile;
 
-                    double progress = (double)this.copiedBytes / this.totalBytes;
+                    // Mise à jour globale
+                    this.copiedBytesGlobal += bytesCopiedInFile;
+
+                    // Progression globale
+                    double progress = (double)this.copiedBytesGlobal / this.totalBytesGlobal;
+
                     this.SetProgressBar(progress);
                     this.State.SetProgress(progress * 100);
-                    
+
                     OnFileProgress(new FileProgressEventArgs
                     {
                         SourceFile = source,
@@ -156,8 +176,3 @@ namespace EasySave.Core.Models
         public Exception Exception { get; set; } = null!;
     }
 }
-
-
-
-
-

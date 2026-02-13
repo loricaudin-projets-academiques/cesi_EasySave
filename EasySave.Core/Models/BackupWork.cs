@@ -10,23 +10,28 @@ namespace EasySave.Core.Models
         public string Name { get; private set; }
         public string SourcePath { get; private set; }
         public string DestinationPath { get; private set; }
-        
+
         /// <summary>Backup type serialized as string (FULL_BACKUP / DIFFERENTIAL_BACKUP).</summary>
         [JsonConverter(typeof(JsonStringEnumConverter))]
         public BackupType Type { get; private set; }
-        
+
         /// <summary>Runtime state, excluded from JSON serialization.</summary>
         [JsonIgnore]
         public BackupState State { get; private set; }
-        
+
         /// <summary>Event raised when file copy progress updates.</summary>
         public event EventHandler? FileProgress;
-        
+
         /// <summary>Event raised when a file transfer completes successfully.</summary>
         public event EventHandler? FileTransferred;
-        
+
         /// <summary>Event raised when a file transfer fails.</summary>
         public event EventHandler? FileTransferError;
+
+        /// <summary>
+        /// Single instance of the copy handler to keep global progress consistent.
+        /// </summary>
+        private readonly CopyFileWithProgressBar _cp;
 
         /// <summary>
         /// Creates a new backup work.
@@ -41,9 +46,16 @@ namespace EasySave.Core.Models
             this.SourcePath = sourcePath;
             this.DestinationPath = destinationPath;
             this.Type = type;
+
             this.State = new BackupState(this.Name, DateTime.UtcNow, 0, 0.0, 0, this.SourcePath, this.DestinationPath);
+
+            _cp = new CopyFileWithProgressBar(this.State);
+
+            _cp.FileProgress += (s, e) => FileProgress?.Invoke(s, e);
+            _cp.FileTransferred += (s, e) => FileTransferred?.Invoke(s, e);
+            _cp.FileTransferError += (s, e) => FileTransferError?.Invoke(s, e);
         }
-      
+
         public string GetName() => this.Name;
         public string GetDestinationPath() => this.DestinationPath;
         public string GetSourcePath() => this.SourcePath;
@@ -62,60 +74,134 @@ namespace EasySave.Core.Models
         {
             if (!Directory.Exists(this.SourcePath))
                 throw new Exception($"Source path is invalid or not accessible: {this.SourcePath}");
-            
+
             if (!Directory.Exists(this.DestinationPath))
                 throw new Exception($"Destination path is invalid or not accessible: {this.DestinationPath}");
+
+            long totalBytes = this.Type switch
+            {
+                BackupType.FULL_BACKUP => ComputeTotalBytesFull(this.SourcePath),
+                BackupType.DIFFERENTIAL_BACKUP => ComputeTotalBytesDifferential(this.SourcePath, this.DestinationPath),
+                _ => throw new Exception("Unknown backup type.")
+            };
+
+            _cp.SetGlobalTotalBytes(totalBytes);
 
             switch (this.Type)
             {
                 case BackupType.DIFFERENTIAL_BACKUP:
                     ExecuteDifferentialBackup();
                     break;
+
                 case BackupType.FULL_BACKUP:
                     ExecuteFullBackup();
                     break;
+                
                 default:
                     throw new Exception("Unknown backup type.");
             }
         }
 
+        /// <summary>
+        /// Computes the total size of all files in the source directory (recursive).
+        /// Used for FULL backup.
+        /// </summary>
+        private long ComputeTotalBytesFull(string sourceDir)
+        {
+            long total = 0;
+
+            foreach (string file in Directory.GetFiles(sourceDir, "*", SearchOption.AllDirectories))
+                total += new FileInfo(file).Length;
+
+            return total;
+        }
+
+        /// <summary>
+        /// Computes the total size of files that WILL be copied in a differential backup.
+        /// </summary>
+        private long ComputeTotalBytesDifferential(string sourceDir, string destDir)
+        {
+            long total = 0;
+
+            // Fichiers du dossier courant
+            foreach (string file in Directory.GetFiles(sourceDir))
+            {
+                string fileName = Path.GetFileName(file);
+                string destFile = Path.Combine(destDir, fileName);
+
+                bool shouldCopy = true;
+
+                if (File.Exists(destFile))
+                {
+                    var srcInfo = new FileInfo(file);
+                    var dstInfo = new FileInfo(destFile);
+
+                    shouldCopy =
+                        srcInfo.LastWriteTime > dstInfo.LastWriteTime ||
+                        srcInfo.Length != dstInfo.Length;
+                }
+
+                if (shouldCopy)
+                    total += new FileInfo(file).Length;
+            }
+
+            // Sous-dossiers
+            foreach (string directory in Directory.GetDirectories(sourceDir))
+            {
+                string dirName = Path.GetFileName(directory);
+                string destSubDir = Path.Combine(destDir, dirName);
+
+                total += ComputeTotalBytesDifferential(directory, destSubDir);
+            }
+
+            return total;
+        }
+
         private void ExecuteFullBackup()
         {
-            string[] files = Directory.GetFiles(this.SourcePath);
-
-            var cp = new CopyFileWithProgressBar(this.State);
-            
-            cp.FileProgress += (sender, args) => FileProgress?.Invoke(sender, args);
-            cp.FileTransferred += (sender, args) => FileTransferred?.Invoke(sender, args);
-            cp.FileTransferError += (sender, args) => FileTransferError?.Invoke(sender, args);
-            
-            cp.InitProgressBar($"Full Backup in progress for: {this.Name}");
-            cp.CopyFiles(this.SourcePath, this.DestinationPath, files);
+            _cp.InitProgressBar($"Full Backup in progress for: {this.Name}");
+            CopyDirectoryRecursively(this.SourcePath, this.DestinationPath, differential: false);
         }
 
         private void ExecuteDifferentialBackup()
         {
-            string[] files = Directory.GetFiles(this.SourcePath);
-            var filesToUpdate = new List<string>();
+            _cp.InitProgressBar($"Differential Backup in progress for: {this.Name}");
+            CopyDirectoryRecursively(this.SourcePath, this.DestinationPath, differential: true);
+        }
 
-            var cp = new CopyFileWithProgressBar(this.State);
-            cp.InitProgressBar($"Differential Backup in progress for: {this.Name}");
+        private void CopyDirectoryRecursively(string sourceDir, string destDir, bool differential)
+        {
+            if (!Directory.Exists(destDir))
+                Directory.CreateDirectory(destDir);
 
-            foreach (string file in files)
+            foreach (string file in Directory.GetFiles(sourceDir))
             {
                 string fileName = Path.GetFileName(file);
-                string sourceFile = Path.Combine(this.SourcePath, fileName);
-                string destFile = Path.Combine(this.DestinationPath, fileName);
+                string destFile = Path.Combine(destDir, fileName);
 
-                bool needsUpdate = !File.Exists(destFile) 
-                    || File.GetLastWriteTime(file) > File.GetLastWriteTime(destFile) 
-                    || new FileInfo(sourceFile).Length != new FileInfo(destFile).Length;
+                bool shouldCopy = true;
 
-                if (needsUpdate)
-                    filesToUpdate.Add(file);
+                if (differential && File.Exists(destFile))
+                {
+                    var srcInfo = new FileInfo(file);
+                    var dstInfo = new FileInfo(destFile);
+
+                    shouldCopy =
+                        srcInfo.LastWriteTime > dstInfo.LastWriteTime ||
+                        srcInfo.Length != dstInfo.Length;
+                }
+
+                if (shouldCopy)
+                    _cp.CopyFiles(sourceDir, destDir, new[] { file });
             }
 
-            cp.CopyFiles(this.SourcePath, this.DestinationPath, filesToUpdate.ToArray());
+            foreach (string directory in Directory.GetDirectories(sourceDir))
+            {
+                string dirName = Path.GetFileName(directory);
+                string destSubDir = Path.Combine(destDir, dirName);
+
+                CopyDirectoryRecursively(directory, destSubDir, differential);
+            }
         }
     }
 }
