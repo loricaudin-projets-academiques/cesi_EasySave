@@ -5,38 +5,54 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:vm="clr-namespace:EasySave.VM.ViewModels;assembly=EasySave.VM"
     mc:Ignorable="d"
-    Title="EasySave" Height="450" Width="800">
+    Title="EasySave" Height="450" Width="800"
+    Name="MainWindowRoot">
 
-<!-- DataContext is injected via DI in App.xaml.cs -->
+    <!-- DataContext is injected via DI in App.xaml.cs -->
 
-<Grid Margin="10">
+    <Grid Margin="10">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
-        <!-- Barre d'outils avec sélecteur de langue -->
+        <!-- Toolbar -->
         <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,10">
-            <!-- Boutons avec texte bindé -->
-            <Button Content="{Binding RefreshButtonText}" 
-                    Command="{Binding RefreshCommand}" 
-                    Margin="0,0,5,0" Padding="10,5"/>
-            <Button Content="{Binding RunAllButtonText}" 
-                    Command="{Binding RunAllCommand}" 
-                    Margin="0,0,20,0" Padding="10,5"/>
+            <Button Content="{Binding SelectAllButtonText}" Margin="0,0,5,0" Padding="10,5"/>
+            <Button Content="{Binding AddButtonText}" Margin="0,0,5,0" Padding="10,5"/>
+            <Button Content="{Binding DeleteButtonText}" Margin="0,0,5,0" Padding="10,5"/>
+            <Button Content="{Binding RunAllButtonText}" Command="{Binding RunAllCommand}" Margin="0,0,5,0" Padding="10,5"/>
 
-            <!-- 🔥 SÉLECTEUR DE LANGUE - Exemple concret de binding -->
-            <TextBlock Text="{Binding LanguageLabel}" 
-                       VerticalAlignment="Center" 
-                       Margin="0,0,5,0"/>
-            <ComboBox ItemsSource="{Binding AvailableLanguages}"
-                      SelectedItem="{Binding SelectedLanguage}"
-                      DisplayMemberPath="DisplayName"
-                      Width="120"/>
+            <Button Content="Options">
+                <Button.ContextMenu>
+                    <ContextMenu>
+                        <MenuItem>
+                            <MenuItem.Header>
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="{Binding LanguageLabel}" Margin="0,0,10,0"/>
+                                    <ComboBox ItemsSource="{Binding AvailableLanguages}"
+                                              SelectedItem="{Binding SelectedLanguage}"
+                                              DisplayMemberPath="DisplayName"
+                                              Width="120"/>
+                                </StackPanel>
+                            </MenuItem.Header>
+                        </MenuItem>
+                        <MenuItem>
+                            <MenuItem.Header>
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="{Binding LogFormatLabel}" Margin="0,0,10,0"/>
+                                    <ComboBox Width="120"/>
+                                </StackPanel>
+                            </MenuItem.Header>
+                        </MenuItem>
+                        <MenuItem Header="{Binding AboutButtonText}" Command="{Binding AboutCommand}"/>
+                    </ContextMenu>
+                </Button.ContextMenu>
+            </Button>
         </StackPanel>
 
-        <!-- Liste des sauvegardes -->
+        <!-- Backup List -->
         <ListBox Grid.Row="1" 
                  ItemsSource="{Binding Backups}" 
                  SelectedItem="{Binding SelectedBackup}"
@@ -46,7 +62,9 @@
                     <Border BorderBrush="LightGray" BorderThickness="1" Padding="10" Margin="2">
                         <Grid>
                             <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
                                 <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
                                 <ColumnDefinition Width="Auto"/>
                             </Grid.ColumnDefinitions>
                             <Grid.RowDefinitions>
@@ -55,24 +73,45 @@
                                 <RowDefinition Height="Auto"/>
                             </Grid.RowDefinitions>
 
-                            <!-- Nom et Type -->
-                            <TextBlock Grid.Row="0" Grid.Column="0" FontWeight="Bold" FontSize="14">
+                            <!-- Checkbox -->
+                            <CheckBox Grid.Row="1" Grid.Column="0" VerticalAlignment="Top" Margin="0,0,5,0"/>
+
+                            <!-- Name and Type -->
+                            <TextBlock Grid.Row="0" Grid.Column="1" FontWeight="Bold" FontSize="14">
                                 <Run Text="{Binding Name, Mode=OneWay}"/>
                                 <Run Text=" - "/>
                                 <Run Text="{Binding Type, Mode=OneWay}"/>
                             </TextBlock>
 
-                            <!-- Bouton Exécuter -->
-                            <Button Grid.Row="0" Grid.Column="1" 
-                                    Content="▶ Exécuter" 
-                                    Command="{Binding RunCommand}"
-                                    Padding="10,3"/>
+                            <!-- Progress Bar -->
+                            <ProgressBar Grid.Row="0" Grid.Column="2"
+                                         Value="{Binding DataContext.CurrentProgress, ElementName=MainWindowRoot}"
+                                         Height="20" Width="100" Margin="10,3"/>
 
-                            <!-- Chemins -->
-                            <TextBlock Grid.Row="1" Grid.ColumnSpan="2" Foreground="Gray" FontSize="11">
+                            <!-- Execute Button -->
+                            <Button Grid.Row="0" Grid.Column="3" 
+                                    Content="{Binding DataContext.ExecuteButtonText, ElementName=MainWindowRoot}" 
+                                    Command="{Binding DataContext.RunBackupCommand, ElementName=MainWindowRoot}"
+                                    CommandParameter="{Binding}"
+                                    Padding="10,3" Margin="0,5"/>
+
+                            <!-- Edit Button -->
+                            <Button Grid.Row="1" Grid.Column="3" 
+                                    Content="{Binding DataContext.EditButtonText, ElementName=MainWindowRoot}" 
+                                    Padding="10,3" Margin="0,5"/>
+
+                            <!-- Delete Button -->
+                            <Button Grid.Row="2" Grid.Column="3" 
+                                    Content="{Binding DataContext.DeleteButtonText, ElementName=MainWindowRoot}" 
+                                    Command="{Binding DataContext.DeleteBackupCommand, ElementName=MainWindowRoot}"
+                                    CommandParameter="{Binding}"
+                                    Padding="10,3" Margin="0,5"/>
+
+                            <!-- Paths -->
+                            <TextBlock Grid.Row="1" Grid.Column="1" Foreground="Gray" FontSize="11">
                                 <Run Text="Source: "/><Run Text="{Binding SourcePath, Mode=OneWay}"/>
                             </TextBlock>
-                            <TextBlock Grid.Row="2" Grid.ColumnSpan="2" Foreground="Gray" FontSize="11">
+                            <TextBlock Grid.Row="2" Grid.Column="1" Foreground="Gray" FontSize="11">
                                 <Run Text="Destination: "/><Run Text="{Binding DestinationPath, Mode=OneWay}"/>
                             </TextBlock>
                         </Grid>
@@ -81,7 +120,7 @@
             </ListBox.ItemTemplate>
         </ListBox>
 
-        <!-- Barre de statut -->
+        <!-- Status Bar -->
         <StatusBar Grid.Row="2" Margin="0,10,0,0">
             <StatusBarItem Content="{Binding StatusMessage}"/>
         </StatusBar>
