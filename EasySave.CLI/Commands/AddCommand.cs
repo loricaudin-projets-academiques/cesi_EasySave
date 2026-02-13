@@ -1,5 +1,6 @@
 ﻿using EasySave.Core.Settings;
 using EasySave.Core.Services;
+using EasySave.Core.Localization;
 using Spectre.Console;
 using Spectre.Console.Cli;
 using System.ComponentModel;
@@ -28,13 +29,13 @@ namespace EasySave.CLI.Commands
 
     public class AddCommand : Command<AddSettings>
     {
-        private readonly Config _config;
         private readonly BackupWorkService _backupService;
+        private readonly ILocalizationService _localization;
 
-        public AddCommand(Config config, BackupWorkService backupService) 
+        public AddCommand(BackupWorkService backupService, ILocalizationService localization) 
         {
-            _config = config;
             _backupService = backupService;
+            _localization = localization;
         }
 
         public override int Execute(CommandContext context, AddSettings settings, CancellationToken cancellationToken)
@@ -43,16 +44,16 @@ namespace EasySave.CLI.Commands
             {
                 if (settings.Type != "full" && settings.Type != "diff")
                 {
-                    AnsiConsole.MarkupLine($"[red]{_config.Localization.Get("commands.add.error_invalid_type", settings.Type)}[/]");
+                    AnsiConsole.MarkupLine($"[red]{_localization.Get("commands.add.error_invalid_type", settings.Type)}[/]");
                     return 1;
                 }
 
                 _backupService.AddWork(settings.Name, settings.Source, settings.Destination, settings.Type);
 
-                AnsiConsole.MarkupLine($"[green]{_config.Localization.Get("commands.add.success", settings.Name)}[/]");
+                AnsiConsole.MarkupLine($"[green]{_localization.Get("commands.add.success", settings.Name)}[/]");
                 AnsiConsole.MarkupLine($"   [grey]Source:[/] {settings.Source}");
                 AnsiConsole.MarkupLine($"   [grey]Destination:[/] {settings.Destination}");
-                AnsiConsole.MarkupLine($"   [grey]Type:[/] {(settings.Type == "full" ? _config.Localization.Get("backup_types.full") : _config.Localization.Get("backup_types.diff"))}");
+                AnsiConsole.MarkupLine($"   [grey]Type:[/] {(settings.Type == "full" ? _localization.Get("backup_types.full") : _localization.Get("backup_types.diff"))}");
 
                 return 0;
             }
@@ -68,7 +69,7 @@ namespace EasySave.CLI.Commands
             }
             catch (Exception ex)
             {
-                AnsiConsole.MarkupLine($"[red]{_config.Localization.Get("errors.general", ex.Message)}[/]");
+                AnsiConsole.MarkupLine($"[red]{_localization.Get("errors.general", ex.Message)}[/]");
                 return 1;
             }
         }

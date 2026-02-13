@@ -1,7 +1,9 @@
 using EasySave.Core.Localization;
 using EasySave.Core.Models;
 using EasySave.Core.Services.Logging;
+using EasySave.Core.Settings;
 using EasyLog.Services;
+using EasySave.Core.ProgressBar;
 
 namespace EasySave.Core.Services
 {
@@ -14,6 +16,8 @@ namespace EasySave.Core.Services
         private readonly BackupWorkList _workList;
         private readonly ILocalizationService _localization;
         private readonly EasyLogger _logger;
+        private readonly CryptoSoftService? _cryptoService;
+        private readonly BusinessSoftwareService? _businessService;
         
         /// <summary>Event raised when a file transfer completes.</summary>
         public event EventHandler<FileTransferredEventArgs>? FileTransferred;
@@ -29,11 +33,20 @@ namespace EasySave.Core.Services
         /// <param name="localization">Localization service for messages.</param>
         /// <param name="workList">List of backup works.</param>
         /// <param name="logger">Logger for file transfer logging.</param>
-        public BackupWorkService(ILocalizationService localization, BackupWorkList workList, EasyLogger? logger = null)
+        /// <param name="cryptoService">Optional crypto service for file encryption.</param>
+        /// <param name="businessService">Optional business software detection service.</param>
+        public BackupWorkService(
+            ILocalizationService localization, 
+            BackupWorkList workList, 
+            EasyLogger? logger = null, 
+            CryptoSoftService? cryptoService = null,
+            BusinessSoftwareService? businessService = null)
         {
             _localization = localization;
             _workList = workList;
             _logger = logger ?? new EasyLogger();
+            _cryptoService = cryptoService;
+            _businessService = businessService;
         }
 
         #region Observer Pattern
@@ -188,11 +201,14 @@ namespace EasySave.Core.Services
 
         #region Execution
 
+
         /// <summary>
         /// Executes a backup work by index.
         /// Events are captured and emitted automatically.
+        /// Blocks if business software is running.
         /// </summary>
         /// <param name="index">Zero-based index of the work to execute.</param>
+        /// <exception cref="BusinessSoftwareRunningException">Thrown when business software is detected.</exception>
         public void ExecuteWork(int index)
         {
             try
@@ -201,18 +217,46 @@ namespace EasySave.Core.Services
                 if (work == null)
                     return;
 
+                // Check if business software is running BEFORE starting
+                if (_businessService != null && _businessService.IsRunning())
+                {
+                    var softwareName = _businessService.GetBusinessSoftwareName() ?? "Unknown";
+                    _logger.LogBackupBlocked(index, work.Name, softwareName);
+                    throw new BusinessSoftwareRunningException(softwareName);
+                }
+
                 var files = Directory.GetFiles(work.SourcePath, "*", SearchOption.AllDirectories);
                 var totalSize = files.Sum(f => new FileInfo(f).Length);
                 
                 NotifyObservers(o => o.OnBackupStarted(work.Name, files.Length, totalSize));
                 _logger.StartBackup(index, work.Name, files.Length, totalSize);
 
-                // Connect file transfer events
+                // Track if backup was stopped due to business software
+                bool stoppedByBusinessSoftware = false;
+
+                // Connect file transfer events - encryption happens HERE at service level
                 work.FileTransferred += (sender, args) => 
                 {
                     if (args is FileCopiedEventArgs fileArgs)
                     {
-                        _logger.LogFileTransfer(work.Name, fileArgs.SourceFile, fileArgs.DestFile, fileArgs.FileSize, fileArgs.TransferTimeMs);
+                        // Check if business software started DURING backup
+                        if (_businessService != null && _businessService.IsRunning())
+                        {
+                            stoppedByBusinessSoftware = true;
+                            var softwareName = _businessService.GetBusinessSoftwareName() ?? "Unknown";
+                            _logger.LogBackupStopped(index, work.Name, softwareName);
+                            // Note: The actual stopping will happen after this file completes
+                        }
+
+                        // Encrypt file if needed (service responsibility, not model)
+                        double encryptionTimeMs = 0;
+                        if (_cryptoService != null)
+                        {
+                            var encryptResult = _cryptoService.EncryptIfNeeded(fileArgs.DestFile);
+                            encryptionTimeMs = encryptResult.EncryptionTimeMs;
+                        }
+
+                        _logger.LogFileTransfer(work.Name, fileArgs.SourceFile, fileArgs.DestFile, fileArgs.FileSize, fileArgs.TransferTimeMs, encryptionTimeMs);
                         OnFileTransferred(work.Name, fileArgs.SourceFile, fileArgs.DestFile, fileArgs.FileSize, fileArgs.TransferTimeMs);
                     }
                 };
@@ -241,8 +285,19 @@ namespace EasySave.Core.Services
 
                 _workList.ExecuteBackupWork(index);
 
-                _logger.CompleteBackup(index);
-                NotifyObservers(o => o.OnBackupCompleted(work.Name));
+                if (stoppedByBusinessSoftware)
+                {
+                    NotifyObservers(o => o.OnBackupPaused(work.Name));
+                }
+                else
+                {
+                    _logger.CompleteBackup(index);
+                    NotifyObservers(o => o.OnBackupCompleted(work.Name));
+                }
+            }
+            catch (BusinessSoftwareRunningException)
+            {
+                throw; // Re-throw to let caller handle it
             }
             catch (Exception ex)
             {

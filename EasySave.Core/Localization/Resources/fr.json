@@ -106,5 +106,33 @@
     "goodbye": "Au revoir !",
     "loading": "Chargement...",
     "saving": "Sauvegarde..."
+  },
+  "gui": {
+    "buttons": {
+      "select_all": "Tout sélectionner",
+      "add": "Ajouter",
+      "delete": "Supprimer",
+      "edit": "Modifier",
+      "execute": "Exécuter",
+      "run_all": "Tout exécuter",
+      "refresh": "Rafraîchir",
+      "options": "Options",
+      "about": "À propos"
+    },
+    "labels": {
+      "language": "Langue :",
+      "log_format": "Format des logs :"
+    },
+    "status": {
+      "ready": "Prêt",
+      "running": "Exécution en cours...",
+      "running_backup": "Exécution de {0}...",
+      "completed": "Terminé !",
+      "backup_completed": "Sauvegarde {0} terminée",
+      "loaded": "{0} sauvegarde(s) chargée(s)",
+      "deleted": "Sauvegarde {0} supprimée",
+      "error": "Erreur : {0}",
+      "language_changed": "Langue changée en {0}"
+    }
   }
 }

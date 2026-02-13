@@ -5,6 +5,7 @@ namespace EasySave.Core.Settings
 {
     /// <summary>
     /// Application configuration loaded from appsettings.json.
+    /// Contains ONLY data/settings - services are injected via DI.
     /// </summary>
     public class Config
     {
@@ -13,6 +14,23 @@ namespace EasySave.Core.Settings
         
         /// <summary>Log format type (json or xml).</summary>
         public string LogType { get; set; } = "json";
+
+        /// <summary>
+        /// File extensions to encrypt (comma-separated, e.g., ".txt,.docx,.pdf").
+        /// Empty string means no encryption.
+        /// </summary>
+        public string EncryptExtensions { get; set; } = string.Empty;
+
+        /// <summary>
+        /// Path to CryptoSoft executable.
+        /// </summary>
+        public string CryptoSoftPath { get; set; } = "CryptoSoft.exe";
+
+        /// <summary>
+        /// Business software process name that blocks backups when running.
+        /// Empty string means no blocking.
+        /// </summary>
+        public string BusinessSoftware { get; set; } = string.Empty;
         
         /// <summary>Path to the loaded config file.</summary>
         public string ConfigFilePath { get; private set; } = string.Empty;
@@ -49,6 +67,12 @@ namespace EasySave.Core.Settings
                     ? langProp.GetString() ?? "fr" : "fr";
                 var logType = appSettings.TryGetProperty("LogType", out var logProp) 
                     ? logProp.GetString() ?? "json" : "json";
+                var encryptExtensions = appSettings.TryGetProperty("EncryptExtensions", out var encryptProp) 
+                    ? encryptProp.GetString() ?? "" : "";
+                var cryptoSoftPath = appSettings.TryGetProperty("CryptoSoftPath", out var cryptoProp) 
+                    ? cryptoProp.GetString() ?? "CryptoSoft.exe" : "CryptoSoft.exe";
+                var businessSoftware = appSettings.TryGetProperty("BusinessSoftware", out var businessProp) 
+                    ? businessProp.GetString() ?? "" : "";
 
                 return new Config 
                 { 
@@ -82,7 +106,10 @@ namespace EasySave.Core.Settings
                 AppSettings = new 
                 { 
                     Language = Language.GetCode(),
-                    LogType = LogType
+                    LogType = LogType,
+                    EncryptExtensions = EncryptExtensions,
+                    CryptoSoftPath = CryptoSoftPath,
+                    BusinessSoftware = BusinessSoftware
                 } 
             }, new JsonSerializerOptions { WriteIndented = true });
             
