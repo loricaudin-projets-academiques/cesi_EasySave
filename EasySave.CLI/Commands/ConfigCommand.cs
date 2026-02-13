@@ -84,6 +84,7 @@ namespace EasySave.CLI.Commands
                 return;
             }
 
+
             var oldType = _config.LogType;
             _config.LogType = normalizedType;
             _config.Save();
