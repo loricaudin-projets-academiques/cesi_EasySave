@@ -24,10 +24,10 @@ namespace EasySave.CLI.Commands
         private readonly Config _config;
         private readonly ILocalizationService _localization;
 
-        public ConfigCommand(Config config)
+        public ConfigCommand(Config config, ILocalizationService localization)
         {
             _config = config;
-            _localization = config.Localization;
+            _localization = localization;
         }
 
         public override int Execute(CommandContext context, ConfigCommandSettings settings, CancellationToken cancellationToken)
@@ -69,6 +69,7 @@ namespace EasySave.CLI.Commands
             
             _config.Language = newLang;
             _config.Save();
+            _localization.SetLanguage(newLang);
             
             AnsiConsole.MarkupLine($"[green]✓[/] {_localization.Get("commands.config.language_changed", oldLang.GetDisplayName(), newLang.GetDisplayName())}");
         }

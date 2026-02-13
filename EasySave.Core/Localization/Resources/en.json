@@ -108,17 +108,19 @@
     "saving": "Saving..."
   },
   "gui": {
-    "buttons": {
-      "refresh": "Refresh",
-      "run_all": "Run All"
-    },
-    "labels": {
-      "language": "Language:"
-    },
-    "status": {
-      "ready": "Ready",
-      "running": "Running...",
-      "completed": "Completed!"
+      "buttons": {
+        "refresh": "Refresh",
+        "run_all": "Run All"
+      },
+      "labels": {
+        "language": "Language:"
+      },
+      "status": {
+        "ready": "Ready",
+        "running": "Running...",
+        "completed": "Completed!",
+        "language_changed": "Language changed: {0}",
+        "loaded": "{0} backup(s) loaded"
+      }
     }
   }
-}
