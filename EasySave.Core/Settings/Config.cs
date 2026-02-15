@@ -34,11 +34,152 @@ namespace EasySave.Core.Settings
         
         /// <summary>Path to the loaded config file.</summary>
         public string ConfigFilePath { get; private set; } = string.Empty;
-        
-        /// <summary>Localization service instance.</summary>
-        [System.ComponentModel.EditorBrowsable(System.ComponentModel.EditorBrowsableState.Never)]
-        public ILocalizationService Localization => _localization ??= new LocalizationService(Language);
-        private ILocalizationService? _localization;
+
+
+        #region Encryption Extensions Management
+
+        /// <summary>
+        /// Gets the list of extensions to encrypt.
+        /// </summary>
+        public string[] GetEncryptExtensionsList()
+        {
+            if (string.IsNullOrWhiteSpace(EncryptExtensions))
+                return Array.Empty<string>();
+
+
+            return EncryptExtensions
+                .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+                .Select(ext => ext.StartsWith('.') ? ext.ToLowerInvariant() : $".{ext.ToLowerInvariant()}")
+                .ToArray();
+        }
+
+        /// <summary>
+        /// Checks if a file should be encrypted based on its extension.
+        /// </summary>
+        public bool ShouldEncrypt(string filePath)
+        {
+            if (string.IsNullOrWhiteSpace(EncryptExtensions))
+                return false;
+
+            var extension = Path.GetExtension(filePath).ToLowerInvariant();
+            return GetEncryptExtensionsList().Contains(extension);
+        }
+
+        /// <summary>
+        /// Adds an extension to the encryption list.
+        /// </summary>
+        /// <param name="extension">Extension to add (with or without dot).</param>
+        /// <returns>True if added, false if already exists.</returns>
+        public bool AddEncryptExtension(string extension)
+        {
+            var ext = extension.StartsWith('.') ? extension.ToLowerInvariant() : $".{extension.ToLowerInvariant()}";
+            var currentList = GetEncryptExtensionsList().ToList();
+
+            if (currentList.Contains(ext))
+                return false;
+
+            currentList.Add(ext);
+            EncryptExtensions = string.Join(",", currentList);
+            return true;
+        }
+
+        /// <summary>
+        /// Removes an extension from the encryption list.
+        /// </summary>
+        /// <param name="extension">Extension to remove (with or without dot).</param>
+        /// <returns>True if removed, false if not found.</returns>
+        public bool RemoveEncryptExtension(string extension)
+        {
+            var ext = extension.StartsWith('.') ? extension.ToLowerInvariant() : $".{extension.ToLowerInvariant()}";
+            var currentList = GetEncryptExtensionsList().ToList();
+
+            if (!currentList.Contains(ext))
+                return false;
+
+            currentList.Remove(ext);
+            EncryptExtensions = string.Join(",", currentList);
+            return true;
+        }
+
+        /// <summary>
+        /// Clears all encryption extensions.
+        /// </summary>
+        public void ClearEncryptExtensions()
+        {
+            EncryptExtensions = string.Empty;
+        }
+
+        /// <summary>
+        /// Common file extensions that might need encryption (for GUI suggestions).
+        /// </summary>
+        public static readonly string[] CommonEncryptExtensions = new[]
+        {
+            ".txt", ".doc", ".docx", ".pdf", ".xls", ".xlsx",
+            ".ppt", ".pptx", ".csv", ".xml", ".json", ".zip",
+            ".rar", ".7z", ".sql", ".db", ".mdb", ".accdb"
+        };
+
+        #endregion
+
+        #region Business Software Management
+
+        /// <summary>
+        /// Sets the business software process name.
+        /// </summary>
+        /// <param name="processName">Process name (with or without .exe).</param>
+        public void SetBusinessSoftware(string processName)
+        {
+            BusinessSoftware = processName.Replace(".exe", "", StringComparison.OrdinalIgnoreCase).Trim();
+        }
+
+        /// <summary>
+        /// Clears the business software (disables blocking).
+        /// </summary>
+        public void ClearBusinessSoftware()
+        {
+            BusinessSoftware = string.Empty;
+        }
+
+        /// <summary>
+        /// Checks if business software blocking is configured.
+        /// </summary>
+        public bool HasBusinessSoftware()
+        {
+            return !string.IsNullOrWhiteSpace(BusinessSoftware);
+        }
+
+        /// <summary>
+        /// Common business software names (for GUI suggestions).
+        /// </summary>
+        public static readonly string[] CommonBusinessSoftware = new[]
+        {
+            "calc", "notepad", "excel", "winword", "outlook",
+            "chrome", "firefox", "msedge", "teams", "slack"
+        };
+
+        /// <summary>
+        /// Gets a list of currently running processes with a visible window.
+        /// Useful for GUI to let user select from running applications.
+        /// </summary>
+        public static string[] GetRunningProcesses()
+        {
+            try
+            {
+                return System.Diagnostics.Process.GetProcesses()
+                    .Where(p => p.MainWindowHandle != IntPtr.Zero)
+                    .Select(p => p.ProcessName)
+                    .Distinct()
+                    .OrderBy(n => n)
+                    .ToArray();
+            }
+            catch
+            {
+                return Array.Empty<string>();
+            }
+        }
+
+        #endregion
+
 
         /// <summary>
         /// Loads configuration from appsettings.json.
@@ -81,6 +222,9 @@ namespace EasySave.Core.Settings
                         "en" or "english" => Language.English, 
                         _ => Language.French 
                     },
+                    EncryptExtensions = encryptExtensions,
+                    CryptoSoftPath = cryptoSoftPath,
+                    BusinessSoftware = businessSoftware,
                     LogType = logType.ToLowerInvariant(),
                     ConfigFilePath = Path.GetFullPath(configPath)
                 };
@@ -115,7 +259,6 @@ namespace EasySave.Core.Settings
             
             File.WriteAllText(configPath, json);
             ConfigFilePath = configPath;
-            _localization = null;
         }
 
         private static string? FindConfigFile()
