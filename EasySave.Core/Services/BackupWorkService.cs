@@ -18,7 +18,10 @@ namespace EasySave.Core.Services
         private readonly EasyLogger _logger;
         private readonly CryptoSoftService? _cryptoService;
         private readonly BusinessSoftwareService? _businessService;
- 
+
+        private readonly SemaphoreSlim _parallelLimiter = new SemaphoreSlim(3);
+
+
 
 
         /// <summary>Event raised when a file transfer completes.</summary>
@@ -322,7 +325,6 @@ namespace EasySave.Core.Services
         /// </summary>
         public async Task ExecuteAllWorksAsync()
         {
-            
             if (_businessService != null && _businessService.IsRunning())
             {
                 throw new BusinessSoftwareRunningException(
@@ -335,13 +337,24 @@ namespace EasySave.Core.Services
 
             for (int i = 0; i < works.Count; i++)
             {
-                int index = i; // IMPORTANT (closure)
-                tasks.Add(Task.Run(() => ExecuteWork(index)));
+                int index = i;
+
+                tasks.Add(Task.Run(async () =>
+                {
+                    await _parallelLimiter.WaitAsync();
+                    try
+                    {
+                        ExecuteWork(index);
+                    }
+                    finally
+                    {
+                        _parallelLimiter.Release();
+                    }
+                }));
             }
 
             await Task.WhenAll(tasks);
         }
-
 
         /// <summary>
         /// Gets the total count of backup works.
