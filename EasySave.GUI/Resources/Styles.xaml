@@ -1,0 +1,140 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <!-- Primary Button Style -->
+    <Style x:Key="PrimaryButtonStyle" TargetType="Button">
+        <Setter Property="Background" Value="#E74C3C"/>
+        <Setter Property="Foreground" Value="White"/>
+        <Setter Property="FontWeight" Value="Bold"/>
+        <Setter Property="FontSize" Value="14"/>
+        <Setter Property="Height" Value="40"/>
+        <Setter Property="MinWidth" Value="120"/>
+        <Setter Property="BorderThickness" Value="0"/>
+        <Setter Property="Cursor" Value="Hand"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <Border Background="{TemplateBinding Background}" CornerRadius="4">
+                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                    </Border>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+        <Style.Triggers>
+            <Trigger Property="IsMouseOver" Value="True">
+                <Setter Property="Background" Value="#C0392B"/>
+            </Trigger>
+            <Trigger Property="IsPressed" Value="True">
+                <Setter Property="Background" Value="#A93226"/>
+            </Trigger>
+        </Style.Triggers>
+    </Style>
+
+    <!-- Secondary Button Style -->
+    <Style x:Key="SecondaryButtonStyle" TargetType="Button">
+        <Setter Property="Background" Value="#ECF0F1"/>
+        <Setter Property="Foreground" Value="#34495E"/>
+        <Setter Property="FontWeight" Value="SemiBold"/>
+        <Setter Property="FontSize" Value="14"/>
+        <Setter Property="Height" Value="40"/>
+        <Setter Property="MinWidth" Value="120"/>
+        <Setter Property="BorderThickness" Value="0"/>
+        <Setter Property="Cursor" Value="Hand"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <Border Background="{TemplateBinding Background}" CornerRadius="4">
+                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                    </Border>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+        <Style.Triggers>
+            <Trigger Property="IsMouseOver" Value="True">
+                <Setter Property="Background" Value="#BDC3C7"/>
+            </Trigger>
+        </Style.Triggers>
+    </Style>
+
+    <!-- Card Style for List Items -->
+    <Style x:Key="CardStyle" TargetType="Border">
+        <Setter Property="Background" Value="White"/>
+        <Setter Property="CornerRadius" Value="8"/>
+        <Setter Property="Margin" Value="0,4,0,4"/>
+        <Setter Property="Padding" Value="16"/>
+        <Setter Property="BorderBrush" Value="#F39C12"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="Effect">
+            <Setter.Value>
+                <DropShadowEffect BlurRadius="6" ShadowDepth="1" Opacity="0.10"/>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- Main Window Background -->
+    <SolidColorBrush x:Key="MainBackgroundBrush" Color="#F5F5F5"/>
+    <SolidColorBrush x:Key="CardBackgroundBrush" Color="White"/>
+    <SolidColorBrush x:Key="AccentBrush" Color="#E74C3C"/>
+    <SolidColorBrush x:Key="AccentLightBrush" Color="#FADBD8"/>
+    <SolidColorBrush x:Key="AccentBorderBrush" Color="#F39C12"/>
+
+	<Style x:Key="LanguageComboBoxStyle" TargetType="ComboBox">
+		<Setter Property="Background" Value="#ECF0F1"/>
+		<Setter Property="Foreground" Value="#34495E"/>
+		<Setter Property="FontWeight" Value="SemiBold"/>
+		<Setter Property="FontSize" Value="14"/>
+		<Setter Property="Height" Value="40"/>
+		<Setter Property="MinWidth" Value="60"/>
+		<Setter Property="BorderThickness" Value="0"/>
+		<Setter Property="Padding" Value="0,0,0,0"/>
+		<Setter Property="Cursor" Value="Hand"/>
+		<Setter Property="Template">
+			<Setter.Value>
+				<ControlTemplate TargetType="ComboBox">
+					<Border Background="{TemplateBinding Background}" CornerRadius="4">
+						<Grid>
+							<ContentPresenter Name="ContentSite"
+											  IsHitTestVisible="False"
+											  Content="{TemplateBinding SelectionBoxItem}"
+											  ContentTemplate="{TemplateBinding SelectionBoxItemTemplate}"
+											  ContentTemplateSelector="{TemplateBinding ItemTemplateSelector}"
+											  Margin="6,0,25,0"
+											  VerticalAlignment="Center"
+											  HorizontalAlignment="Left" />
+							<ToggleButton Name="ToggleButton"
+										  Grid.Column="2"
+										  Focusable="false"
+										  IsChecked="{Binding Path=IsDropDownOpen, Mode=TwoWay, RelativeSource={RelativeSource TemplatedParent}}"
+										  ClickMode="Press"
+										  Background="Transparent"
+										  BorderThickness="0"
+										  HorizontalAlignment="Right"
+										  VerticalAlignment="Center"
+										  Width="20" Height="20">
+								<Path x:Name="Arrow" Data="M 0 0 L 4 4 L 8 0 Z" Fill="#34495E" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+							</ToggleButton>
+							<Popup Name="Popup"
+       Placement="Bottom"
+       IsOpen="{TemplateBinding IsDropDownOpen}"
+       AllowsTransparency="True"
+       Focusable="False"
+       PopupAnimation="Slide">
+								<Border x:Name="DropDownBorder" Background="White" CornerRadius="4" BorderBrush="#BDC3C7" BorderThickness="1">
+									<ScrollViewer Margin="4,6,4,6" SnapsToDevicePixels="True">
+										<StackPanel IsItemsHost="True" KeyboardNavigation.DirectionalNavigation="Contained"/>
+									</ScrollViewer>
+								</Border>
+							</Popup>
+						</Grid>
+					</Border>
+				</ControlTemplate>
+			</Setter.Value>
+		</Setter>
+		<Style.Triggers>
+			<Trigger Property="IsMouseOver" Value="True">
+				<Setter Property="Background" Value="#BDC3C7"/>
+			</Trigger>
+		</Style.Triggers>
+	</Style>
+	
+	
+</ResourceDictionary>
