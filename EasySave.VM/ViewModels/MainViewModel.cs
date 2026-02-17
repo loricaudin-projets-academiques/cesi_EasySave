@@ -23,8 +23,8 @@ public partial class MainViewModel : ObservableObject
     /// <summary>Available languages for ComboBox.</summary>
     public ObservableCollection<LanguageOption> AvailableLanguages { get; } = new()
     {
-        new LanguageOption(Language.French, "Français"),
-        new LanguageOption(Language.English, "English")
+        new LanguageOption(Language.French, "Français", "/Resources/Flags/french_flag_icon.png"),
+        new LanguageOption(Language.English, "English", "/Resources/Flags/uk_flag_icon.png")
     };
 
     /// <summary>Selected language.</summary>
@@ -218,10 +218,12 @@ public class LanguageOption
 {
     public Language Value { get; }
     public string DisplayName { get; }
+    public string FlagPath { get; }
 
-    public LanguageOption(Language value, string displayName)
+    public LanguageOption(Language value, string displayName, string flagPath)
     {
         Value = value;
         DisplayName = displayName;
+        FlagPath = flagPath;
     }
 }
