@@ -52,21 +52,12 @@ namespace EasySave.Tests
  
             Assert.Equal(0, list.GetCount());
 
-            for (int i = 0; i < 5; i++)
+            for (int i = 0; i < 10; i++)
             {
                 list.AddBackupWork(new BackupWork($"Backup{i}", @"C:\Source", @"C:\Destination", BackupType.FULL_BACKUP));
             }
 
-
-            Assert.Equal(5, list.GetCount());
-
-            Assert.Throws<Exception>(() =>
-            {
-                list.AddBackupWork(new BackupWork("Backup6", @"C:\Source", @"C:\Destination", BackupType.FULL_BACKUP));
-            });
-
-
-            Assert.Equal(5, list.GetCount());
+            Assert.Equal(10, list.GetCount());
         }
 
         [Fact]

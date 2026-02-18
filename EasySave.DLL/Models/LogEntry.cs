@@ -20,6 +20,12 @@ namespace EasyLog.Models
         /// <summary>File transfer time in milliseconds. Negative if error.</summary>
         public double FileTransferTime { get; set; }
 
+        /// <summary>
+        /// Encryption time in milliseconds.
+        /// 0 = no encryption, greater than 0 = encryption time (ms), less than 0 = error code.
+        /// </summary>
+        public double EncryptionTime { get; set; } = 0;
+
         /// <summary>Timestamp of the action (format: dd/MM/yyyy HH:mm:ss).</summary>
         public string Time { get; set; } = DateTime.Now.ToString("dd/MM/yyyy HH:mm:ss");
 
@@ -28,7 +34,7 @@ namespace EasyLog.Models
 
         public override string ToString()
         {
-            return $"{Name} ({BackupType}) | {FileSource} -> {FileTarget} | {FileSize} bytes | {FileTransferTime}ms";
+            return $"{Name} ({BackupType}) | {FileSource} -> {FileTarget} | {FileSize} bytes | Transfer: {FileTransferTime}ms | Encrypt: {EncryptionTime}ms";
         }
     }
 }

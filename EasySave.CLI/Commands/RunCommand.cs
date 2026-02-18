@@ -1,5 +1,5 @@
-﻿using EasySave.Core.Settings;
-using EasySave.Core.Services;
+﻿using EasySave.Core.Services;
+using EasySave.Core.Localization;
 using Spectre.Console;
 using Spectre.Console.Cli;
 using System.ComponentModel;
@@ -15,13 +15,13 @@ namespace EasySave.CLI.Commands
 
     public class RunCommand : Command<RunSettings>
     {
-        private readonly Config _config;
         private readonly BackupWorkService _backupService;
+        private readonly ILocalizationService _localization;
 
-        public RunCommand(Config config, BackupWorkService backupService)
+        public RunCommand(BackupWorkService backupService, ILocalizationService localization)
         {
-            _config = config;
             _backupService = backupService;
+            _localization = localization;
         }
 
         public override int Execute(CommandContext context, RunSettings settings, CancellationToken cancellationToken)
@@ -32,32 +32,35 @@ namespace EasySave.CLI.Commands
 
                 if (indices.Count == 0)
                 {
-                    AnsiConsole.MarkupLine($"[red]{_config.Localization.Get("commands.run.error_invalid_indices", settings.Ids)}[/]");
+                    AnsiConsole.MarkupLine($"[red]{_localization.Get("commands.run.error_invalid_indices", settings.Ids)}[/]");
                     return 1;
                 }
 
                 foreach (var id in indices)
                 {
-                    // Convertir l'ID utilisateur (1-basé) en index (0-basé)
                     int index = id - 1;
                     var work = _backupService.GetWorkByIndex(index);
 
                     if (work == null)
                     {
-                        AnsiConsole.MarkupLine($"[yellow]{_config.Localization.Get("errors.work_not_found", id.ToString())}[/]");
+                        AnsiConsole.MarkupLine($"[yellow]{_localization.Get("errors.work_not_found", id.ToString())}[/]");
                         continue;
                     }
 
-                    AnsiConsole.MarkupLine($"[blue]{_config.Localization.Get("commands.run.starting", work.GetName())}[/]");
+                    AnsiConsole.MarkupLine($"[blue]{_localization.Get("commands.run.starting", work.GetName())}[/]");
                     
                     try
                     {
                         _backupService.ExecuteWork(index);
-                        AnsiConsole.MarkupLine($"[green]{_config.Localization.Get("commands.run.completed")}[/]");
+                        AnsiConsole.MarkupLine($"[green]{_localization.Get("commands.run.completed")}[/]");
+                    }
+                    catch (BusinessSoftwareRunningException ex)
+                    {
+                        AnsiConsole.MarkupLine($"[red]Backup blocked: {ex.SoftwareName} is running[/]");
                     }
                     catch (Exception ex)
                     {
-                        AnsiConsole.MarkupLine($"[red]{_config.Localization.Get("errors.execution_failed", ex.Message)}[/]");
+                        AnsiConsole.MarkupLine($"[red]{_localization.Get("errors.execution_failed", ex.Message)}[/]");
                     }
                 }
 
@@ -65,7 +68,7 @@ namespace EasySave.CLI.Commands
             }
             catch (Exception ex)
             {
-                AnsiConsole.MarkupLine($"[red]{_config.Localization.Get("errors.general", ex.Message)}[/]");
+                AnsiConsole.MarkupLine($"[red]{_localization.Get("errors.general", ex.Message)}[/]");
                 return 1;
             }
         }

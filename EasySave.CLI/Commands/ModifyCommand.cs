@@ -1,5 +1,5 @@
-﻿using EasySave.Core.Settings;
-using EasySave.Core.Services;
+﻿using EasySave.Core.Services;
+using EasySave.Core.Localization;
 using Spectre.Console;
 using Spectre.Console.Cli;
 using System.ComponentModel;
@@ -31,39 +31,38 @@ namespace EasySave.CLI.Commands
 
     public class ModifyCommand : Command<ModifySettings>
     {
-        private readonly Config _config;
         private readonly BackupWorkService _backupService;
+        private readonly ILocalizationService _localization;
 
-        public ModifyCommand(Config config, BackupWorkService backupService)
+        public ModifyCommand(BackupWorkService backupService, ILocalizationService localization)
         {
-            _config = config;
             _backupService = backupService;
+            _localization = localization;
         }
 
         public override int Execute(CommandContext context, ModifySettings settings, CancellationToken cancellationToken)
         {
             try
             {
-                // Convertir l'ID utilisateur (1-basé) en index (0-basé)
                 int index = settings.Id - 1;
 
                 var work = _backupService.GetWorkByIndex(index);
                 if (work == null)
                 {
-                    AnsiConsole.MarkupLine($"[red]{_config.Localization.Get("errors.work_not_found", settings.Id.ToString())}[/]");
+                    AnsiConsole.MarkupLine($"[red]{_localization.Get("errors.work_not_found", settings.Id.ToString())}[/]");
                     return 1;
                 }
 
                 if (string.IsNullOrEmpty(settings.NewName) && string.IsNullOrEmpty(settings.NewSource) &&
                     string.IsNullOrEmpty(settings.NewDestination) && string.IsNullOrEmpty(settings.NewType))
                 {
-                    AnsiConsole.MarkupLine($"[yellow]{_config.Localization.Get("commands.modify.no_changes")}[/]");
+                    AnsiConsole.MarkupLine($"[yellow]{_localization.Get("commands.modify.no_changes")}[/]");
                     return 1;
                 }
 
                 if (_backupService.ModifyWork(index, settings.NewName, settings.NewSource, settings.NewDestination, settings.NewType))
                 {
-                    AnsiConsole.MarkupLine($"[green]{_config.Localization.Get("commands.modify.success", work.GetName())}[/]");
+                    AnsiConsole.MarkupLine($"[green]{_localization.Get("commands.modify.success", work.GetName())}[/]");
                     if (settings.NewName != null)
                         AnsiConsole.MarkupLine($"   [grey]Nom:[/] {settings.NewName}");
                     if (settings.NewSource != null)
@@ -71,12 +70,12 @@ namespace EasySave.CLI.Commands
                     if (settings.NewDestination != null)
                         AnsiConsole.MarkupLine($"   [grey]Destination:[/] {settings.NewDestination}");
                     if (settings.NewType != null)
-                        AnsiConsole.MarkupLine($"   [grey]Type:[/] {(settings.NewType == "full" ? _config.Localization.Get("backup_types.full") : _config.Localization.Get("backup_types.diff"))}");
+                        AnsiConsole.MarkupLine($"   [grey]Type:[/] {(settings.NewType == "full" ? _localization.Get("backup_types.full") : _localization.Get("backup_types.diff"))}");
                     return 0;
                 }
                 else
                 {
-                    AnsiConsole.MarkupLine($"[red]{_config.Localization.Get("commands.modify.error")}[/]");
+                    AnsiConsole.MarkupLine($"[red]{_localization.Get("commands.modify.error")}[/]");
                     return 1;
                 }
             }
@@ -92,7 +91,7 @@ namespace EasySave.CLI.Commands
             }
             catch (Exception ex)
             {
-                AnsiConsole.MarkupLine($"[red]{_config.Localization.Get("errors.general", ex.Message)}[/]");
+                AnsiConsole.MarkupLine($"[red]{_localization.Get("errors.general", ex.Message)}[/]");
                 return 1;
             }
         }
