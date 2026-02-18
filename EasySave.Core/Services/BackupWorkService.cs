@@ -18,7 +18,12 @@ namespace EasySave.Core.Services
         private readonly EasyLogger _logger;
         private readonly CryptoSoftService? _cryptoService;
         private readonly BusinessSoftwareService? _businessService;
-        
+
+        private readonly SemaphoreSlim _parallelLimiter = new SemaphoreSlim(3);
+
+
+
+
         /// <summary>Event raised when a file transfer completes.</summary>
         public event EventHandler<FileTransferredEventArgs>? FileTransferred;
         
@@ -60,6 +65,7 @@ namespace EasySave.Core.Services
             if (!_observers.Contains(observer))
                 _observers.Add(observer);
         }
+
 
         /// <summary>
         /// Removes an observer from receiving backup events.
@@ -211,6 +217,7 @@ namespace EasySave.Core.Services
         /// <exception cref="BusinessSoftwareRunningException">Thrown when business software is detected.</exception>
         public void ExecuteWork(int index)
         {
+
             try
             {
                 var work = GetWorkByIndex(index);
@@ -313,9 +320,40 @@ namespace EasySave.Core.Services
         /// <summary>
         /// Executes all backup works sequentially.
         /// </summary>
-        public void ExecuteAllWorks()
+        /// <summary>
+        /// Executes all backup works in parallel.
+        /// </summary>
+        public async Task ExecuteAllWorksAsync()
         {
-            _workList.ExecuteAllBackupWorks();
+            if (_businessService != null && _businessService.IsRunning())
+            {
+                throw new BusinessSoftwareRunningException(
+                    _businessService.GetBusinessSoftwareName() ?? "Unknown"
+                );
+            }
+
+            var works = _workList.GetAllWorks();
+            var tasks = new List<Task>();
+
+            for (int i = 0; i < works.Count; i++)
+            {
+                int index = i;
+
+                tasks.Add(Task.Run(async () =>
+                {
+                    await _parallelLimiter.WaitAsync();
+                    try
+                    {
+                        ExecuteWork(index);
+                    }
+                    finally
+                    {
+                        _parallelLimiter.Release();
+                    }
+                }));
+            }
+
+            await Task.WhenAll(tasks);
         }
 
         /// <summary>
