@@ -1,5 +1,6 @@
 <Solution>
   <Project Path="CryptoSave/CryptoSoft.csproj" />
+  <Project Path="EasyLog.Server/EasyLog.Server.csproj" Id="291d728b-6d10-471c-beb6-ec178ea4f403" />
   <Project Path="EasySave.CLI/EasySave.CLI.csproj" Id="76ed430c-d500-4f95-9fa9-517af36b37d5" />
   <Project Path="EasySave.Core/EasySave.Core.csproj" Id="cb5de1a9-2a83-4c46-91ac-74353f9cf56a" />
   <Project Path="EasySave.DLL/EasyLog.csproj" Id="3aa962c9-ac0b-4103-a84b-9759fb242799" />

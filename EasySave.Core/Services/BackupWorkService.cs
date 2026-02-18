@@ -15,7 +15,7 @@ namespace EasySave.Core.Services
     {
         private readonly BackupWorkList _workList;
         private readonly ILocalizationService _localization;
-        private readonly EasyLogger _logger;
+        private readonly EasyLogServerLogger _logger;
         private readonly CryptoSoftService? _cryptoService;
         private readonly BusinessSoftwareService? _businessService;
         
@@ -37,14 +37,14 @@ namespace EasySave.Core.Services
         /// <param name="businessService">Optional business software detection service.</param>
         public BackupWorkService(
             ILocalizationService localization, 
-            BackupWorkList workList, 
-            EasyLogger? logger = null, 
+            BackupWorkList workList,
+            EasyLogServerLogger? logger = null, 
             CryptoSoftService? cryptoService = null,
             BusinessSoftwareService? businessService = null)
         {
             _localization = localization;
             _workList = workList;
-            _logger = logger ?? new EasyLogger();
+            _logger = logger ?? new EasyLogServerLogger();
             _cryptoService = cryptoService;
             _businessService = businessService;
         }

@@ -31,7 +31,7 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<BackupWorkService>(sp => new BackupWorkService(
             sp.GetRequiredService<ILocalizationService>(),
             sp.GetRequiredService<BackupWorkList>(),
-            sp.GetService<EasyLog.Services.EasyLogger>(),
+            sp.GetService<EasyLog.Services.EasyLogServerLogger>(),
             sp.GetService<CryptoSoftService>(),
             sp.GetService<BusinessSoftwareService>()
         ));
@@ -47,7 +47,7 @@ public static class ServiceCollectionExtensions
         config ??= Config.Load();
         
         var logConfig = new LogConfiguration { LogFormat = config.LogType };
-        services.AddSingleton(_ => new EasyLog.Services.EasyLogger(logConfig));
+        services.AddSingleton(_ => new EasyLog.Services.EasyLogServerLogger(logConfig));
         // FileTransferLogger removed - BackupWorkService handles logging with EncryptionTime
         services.AddSingleton<IBackupEventObserver, EasyLogObserver>();
         
