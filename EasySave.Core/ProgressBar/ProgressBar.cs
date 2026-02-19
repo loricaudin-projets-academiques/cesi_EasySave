@@ -6,12 +6,11 @@
     internal class ProgressBar
     {
         protected double Percentage;
-
+        private static readonly object _consoleLock = new object();
         public ProgressBar()
         {
             this.Percentage = 0;
         }
-
         /// <summary>
         /// Initializes the progress bar with a title message.
         /// </summary>
@@ -22,7 +21,6 @@
             Console.WriteLine(text);
             this.DrawProgressBar(Percentage);
         }
-
         /// <summary>
         /// Updates the progress bar to the specified value.
         /// </summary>
@@ -32,17 +30,17 @@
             this.Percentage = value;
             this.DrawProgressBar(Percentage);
         }
-
         private void DrawProgressBar(double progress, int barSize = 50)
         {
-            if (progress < 0) progress = 0;
-            if (progress > 1) progress = 1;
-
-            int filledBars = (int)Math.Round(progress * barSize);
-            int emptyBars = barSize - filledBars;
-
-            string bar = new string('█', filledBars) + new string('░', emptyBars);
-            Console.Write($"\r[{bar}] {progress * 100:0.0}%");
+            lock (_consoleLock) // ← AJOUTE LE LOCK
+            {
+                if (progress < 0) progress = 0;
+                if (progress > 1) progress = 1;
+                int filledBars = (int)Math.Round(progress * barSize);
+                int emptyBars = barSize - filledBars;
+                string bar = new string('█', filledBars) + new string('░', emptyBars);
+                Console.Write($"\r[{bar}] {progress * 100:0.0}%");
+            }
         }
     }
 }

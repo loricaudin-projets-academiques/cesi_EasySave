@@ -1,4 +1,4 @@
-using System.Diagnostics;
+﻿using System.Diagnostics;
 using EasySave.Core.Settings;
 
 namespace EasySave.Core.Services
@@ -21,18 +21,8 @@ namespace EasySave.Core.Services
         /// <returns>True if business software is running, false otherwise.</returns>
         public bool IsRunning()
         {
-            if (string.IsNullOrWhiteSpace(_config.BusinessSoftware))
-                return false;
-
-            try
-            {
-                var processName = _config.BusinessSoftware.Replace(".exe", "", StringComparison.OrdinalIgnoreCase);
-                return Process.GetProcessesByName(processName).Length > 0;
-            }
-            catch
-            {
-                return false;
-            }
+            // 🧪 TEST : détecte notepad.exe
+            return Process.GetProcessesByName("notepad").Length > 0;
         }
 
         /// <summary>

@@ -1,4 +1,5 @@
-using EasySave.Core.ProgressBar;
+﻿using EasySave.Core.ProgressBar;
+using System.Net;
 using System.Text.Json.Serialization;
 
 namespace EasySave.Core.Models
@@ -19,6 +20,8 @@ namespace EasySave.Core.Models
 
         /// <summary>Runtime state, excluded from JSON serialization.</summary>
         [JsonIgnore]
+
+        private ManualResetEventSlim? _pauseEvent;
         public BackupState State { get; private set; }
 
         /// <summary>Event raised when file copy progress updates.</summary>
@@ -33,7 +36,7 @@ namespace EasySave.Core.Models
         /// <summary>
         /// Single instance of the copy handler to keep global progress consistent.
         /// </summary>
-        private readonly CopyFileWithProgressBar _cp;
+        private CopyFileWithProgressBar? _cp;
 
         /// <summary>
         /// Creates a new backup work.
@@ -98,10 +101,14 @@ namespace EasySave.Core.Models
                 case BackupType.FULL_BACKUP:
                     ExecuteFullBackup();
                     break;
-                
+
                 default:
                     throw new Exception("Unknown backup type.");
             }
+        }
+        public void SetPauseEvent(ManualResetEventSlim? pauseEvent)
+        {
+            _pauseEvent = pauseEvent;
         }
 
         /// <summary>
@@ -161,12 +168,22 @@ namespace EasySave.Core.Models
 
         private void ExecuteFullBackup()
         {
+            _cp = new CopyFileWithProgressBar(this.State, _pauseEvent); // ← IMPORTANT : ajoute _pauseEvent
+            _cp.FileProgress += (s, e) => FileProgress?.Invoke(s, e);
+            _cp.FileTransferred += (s, e) => FileTransferred?.Invoke(s, e);
+            _cp.FileTransferError += (s, e) => FileTransferError?.Invoke(s, e);
+
             _cp.InitProgressBar($"Full Backup in progress for: {this.Name}");
             CopyDirectoryRecursively(this.SourcePath, this.DestinationPath, differential: false);
         }
 
         private void ExecuteDifferentialBackup()
         {
+            _cp = new CopyFileWithProgressBar(this.State, _pauseEvent); // ← IMPORTANT : ajoute _pauseEvent
+            _cp.FileProgress += (s, e) => FileProgress?.Invoke(s, e);
+            _cp.FileTransferred += (s, e) => FileTransferred?.Invoke(s, e);
+            _cp.FileTransferError += (s, e) => FileTransferError?.Invoke(s, e);
+
             _cp.InitProgressBar($"Differential Backup in progress for: {this.Name}");
             CopyDirectoryRecursively(this.SourcePath, this.DestinationPath, differential: true);
         }

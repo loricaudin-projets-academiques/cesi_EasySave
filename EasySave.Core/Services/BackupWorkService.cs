@@ -1,9 +1,11 @@
+﻿using EasyLog.Services;
 using EasySave.Core.Localization;
 using EasySave.Core.Models;
+using EasySave.Core.ProgressBar;
 using EasySave.Core.Services.Logging;
 using EasySave.Core.Settings;
-using EasyLog.Services;
-using EasySave.Core.ProgressBar;
+using System.Net;
+using System.Text.Json.Serialization;
 
 namespace EasySave.Core.Services
 {
@@ -18,13 +20,14 @@ namespace EasySave.Core.Services
         private readonly EasyLogger _logger;
         private readonly CryptoSoftService? _cryptoService;
         private readonly BusinessSoftwareService? _businessService;
-        
+        private readonly ManualResetEventSlim _pauseEvent = new(true);
+        private CancellationTokenSource _pauseMonitorToken = new();
         /// <summary>Event raised when a file transfer completes.</summary>
         public event EventHandler<FileTransferredEventArgs>? FileTransferred;
-        
+
         /// <summary>Event raised when a file transfer fails.</summary>
         public event EventHandler<FileTransferErrorEventArgs>? FileTransferError;
-        
+
         private readonly List<IBackupEventObserver> _observers = new();
 
         /// <summary>
@@ -36,9 +39,9 @@ namespace EasySave.Core.Services
         /// <param name="cryptoService">Optional crypto service for file encryption.</param>
         /// <param name="businessService">Optional business software detection service.</param>
         public BackupWorkService(
-            ILocalizationService localization, 
-            BackupWorkList workList, 
-            EasyLogger? logger = null, 
+            ILocalizationService localization,
+            BackupWorkList workList,
+            EasyLogger? logger = null,
             CryptoSoftService? cryptoService = null,
             BusinessSoftwareService? businessService = null)
         {
@@ -47,6 +50,40 @@ namespace EasySave.Core.Services
             _logger = logger ?? new EasyLogger();
             _cryptoService = cryptoService;
             _businessService = businessService;
+
+            StartBusinessSoftwareMonitor(); // ← AJOUTE CETTE LIGNE
+        }
+        private void StartBusinessSoftwareMonitor()
+        {
+            if (_businessService == null)
+            {
+                Console.WriteLine("⚠️ No business service configured");
+                _pauseEvent.Set(); // Assure que le pauseEvent est ouvert
+                return;
+            }
+
+            Console.WriteLine("✅ Starting business software monitor...");
+
+            Task.Run(async () =>
+            {
+                while (!_pauseMonitorToken.Token.IsCancellationRequested)
+                {
+                    bool isRunning = _businessService.IsRunning();
+
+                    if (isRunning && _pauseEvent.IsSet)
+                    {
+                        Console.WriteLine("⏸️ PAUSE - Business software detected");
+                        _pauseEvent.Reset(); // Bloque
+                    }
+                    else if (!isRunning && !_pauseEvent.IsSet)
+                    {
+                        Console.WriteLine("▶️ RESUME - Business software closed");
+                        _pauseEvent.Set(); // Libère
+                    }
+
+                    await Task.Delay(500);
+                }
+            });
         }
 
         #region Observer Pattern
@@ -83,7 +120,7 @@ namespace EasySave.Core.Services
 
         #region Event Emitters
 
-        protected virtual void OnFileTransferred(string backupName, string sourceFile, string targetFile, 
+        protected virtual void OnFileTransferred(string backupName, string sourceFile, string targetFile,
                                                long fileSize, double transferTimeMs)
         {
             FileTransferred?.Invoke(this, new FileTransferredEventArgs
@@ -96,7 +133,7 @@ namespace EasySave.Core.Services
             });
         }
 
-        protected virtual void OnFileTransferError(string backupName, string sourceFile, string targetFile, 
+        protected virtual void OnFileTransferError(string backupName, string sourceFile, string targetFile,
                                                   long fileSize, Exception ex)
         {
             FileTransferError?.Invoke(this, new FileTransferErrorEventArgs
@@ -179,7 +216,7 @@ namespace EasySave.Core.Services
         /// <param name="newDestinationPath">New destination path (optional).</param>
         /// <param name="newType">New backup type (optional).</param>
         /// <returns>True if successful.</returns>
-        public bool ModifyWork(int index, string? newName = null, string? newSourcePath = null, 
+        public bool ModifyWork(int index, string? newName = null, string? newSourcePath = null,
             string? newDestinationPath = null, string? newType = null)
         {
             var works = _workList.GetAllWorks();
@@ -217,6 +254,7 @@ namespace EasySave.Core.Services
                 if (work == null)
                     return;
 
+
                 // Check if business software is running BEFORE starting
                 if (_businessService != null && _businessService.IsRunning())
                 {
@@ -227,7 +265,7 @@ namespace EasySave.Core.Services
 
                 var files = Directory.GetFiles(work.SourcePath, "*", SearchOption.AllDirectories);
                 var totalSize = files.Sum(f => new FileInfo(f).Length);
-                
+
                 NotifyObservers(o => o.OnBackupStarted(work.Name, files.Length, totalSize));
                 _logger.StartBackup(index, work.Name, files.Length, totalSize);
 
@@ -235,7 +273,7 @@ namespace EasySave.Core.Services
                 bool stoppedByBusinessSoftware = false;
 
                 // Connect file transfer events - encryption happens HERE at service level
-                work.FileTransferred += (sender, args) => 
+                work.FileTransferred += (sender, args) =>
                 {
                     if (args is FileCopiedEventArgs fileArgs)
                     {
@@ -260,8 +298,8 @@ namespace EasySave.Core.Services
                         OnFileTransferred(work.Name, fileArgs.SourceFile, fileArgs.DestFile, fileArgs.FileSize, fileArgs.TransferTimeMs);
                     }
                 };
-                
-                work.FileTransferError += (sender, args) => 
+
+                work.FileTransferError += (sender, args) =>
                 {
                     if (args is FileCopyErrorEventArgs errorArgs)
                     {
@@ -269,7 +307,7 @@ namespace EasySave.Core.Services
                         OnFileTransferError(work.Name, errorArgs.SourceFile, errorArgs.DestFile, errorArgs.FileSize, errorArgs.Exception);
                     }
                 };
-                
+
                 // Connect progress events
                 work.FileProgress += (sender, args) =>
                 {
@@ -277,7 +315,7 @@ namespace EasySave.Core.Services
                     {
                         long filesLeft = files.Length - (int)(progressArgs.CurrentProgress / 100 * files.Length);
                         long sizeLeft = (long)(totalSize * (100 - progressArgs.CurrentProgress) / 100);
-                        
+
                         _logger.UpdateProgress(index, progressArgs.SourceFile, progressArgs.DestFile, filesLeft, sizeLeft, progressArgs.CurrentProgress);
                         NotifyObservers(o => o.OnProgressUpdated(work.Name, progressArgs.SourceFile, progressArgs.DestFile, filesLeft, sizeLeft, progressArgs.CurrentProgress));
                     }
@@ -345,7 +383,7 @@ namespace EasySave.Core.Services
         /// <returns>Localized type name.</returns>
         public string GetLocalizedBackupTypeName(BackupType type)
         {
-            return type == BackupType.FULL_BACKUP 
+            return type == BackupType.FULL_BACKUP
                 ? _localization.Get("backup_types.full")
                 : _localization.Get("backup_types.diff");
         }
@@ -353,3 +391,4 @@ namespace EasySave.Core.Services
         #endregion
     }
 }
+

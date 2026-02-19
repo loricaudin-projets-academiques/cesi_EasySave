@@ -16,6 +16,7 @@ namespace EasySave.Core.ProgressBar
         private long copiedBytesGlobal;    // Bytes copiés depuis le début du backup
 
         private readonly BackupState State;
+        private readonly ManualResetEventSlim? _pauseEvent;
 
         /// <summary>Event raised when file copy progress updates.</summary>
         public event EventHandler<FileProgressEventArgs>? FileProgress;
@@ -26,9 +27,10 @@ namespace EasySave.Core.ProgressBar
         /// <summary>Event raised when a file transfer fails.</summary>
         public event EventHandler<FileCopyErrorEventArgs>? FileTransferError;
 
-        public CopyFileWithProgressBar(BackupState backupState)
+        public CopyFileWithProgressBar(BackupState backupState, ManualResetEventSlim? pauseEvent = null)
         {
             this.State = backupState;
+            this._pauseEvent = pauseEvent;
         }
 
         /// <summary>
@@ -70,23 +72,20 @@ namespace EasySave.Core.ProgressBar
 
         private void CopyFile(string source, string dest)
         {
+
+
             var stopwatch = Stopwatch.StartNew();
 
             try
             {
-                this.CopyWithProgress(source, dest, bytesCopiedInFile =>
+                this.CopyWithProgress(source, dest, bytesCopied =>
                 {
-                    // Mise à jour locale
-                    this.copiedBytesLocal += bytesCopiedInFile;
+                    copiedBytesGlobal += bytesCopied;
 
-                    // Mise à jour globale
-                    this.copiedBytesGlobal += bytesCopiedInFile;
+                    double progress = (double)copiedBytesGlobal / totalBytesGlobal;
 
-                    // Progression globale
-                    double progress = (double)this.copiedBytesGlobal / this.totalBytesGlobal;
-
-                    this.SetProgressBar(progress);
-                    this.State.SetProgress(progress * 100);
+                    State.SetProgress(progress * 100);
+                    SetProgressBar(progress);
 
                     OnFileProgress(new FileProgressEventArgs
                     {
@@ -95,6 +94,7 @@ namespace EasySave.Core.ProgressBar
                         CurrentProgress = progress * 100
                     });
                 });
+
 
                 stopwatch.Stop();
 
@@ -124,7 +124,7 @@ namespace EasySave.Core.ProgressBar
 
         private void CopyWithProgress(string source, string dest, Action<long> onChunkCopied)
         {
-            const int bufferSize = 1024 * 1024; // 1 MB buffer
+            const int bufferSize = 1024 * 1024;
             byte[] buffer = new byte[bufferSize];
 
             using var input = new FileStream(source, FileMode.Open, FileAccess.Read);
@@ -133,16 +133,10 @@ namespace EasySave.Core.ProgressBar
             int read;
             while ((read = input.Read(buffer, 0, buffer.Length)) > 0)
             {
-                try
-                {
-                    output.Write(buffer, 0, read);
-                }
-                catch (IOException)
-                {
-                    throw new Exception("An error occurred during backup. Check if folders are accessible and there is enough disk space.");
-                }
+                _pauseEvent?.Wait(); // ✅ UNIQUE POINT DE PAUSE
 
-                onChunkCopied?.Invoke(read);
+                output.Write(buffer, 0, read);
+                onChunkCopied(read);
             }
         }
 
