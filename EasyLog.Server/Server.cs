@@ -1,18 +1,24 @@
-﻿using System.Net;
+﻿using EasyLog.Server;
+using EasyLog.Services;
+using System.Net;
 using System.Net.Sockets;
+using System.Reflection.Metadata;
 using System.Text;
 
 public class Server
 {
+
+    static ServerConfigurations serverConfigurations = ServerConfigurations.GetInstance();
     private static Socket StartServer()
     {
         Socket server = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+        int port = serverConfigurations.Port;
 
-        IPEndPoint endPoint = new IPEndPoint(IPAddress.Any, 5000);
+        IPEndPoint endPoint = new IPEndPoint(IPAddress.Any, port);
         server.Bind(endPoint);
 
         server.Listen(5);
-        Console.WriteLine("Serveur en cours d'exécution sur le port 5000...");
+        Console.WriteLine($"Serveur en cours d'exécution sur le port {port}...");
 
         return server;
     }
@@ -69,20 +75,16 @@ public class Server
 
     private static string MessageReceived(string message)
     {
-        Console.WriteLine(message);
-        return "Ca va ?";
-    }
-
-    private static string GetLogPath()
-    {
-        if (OperatingSystem.IsWindows())
+        try
         {
-            return "log.txt";
+            Console.WriteLine(message);
+            File.WriteAllText(serverConfigurations.LogLocation, message);
+            return "Success";
         }
-        else
+        catch (Exception e)
         {
-            // Environnement Docker/Linux
-            return "/app/logs/log.txt";
+            Console.WriteLine($"Error: {e.Message}");
+            return $"Error: {e.Message}";
         }
     }
 

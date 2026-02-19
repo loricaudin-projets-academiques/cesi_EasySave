@@ -16,25 +16,19 @@ namespace EasyLog.Services
 
         public void SendJson(object data)
         {
-            Console.WriteLine("OK");
-            string json = JsonSerializer.Serialize(data);
+            string typeName = data.GetType().Name;
+            var payload = new
+            {
+                Type = typeName,
+                Data = data
+            };
+
+            string json = JsonSerializer.Serialize(payload);
             byte[] bytes = Encoding.UTF8.GetBytes(json);
 
             _client.Send(bytes);
-
-            byte[] buffer = new byte[1024];
-            int received = _client.Receive(buffer);
-
-            if (received == 0)
-            {
-                Console.WriteLine("Serveur déconnecté.");
-            }
-            else
-            {
-                string response = Encoding.UTF8.GetString(buffer, 0, received);
-                Console.WriteLine("Serveur : " + response);
-            }
         }
+
 
         public void Close()
         {

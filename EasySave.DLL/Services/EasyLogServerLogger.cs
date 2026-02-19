@@ -7,15 +7,30 @@ namespace EasyLog.Services
 {
     public class EasyLogServerLogger
     {
+        private readonly DailyLogService _dailyLogService;
+        private readonly StateLogService _stateService;
         private readonly EasyLogServer _server;
         private readonly Dictionary<int, string> _workIndexToStateId = new();
 
         public EasyLogServerLogger(LogConfiguration? config = null)
         {
             var logConfig = config ?? new LogConfiguration();
+            _dailyLogService = new DailyLogService(logConfig);
+            _stateService = new StateLogService(logConfig);
+            LoadExistingStateIds();
 
             // Connexion au serveur TCP
             _server = new EasyLogServer("127.0.0.1", 5000);
+        }
+
+        private void LoadExistingStateIds()
+        {
+            var allStates = _stateService.GetAllStates();
+            foreach (var state in allStates)
+            {
+                if (state.WorkIndex >= 0)
+                    _workIndexToStateId[state.WorkIndex] = state.Id;
+            }
         }
 
         public EasyLogServerLogger(object configObj)
