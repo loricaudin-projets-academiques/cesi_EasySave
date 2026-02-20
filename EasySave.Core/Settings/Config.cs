@@ -3,164 +3,68 @@ using System.Text.Json;
 
 namespace EasySave.Core.Settings
 {
-    /// <summary>
-    /// Application configuration loaded from appsettings.json.
-    /// Contains ONLY data/settings - services are injected via DI.
-    /// </summary>
     public class Config
     {
-        /// <summary>Current language setting.</summary>
         public Language Language { get; set; } = Language.French;
-        
-        /// <summary>Log format type (json or xml).</summary>
         public string LogType { get; set; } = "json";
-
-        /// <summary>
-        /// File extensions to encrypt (comma-separated, e.g., ".txt,.docx,.pdf").
-        /// Empty string means no encryption.
-        /// </summary>
         public string EncryptExtensions { get; set; } = string.Empty;
-
-        /// <summary>
-        /// Path to CryptoSoft executable.
-        /// </summary>
         public string CryptoSoftPath { get; set; } = "CryptoSoft.exe";
-
-        /// <summary>
-        /// Business software process name that blocks backups when running.
-        /// Empty string means no blocking.
-        /// </summary>
         public string BusinessSoftware { get; set; } = string.Empty;
-        
-        /// <summary>Path to the loaded config file.</summary>
+
+        // ← NOUVEAU : max file size en Ko
+        public int MaxFileSizeKo { get; set; } = 1024;
+
         public string ConfigFilePath { get; private set; } = string.Empty;
 
-
-        #region Encryption Extensions Management
-
-        /// <summary>
-        /// Gets the list of extensions to encrypt.
-        /// </summary>
+        #region Encrypt Extensions Management
         public string[] GetEncryptExtensionsList()
         {
             if (string.IsNullOrWhiteSpace(EncryptExtensions))
                 return Array.Empty<string>();
-
-
             return EncryptExtensions
                 .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
                 .Select(ext => ext.StartsWith('.') ? ext.ToLowerInvariant() : $".{ext.ToLowerInvariant()}")
                 .ToArray();
         }
 
-        /// <summary>
-        /// Checks if a file should be encrypted based on its extension.
-        /// </summary>
         public bool ShouldEncrypt(string filePath)
         {
             if (string.IsNullOrWhiteSpace(EncryptExtensions))
                 return false;
-
             var extension = Path.GetExtension(filePath).ToLowerInvariant();
             return GetEncryptExtensionsList().Contains(extension);
         }
 
-        /// <summary>
-        /// Adds an extension to the encryption list.
-        /// </summary>
-        /// <param name="extension">Extension to add (with or without dot).</param>
-        /// <returns>True if added, false if already exists.</returns>
         public bool AddEncryptExtension(string extension)
         {
             var ext = extension.StartsWith('.') ? extension.ToLowerInvariant() : $".{extension.ToLowerInvariant()}";
-            var currentList = GetEncryptExtensionsList().ToList();
-
-            if (currentList.Contains(ext))
-                return false;
-
-            currentList.Add(ext);
-            EncryptExtensions = string.Join(",", currentList);
+            var list = GetEncryptExtensionsList().ToList();
+            if (list.Contains(ext)) return false;
+            list.Add(ext);
+            EncryptExtensions = string.Join(",", list);
             return true;
         }
 
-        /// <summary>
-        /// Removes an extension from the encryption list.
-        /// </summary>
-        /// <param name="extension">Extension to remove (with or without dot).</param>
-        /// <returns>True if removed, false if not found.</returns>
         public bool RemoveEncryptExtension(string extension)
         {
             var ext = extension.StartsWith('.') ? extension.ToLowerInvariant() : $".{extension.ToLowerInvariant()}";
-            var currentList = GetEncryptExtensionsList().ToList();
-
-            if (!currentList.Contains(ext))
-                return false;
-
-            currentList.Remove(ext);
-            EncryptExtensions = string.Join(",", currentList);
+            var list = GetEncryptExtensionsList().ToList();
+            if (!list.Contains(ext)) return false;
+            list.Remove(ext);
+            EncryptExtensions = string.Join(",", list);
             return true;
         }
 
-        /// <summary>
-        /// Clears all encryption extensions.
-        /// </summary>
-        public void ClearEncryptExtensions()
-        {
-            EncryptExtensions = string.Empty;
-        }
-
-        /// <summary>
-        /// Common file extensions that might need encryption (for GUI suggestions).
-        /// </summary>
-        public static readonly string[] CommonEncryptExtensions = new[]
-        {
-            ".txt", ".doc", ".docx", ".pdf", ".xls", ".xlsx",
-            ".ppt", ".pptx", ".csv", ".xml", ".json", ".zip",
-            ".rar", ".7z", ".sql", ".db", ".mdb", ".accdb"
-        };
-
+        public void ClearEncryptExtensions() => EncryptExtensions = string.Empty;
         #endregion
 
-        #region Business Software Management
-
-        /// <summary>
-        /// Sets the business software process name.
-        /// </summary>
-        /// <param name="processName">Process name (with or without .exe).</param>
-        public void SetBusinessSoftware(string processName)
-        {
+        #region Business Software
+        public void SetBusinessSoftware(string processName) =>
             BusinessSoftware = processName.Replace(".exe", "", StringComparison.OrdinalIgnoreCase).Trim();
-        }
 
-        /// <summary>
-        /// Clears the business software (disables blocking).
-        /// </summary>
-        public void ClearBusinessSoftware()
-        {
-            BusinessSoftware = string.Empty;
-        }
+        public void ClearBusinessSoftware() => BusinessSoftware = string.Empty;
+        public bool HasBusinessSoftware() => !string.IsNullOrWhiteSpace(BusinessSoftware);
 
-        /// <summary>
-        /// Checks if business software blocking is configured.
-        /// </summary>
-        public bool HasBusinessSoftware()
-        {
-            return !string.IsNullOrWhiteSpace(BusinessSoftware);
-        }
-
-        /// <summary>
-        /// Common business software names (for GUI suggestions).
-        /// </summary>
-        public static readonly string[] CommonBusinessSoftware = new[]
-        {
-            "calc", "notepad", "excel", "winword", "outlook",
-            "chrome", "firefox", "msedge", "teams", "slack"
-        };
-
-        /// <summary>
-        /// Gets a list of currently running processes with a visible window.
-        /// Useful for GUI to let user select from running applications.
-        /// </summary>
         public static string[] GetRunningProcesses()
         {
             try
@@ -177,24 +81,15 @@ namespace EasySave.Core.Settings
                 return Array.Empty<string>();
             }
         }
-
         #endregion
 
-
-        /// <summary>
-        /// Loads configuration from appsettings.json.
-        /// </summary>
-        /// <returns>Config instance with loaded settings.</returns>
         public static Config Load()
         {
             try
             {
-                var configPath = FindConfigFile();
-                
-                if (string.IsNullOrEmpty(configPath) || !File.Exists(configPath))
+                var configPath = Path.Combine(AppContext.BaseDirectory, "appsettings.json");
+                if (!File.Exists(configPath))
                 {
-                    // Create default config file
-                    configPath = Path.Combine(AppContext.BaseDirectory, "appsettings.json");
                     var defaultConfig = new Config { ConfigFilePath = configPath };
                     defaultConfig.Save();
                     return defaultConfig;
@@ -203,75 +98,48 @@ namespace EasySave.Core.Settings
                 var json = File.ReadAllText(configPath);
                 using var doc = JsonDocument.Parse(json);
                 var appSettings = doc.RootElement.GetProperty("AppSettings");
-                
-                var languageStr = appSettings.TryGetProperty("Language", out var langProp) 
-                    ? langProp.GetString() ?? "fr" : "fr";
-                var logType = appSettings.TryGetProperty("LogType", out var logProp) 
-                    ? logProp.GetString() ?? "json" : "json";
-                var encryptExtensions = appSettings.TryGetProperty("EncryptExtensions", out var encryptProp) 
-                    ? encryptProp.GetString() ?? "" : "";
-                var cryptoSoftPath = appSettings.TryGetProperty("CryptoSoftPath", out var cryptoProp) 
-                    ? cryptoProp.GetString() ?? "CryptoSoft.exe" : "CryptoSoft.exe";
-                var businessSoftware = appSettings.TryGetProperty("BusinessSoftware", out var businessProp) 
-                    ? businessProp.GetString() ?? "" : "";
 
-                return new Config 
-                { 
-                    Language = languageStr.ToLowerInvariant() switch 
-                    { 
-                        "en" or "english" => Language.English, 
-                        _ => Language.French 
-                    },
+                var languageStr = appSettings.TryGetProperty("Language", out var langProp) ? langProp.GetString() ?? "fr" : "fr";
+                var logType = appSettings.TryGetProperty("LogType", out var logProp) ? logProp.GetString() ?? "json" : "json";
+                var encryptExtensions = appSettings.TryGetProperty("EncryptExtensions", out var encryptProp) ? encryptProp.GetString() ?? "" : "";
+                var cryptoSoftPath = appSettings.TryGetProperty("CryptoSoftPath", out var cryptoProp) ? cryptoProp.GetString() ?? "CryptoSoft.exe" : "CryptoSoft.exe";
+                var businessSoftware = appSettings.TryGetProperty("BusinessSoftware", out var businessProp) ? businessProp.GetString() ?? "" : "";
+                var maxFileSize = appSettings.TryGetProperty("MaxFileSizeKo", out var maxProp) ? maxProp.GetInt32() : 1024;
+
+                return new Config
+                {
+                    Language = languageStr.ToLowerInvariant() switch { "en" or "english" => Language.English, _ => Language.French },
                     EncryptExtensions = encryptExtensions,
                     CryptoSoftPath = cryptoSoftPath,
                     BusinessSoftware = businessSoftware,
                     LogType = logType.ToLowerInvariant(),
+                    MaxFileSizeKo = maxFileSize,
                     ConfigFilePath = Path.GetFullPath(configPath)
                 };
             }
             catch
             {
-                var defaultPath = Path.Combine(AppContext.BaseDirectory, "appsettings.json");
-                return new Config { ConfigFilePath = defaultPath };
+                return new Config { ConfigFilePath = Path.Combine(AppContext.BaseDirectory, "appsettings.json") };
             }
         }
 
-        /// <summary>
-        /// Saves current configuration to appsettings.json.
-        /// </summary>
         public void Save()
         {
-            var configPath = !string.IsNullOrEmpty(ConfigFilePath) 
-                ? ConfigFilePath 
-                : Path.Combine(AppContext.BaseDirectory, "appsettings.json");
-                
-            var json = JsonSerializer.Serialize(new 
-            { 
-                AppSettings = new 
-                { 
+            var configPath = !string.IsNullOrEmpty(ConfigFilePath) ? ConfigFilePath : Path.Combine(AppContext.BaseDirectory, "appsettings.json");
+            var json = JsonSerializer.Serialize(new
+            {
+                AppSettings = new
+                {
                     Language = Language.GetCode(),
                     LogType = LogType,
                     EncryptExtensions = EncryptExtensions,
                     CryptoSoftPath = CryptoSoftPath,
-                    BusinessSoftware = BusinessSoftware
-                } 
+                    BusinessSoftware = BusinessSoftware,
+                    MaxFileSizeKo = MaxFileSizeKo
+                }
             }, new JsonSerializerOptions { WriteIndented = true });
-            
             File.WriteAllText(configPath, json);
             ConfigFilePath = configPath;
         }
-
-        private static string? FindConfigFile()
-        {
-            var paths = new[] { 
-                Path.Combine(AppContext.BaseDirectory, "appsettings.json"),
-                "appsettings.json"
-            };
-            return paths.FirstOrDefault(File.Exists);
-        }
     }
 }
-
-
-
-

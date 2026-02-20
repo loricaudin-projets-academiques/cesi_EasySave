@@ -1,0 +1,11 @@
+{
+  "profiles": {
+    "CryptoSoft": {
+      "commandName": "Project"
+    },
+    "Profil 1": {
+      "commandName": "Project",
+      "commandLineArgs": "C:\\Users\\tmpinst\\Downloads\\TestParallele"
+    }
+  }
+}

@@ -121,7 +121,8 @@
     },
     "labels": {
       "language": "Language:",
-      "log_format": "Log format:"
+      "log_format": "Log format:",
+      "max_file_size": "Max file size (KB)"
     },
     "status": {
       "ready": "Ready",
