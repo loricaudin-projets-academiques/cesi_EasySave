@@ -24,6 +24,7 @@ namespace EasyLog.Services
             };
 
             string json = JsonSerializer.Serialize(payload);
+            Console.WriteLine($"1 envoi : {json}\n");
             byte[] bytes = Encoding.UTF8.GetBytes(json);
 
             _client.Send(bytes);

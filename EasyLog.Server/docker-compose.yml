@@ -1,6 +1,8 @@
 services:
-  serveur:
-    build: .
+  server:
+    build:
+      context: ..
+      dockerfile: EasyLog.Server/dockerfile
     container_name: easylog-server
     ports:
       - "5000:5000"

@@ -1,0 +1,28 @@
+[
+  {
+    "Id": "86ddbbad-5b20-4a0d-ae6f-2b68f55f9e72",
+    "WorkIndex": 0,
+    "Name": "Test",
+    "SourceFilePath": "",
+    "TargetFilePath": "",
+    "State": "ACTIVE",
+    "TotalFilesToCopy": 0,
+    "TotalFilesSize": 0,
+    "NbFilesLeftToDo": 0,
+    "Progression": 0,
+    "LastActionTime": "20/02/2026 09:28:09"
+  },
+  {
+    "Id": "fd8143ca-7a45-46eb-aa17-308428cacfd4",
+    "WorkIndex": 1,
+    "Name": "Test2",
+    "SourceFilePath": "",
+    "TargetFilePath": "",
+    "State": "ACTIVE",
+    "TotalFilesToCopy": 847,
+    "TotalFilesSize": 961937394,
+    "NbFilesLeftToDo": 847,
+    "Progression": 0,
+    "LastActionTime": "20/02/2026 09:28:10"
+  }
+]

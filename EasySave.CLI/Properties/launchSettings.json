@@ -1,0 +1,11 @@
+{
+  "profiles": {
+    "EasySave.CLI": {
+      "commandName": "Project"
+    },
+    "EasySave.CLI run 1-2": {
+      "commandName": "Project",
+      "commandLineArgs": "run 1-2"
+    }
+  }
+}

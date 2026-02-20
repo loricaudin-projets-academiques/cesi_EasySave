@@ -26,7 +26,7 @@ namespace EasyLog.Services
             }
             else if (Environment.OSVersion.Platform == PlatformID.Unix)
             {
-                return "/var/log/easysave/.env";
+                return ".env";
             }
             else
             {
