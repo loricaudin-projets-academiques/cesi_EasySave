@@ -1,4 +1,5 @@
 using EasySave.VM.ViewModels;
+using EasySave.VM.Services;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace EasySave.VM.DependencyInjection;
@@ -13,7 +14,15 @@ public static class ViewModelExtensions
     /// </summary>
     public static IServiceCollection AddViewModels(this IServiceCollection services)
     {
-        services.AddTransient<MainViewModel>();
+        services.AddSingleton<IAppEvents, AppEvents>();
+        services.AddSingleton<IShellNavigationService, ShellNavigationService>();
+
+        services.AddSingleton<BackupListViewModel>();
+        services.AddSingleton<BackupEditorViewModel>();
+        services.AddSingleton<SettingsViewModel>();
+        services.AddSingleton<AboutViewModel>();
+
+        services.AddSingleton<MainViewModel>();
         
         return services;
     }
