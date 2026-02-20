@@ -1,0 +1,80 @@
+<UserControl x:Class="EasySave.GUI.Views.Pages.SettingsView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d"
+             d:DesignHeight="600" d:DesignWidth="900">
+
+    <Border Background="White" CornerRadius="8" Padding="20">
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+            </Grid.RowDefinitions>
+
+            <StackPanel Grid.Row="0" Margin="0,0,0,16">
+                <TextBlock Text="{Binding PageTitle}" FontSize="22" FontWeight="Bold" Foreground="#2C3E50"/>
+                <TextBlock Text="{Binding StatusMessage}" FontSize="12" Foreground="#7F8C8D" Margin="0,6,0,0"/>
+            </StackPanel>
+
+            <ScrollViewer Grid.Row="1">
+                <StackPanel Margin="0,0,10,0">
+                    <TextBlock Text="{Binding LanguageLabel}" FontWeight="SemiBold" Foreground="#34495E" Margin="0,0,0,6"/>
+                    <ComboBox ItemsSource="{Binding AvailableLanguages}"
+                              SelectedItem="{Binding SelectedLanguage}"
+                              DisplayMemberPath="DisplayName"
+                              Height="36" Margin="0,0,0,14"/>
+
+                    <TextBlock Text="{Binding LogFormatLabel}" FontWeight="SemiBold" Foreground="#34495E" Margin="0,0,0,6"/>
+                    <ComboBox ItemsSource="{Binding AvailableLogFormats}"
+                              SelectedItem="{Binding SelectedLogFormat}"
+                              Height="36" Margin="0,0,0,14"/>
+
+                    <TextBlock Text="{Binding CryptoSoftPathLabel}" FontWeight="SemiBold" Foreground="#34495E" Margin="0,0,0,6"/>
+                    <TextBox Text="{Binding CryptoSoftPath, UpdateSourceTrigger=PropertyChanged}" Height="36" Margin="0,0,0,14"/>
+
+                    <TextBlock Text="{Binding BusinessSoftwareLabel}" FontWeight="SemiBold" Foreground="#34495E" Margin="0,0,0,6"/>
+                    <Grid Margin="0,0,0,14">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBox Grid.Column="0" Text="{Binding BusinessSoftware, UpdateSourceTrigger=PropertyChanged}" Height="36" Margin="0,0,10,0"/>
+                        <Button Grid.Column="1" Content="{Binding RefreshProcessesButtonText}" Style="{StaticResource SecondaryButtonStyle}" Width="140" Command="{Binding RefreshProcessesCommand}"/>
+                    </Grid>
+
+                    <TextBlock Text="{Binding RunningProcessesLabel}" FontWeight="SemiBold" Foreground="#34495E" Margin="0,0,0,6"/>
+                    <ListBox ItemsSource="{Binding RunningProcesses}" Height="120" Margin="0,0,0,14"/>
+
+                    <TextBlock Text="{Binding EncryptExtensionsLabel}" FontWeight="SemiBold" Foreground="#34495E" Margin="0,0,0,6"/>
+                    <Grid Margin="0,0,0,10">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBox Grid.Column="0" Text="{Binding NewExtension, UpdateSourceTrigger=PropertyChanged}" Height="36" Margin="0,0,10,0"/>
+                        <Button Grid.Column="1" Content="{Binding AddExtensionButtonText}" Style="{StaticResource SecondaryButtonStyle}" Width="140" Command="{Binding AddExtensionCommand}"/>
+                    </Grid>
+
+                    <ItemsControl ItemsSource="{Binding EncryptExtensions}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <DockPanel Margin="0,0,0,6">
+                                    <Button DockPanel.Dock="Right"
+                                            Content="{Binding DataContext.RemoveButtonText, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                            Style="{StaticResource SecondaryButtonStyle}"
+                                            Width="120"
+                                            Command="{Binding DataContext.RemoveExtensionCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                            CommandParameter="{Binding}"/>
+                                    <TextBlock Text="{Binding}" VerticalAlignment="Center" Foreground="#2C3E50"/>
+                                </DockPanel>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </StackPanel>
+            </ScrollViewer>
+        </Grid>
+    </Border>
+</UserControl>
+

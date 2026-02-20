@@ -1,0 +1,29 @@
+<UserControl x:Class="EasySave.GUI.Views.Pages.AboutView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d"
+             d:DesignHeight="600" d:DesignWidth="900">
+
+    <Border Background="White" CornerRadius="8" Padding="20">
+        <StackPanel>
+            <TextBlock Text="{Binding Title}" FontSize="22" FontWeight="Bold" Foreground="#2C3E50" Margin="0,0,0,16"/>
+
+            <Border Background="#F5F5F5" CornerRadius="8" Padding="16" Margin="0,0,0,10">
+                <StackPanel>
+                    <TextBlock Text="{Binding ConfigPathLabel}" FontWeight="SemiBold" Foreground="#34495E"/>
+                    <TextBlock Text="{Binding ConfigPath}" Foreground="#2C3E50" TextWrapping="Wrap" Margin="0,6,0,0"/>
+                </StackPanel>
+            </Border>
+
+            <Border Background="#F5F5F5" CornerRadius="8" Padding="16">
+                <StackPanel>
+                    <TextBlock Text="{Binding LogsPathLabel}" FontWeight="SemiBold" Foreground="#34495E"/>
+                    <TextBlock Text="{Binding LogsPath}" Foreground="#2C3E50" TextWrapping="Wrap" Margin="0,6,0,0"/>
+                </StackPanel>
+            </Border>
+        </StackPanel>
+    </Border>
+</UserControl>
+

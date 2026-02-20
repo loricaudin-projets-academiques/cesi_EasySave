@@ -1,229 +1,110 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using EasySave.Core.Localization;
-using EasySave.Core.Models;
-using EasySave.Core.Services;
 using EasySave.Core.Settings;
-using System.Collections.ObjectModel;
+using EasySave.VM.Services;
 
 namespace EasySave.VM.ViewModels;
 
 /// <summary>
-/// Main application ViewModel - one VM per page pattern.
+/// Main application shell ViewModel.
+/// Hosts navigation and the currently displayed page ViewModel.
 /// </summary>
 public partial class MainViewModel : ObservableObject
 {
     private readonly Config _config;
-    private readonly BackupWorkService _backupService;
     private readonly ILocalizationService _localization;
+    private readonly IShellNavigationService _navigation;
+    private readonly IAppEvents _events;
 
-    /// <summary>Displayed backups list (direct models).</summary>
-    public ObservableCollection<BackupWork> Backups { get; } = new();
-
-    /// <summary>Available languages for ComboBox.</summary>
-    public ObservableCollection<LanguageOption> AvailableLanguages { get; } = new()
-    {
-        new LanguageOption(Language.French, "Français", "/Resources/Flags/french_flag_icon.png"),
-        new LanguageOption(Language.English, "English", "/Resources/Flags/uk_flag_icon.png")
-    };
-
-    /// <summary>Selected language.</summary>
-    [ObservableProperty]
-    private LanguageOption _selectedLanguage = null!;
-
-    /// <summary>Currently selected backup.</summary>
-    [ObservableProperty]
-    private BackupWork? _selectedBackup;
-
-    /// <summary>Status message.</summary>
-    [ObservableProperty]
-    private string _statusMessage = string.Empty;
-
-    /// <summary>Current backup progress (0-100).</summary>
-    [ObservableProperty]
-    private double _currentProgress;
-
-    /// <summary>Indicates if a backup is running.</summary>
-    [ObservableProperty]
-    private bool _isRunning;
-
-    /// <summary>Available log formats for ComboBox.</summary>
-    public ObservableCollection<string> AvailableLogFormats { get; } = new()
-    {
-        "json",
-        "xml"
-    };
-
-    /// <summary>Selected log format.</summary>
-    [ObservableProperty]
-    private string _selectedLogFormat = string.Empty;
+    private readonly BackupListViewModel _backupListViewModel;
+    private readonly BackupEditorViewModel _backupEditorViewModel;
+    private readonly SettingsViewModel _settingsViewModel;
+    private readonly AboutViewModel _aboutViewModel;
 
     // ========== LOCALIZED TEXTS ==========
     
-    [ObservableProperty] private string _refreshButtonText = string.Empty;
-    [ObservableProperty] private string _runAllButtonText = string.Empty;
-    [ObservableProperty] private string _selectAllButtonText = string.Empty;
-    [ObservableProperty] private string _addButtonText = string.Empty;
-    [ObservableProperty] private string _deleteButtonText = string.Empty;
-    [ObservableProperty] private string _editButtonText = string.Empty;
-    [ObservableProperty] private string _executeButtonText = string.Empty;
-    [ObservableProperty] private string _languageLabel = string.Empty;
-    [ObservableProperty] private string _logFormatLabel = string.Empty;
-    [ObservableProperty] private string _aboutButtonText = string.Empty;
+    [ObservableProperty] private string _backupsNavText = string.Empty;
+    [ObservableProperty] private string _settingsNavText = string.Empty;
+    [ObservableProperty] private string _aboutNavText = string.Empty;
 
-    public MainViewModel(Config config, BackupWorkService backupService, ILocalizationService localization)
+    /// <summary>Currently displayed page ViewModel.</summary>
+    [ObservableProperty] private ObservableObject _currentPage = null!;
+
+    public MainViewModel(
+        Config config,
+        ILocalizationService localization,
+        IShellNavigationService navigation,
+        IAppEvents events,
+        BackupListViewModel backupListViewModel,
+        BackupEditorViewModel backupEditorViewModel,
+        SettingsViewModel settingsViewModel,
+        AboutViewModel aboutViewModel)
     {
         _config = config;
-        _backupService = backupService;
         _localization = localization;
+        _navigation = navigation;
+        _events = events;
+        _backupListViewModel = backupListViewModel;
+        _backupEditorViewModel = backupEditorViewModel;
+        _settingsViewModel = settingsViewModel;
+        _aboutViewModel = aboutViewModel;
 
-        _selectedLanguage = AvailableLanguages.First(l => l.Value == _config.Language);
-        _selectedLogFormat = AvailableLogFormats.FirstOrDefault(f => f == _config.LogType) ?? "json";
         UpdateLocalizedTexts();
-        LoadBackups();
+
+        _navigation.NavigationRequested += OnNavigationRequested;
+        _events.LocalizationChanged += (_, __) => UpdateLocalizedTexts();
+
+        // Default page
+        CurrentPage = _backupListViewModel;
     }
     
     private void UpdateLocalizedTexts()
     {
-        RefreshButtonText = _localization.Get("gui.buttons.refresh");
-        SelectAllButtonText = _localization.Get("gui.buttons.select_all");
-        AddButtonText = _localization.Get("gui.buttons.add");
-        DeleteButtonText = _localization.Get("gui.buttons.delete");
-        EditButtonText = _localization.Get("gui.buttons.edit");
-        ExecuteButtonText = _localization.Get("gui.buttons.execute");
-        RunAllButtonText = _localization.Get("gui.buttons.run_all");
-        LanguageLabel = _localization.Get("gui.labels.language");
-        LogFormatLabel = _localization.Get("gui.labels.log_format");
-        AboutButtonText = _localization.Get("gui.buttons.about");
-        StatusMessage = _localization.Get("gui.status.ready");
-    }
-    partial void OnSelectedLogFormatChanged(string value)
-    {
-        if (string.IsNullOrWhiteSpace(value) || value == _config.LogType)
-            return;
-
-        var valid = AvailableLogFormats.Contains(value);
-        if (!valid)
-        {
-            StatusMessage = _localization.Get("gui.status.invalid_logtype", value, string.Join(", ", AvailableLogFormats));
-            SelectedLogFormat = _config.LogType;
-            return;
-        }
-
-        var oldType = _config.LogType;
-        _config.LogType = value;
-        _config.Save();
-        StatusMessage = _localization.Get("gui.status.logtype_changed", oldType.ToUpperInvariant(), value.ToUpperInvariant());
-    }
-
-    partial void OnSelectedLanguageChanged(LanguageOption value)
-    {
-        if (value == null) return;
-
-        _config.Language = value.Value;
-        _config.Save();
-        _localization.SetLanguage(value.Value);
-        UpdateLocalizedTexts();
-        StatusMessage = _localization.Get("gui.status.language_changed", value.DisplayName);
-    }
-
-    private void LoadBackups()
-    {
-        Backups.Clear();
-        foreach (var work in _backupService.GetAllWorks())
-        {
-            Backups.Add(work);
-        }
-        StatusMessage = _localization.Get("gui.status.loaded", Backups.Count);
+        BackupsNavText = _localization.Get("gui.nav.backups");
+        SettingsNavText = _localization.Get("gui.nav.settings");
+        AboutNavText = _localization.Get("gui.nav.about");
     }
 
     [RelayCommand]
-    private void Refresh() => LoadBackups();
+    private void NavigateBackups() => _navigation.RequestNavigate(NavigationTarget.Backups);
 
-    /// <summary>
-    /// Runs a specific backup (parameterized command).
-    /// </summary>
     [RelayCommand]
-    private async Task RunBackupAsync(BackupWork? backup)
+    private void NavigateSettings()
     {
-        if (backup == null || IsRunning) return;
-        
-        IsRunning = true;
-        CurrentProgress = 0;
-        StatusMessage = _localization.Get("gui.status.running_backup", backup.Name);
-
-        try
-        {
-            await Task.Run(() => backup.Execute());
-            CurrentProgress = 100;
-            StatusMessage = _localization.Get("gui.status.backup_completed", backup.Name);
-        }
-        catch (Exception ex)
-        {
-            StatusMessage = _localization.Get("gui.status.error", ex.Message);
-        }
-        finally
-        {
-            IsRunning = false;
-        }
+        _navigation.RequestNavigate(NavigationTarget.Settings);
     }
 
     [RelayCommand]
-    private async Task RunAllAsync()
+    private void NavigateAbout() => _navigation.RequestNavigate(NavigationTarget.About);
+
+    private void OnNavigationRequested(object? sender, NavigationRequest e)
     {
-        if (IsRunning) return;
-        
-        IsRunning = true;
-        StatusMessage = _localization.Get("gui.status.running");
-        
-        for (int i = 0; i < Backups.Count; i++)
+        switch (e.Target)
         {
-            CurrentProgress = (double)i / Backups.Count * 100;
-            await Task.Run(() => Backups[i].Execute());
+            case NavigationTarget.Backups:
+                CurrentPage = _backupListViewModel;
+                _backupListViewModel.Refresh();
+                break;
+            case NavigationTarget.Settings:
+                CurrentPage = _settingsViewModel;
+                _settingsViewModel.RefreshFromConfig();
+                break;
+            case NavigationTarget.About:
+                CurrentPage = _aboutViewModel;
+                break;
+            case NavigationTarget.EditorCreate:
+                _backupEditorViewModel.BeginCreate();
+                CurrentPage = _backupEditorViewModel;
+                break;
+            case NavigationTarget.EditorEdit:
+                if (e.BackupIndex is int idx)
+                    _backupEditorViewModel.BeginEdit(idx);
+                CurrentPage = _backupEditorViewModel;
+                break;
+            default:
+                CurrentPage = _backupListViewModel;
+                break;
         }
-        
-        CurrentProgress = 100;
-        StatusMessage = _localization.Get("gui.status.completed");
-        IsRunning = false;
-    }
-
-    /// <summary>
-    /// Deletes a backup (parameterized command).
-    /// </summary>
-    [RelayCommand]
-    private void DeleteBackup(BackupWork? backup)
-    {
-        if (backup == null) return;
-        
-        var index = Backups.IndexOf(backup);
-        if (index >= 0)
-        {
-            _backupService.RemoveWorkByIndex(index);
-            LoadBackups();
-            StatusMessage = _localization.Get("gui.status.deleted", backup.Name);
-        }
-    }
-
-    [RelayCommand]
-    private void About()
-    {
-        // TODO: Show about dialog
-    }
-}
-
-/// <summary>
-/// Language option for ComboBox binding.
-/// </summary>
-public class LanguageOption
-{
-    public Language Value { get; }
-    public string DisplayName { get; }
-    public string FlagPath { get; }
-
-    public LanguageOption(Language value, string displayName, string flagPath)
-    {
-        Value = value;
-        DisplayName = displayName;
-        FlagPath = flagPath;
     }
 }
