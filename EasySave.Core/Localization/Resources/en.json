@@ -121,6 +121,7 @@
       "edit": "Edit",
       "execute": "Run",
       "run_all": "Run all",
+      "run_selected": "Run selected",
       "refresh": "Refresh",
       "options": "Options",
       "about": "About",
@@ -176,7 +177,8 @@
       "logtype_changed": "Log format changed from {0} to {1}",
       "delete_confirm": "Delete '{0}'?",
       "blocked_business": "Backup blocked: business software '{0}' is running",
-      "paused": "Backup '{0}' paused"
+      "paused": "Backup '{0}' paused",
+      "settings_saved": "Settings saved"
     }
   }
 }

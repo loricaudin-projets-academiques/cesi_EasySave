@@ -4,59 +4,91 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              mc:Ignorable="d"
-             d:DesignHeight="600" d:DesignWidth="900">
+             d:DesignHeight="600" d:DesignWidth="750">
 
-    <Border Background="White" CornerRadius="8" Padding="20">
-        <Grid>
-            <Grid.RowDefinitions>
-                <RowDefinition Height="Auto"/>
-                <RowDefinition Height="*"/>
-                <RowDefinition Height="Auto"/>
-            </Grid.RowDefinitions>
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
 
-            <StackPanel Grid.Row="0" Margin="0,0,0,16">
-                <TextBlock Text="{Binding Title}" FontSize="22" FontWeight="Bold" Foreground="#2C3E50"/>
-                <TextBlock Text="{Binding StatusMessage}" FontSize="12" Foreground="#7F8C8D" Margin="0,6,0,0"/>
+        <!-- Page Header -->
+        <StackPanel Grid.Row="0" Margin="0,0,0,20">
+            <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
+                <Border Width="36" Height="36" CornerRadius="8" Background="{StaticResource AccentLightBrush}" Margin="0,0,12,0">
+                    <TextBlock Text="&#xE70F;" FontFamily="Segoe MDL2 Assets" FontSize="16" 
+                               Foreground="{StaticResource AccentBrush}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                </Border>
+                <TextBlock Text="{Binding Title}" FontSize="24" FontWeight="Bold" 
+                           Foreground="{StaticResource TextPrimaryBrush}" FontFamily="{StaticResource AppFont}" VerticalAlignment="Center"/>
             </StackPanel>
+            <TextBlock Text="{Binding StatusMessage}" FontSize="12" 
+                       Foreground="{StaticResource TextMutedBrush}" FontFamily="{StaticResource AppFont}" Margin="48,0,0,0"/>
+        </StackPanel>
 
-            <ScrollViewer Grid.Row="1">
-                <StackPanel Margin="0,0,10,0">
-                    <TextBlock Text="{Binding NameLabel}" FontWeight="SemiBold" Foreground="#34495E" Margin="0,0,0,6"/>
-                    <TextBox Text="{Binding Name, UpdateSourceTrigger=PropertyChanged}" Height="36" Margin="0,0,0,14"/>
+        <!-- Form -->
+        <Border Grid.Row="1" Style="{StaticResource CardStyle}">
+            <ScrollViewer VerticalScrollBarVisibility="Auto">
+                <StackPanel Margin="4">
+                    <!-- Name -->
+                    <TextBlock Text="{Binding NameLabel}" Style="{StaticResource SectionLabelStyle}"/>
+                    <TextBox Text="{Binding Name, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource ModernTextBoxStyle}" Margin="0,0,0,18"/>
 
-                    <TextBlock Text="{Binding SourceLabel}" FontWeight="SemiBold" Foreground="#34495E" Margin="0,0,0,6"/>
-                    <Grid Margin="0,0,0,14">
+                    <!-- Source -->
+                    <TextBlock Text="{Binding SourceLabel}" Style="{StaticResource SectionLabelStyle}"/>
+                    <Grid Margin="0,0,0,18">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*"/>
                             <ColumnDefinition Width="Auto"/>
                         </Grid.ColumnDefinitions>
-                        <TextBox Grid.Column="0" Text="{Binding SourcePath, UpdateSourceTrigger=PropertyChanged}" Height="36" Margin="0,0,10,0"/>
-                        <Button Grid.Column="1" Content="{Binding BrowseButtonText}" Style="{StaticResource SecondaryButtonStyle}" Width="140" Command="{Binding BrowseSourceCommand}"/>
+                        <TextBox Grid.Column="0" Text="{Binding SourcePath, UpdateSourceTrigger=PropertyChanged}" 
+                                 Style="{StaticResource ModernTextBoxStyle}" Margin="0,0,10,0"/>
+                        <Button Grid.Column="1" Style="{StaticResource SecondaryButtonStyle}" MinWidth="120" Command="{Binding BrowseSourceCommand}">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="&#xED25;" FontFamily="Segoe MDL2 Assets" FontSize="13" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                                <TextBlock Text="{Binding BrowseButtonText}" VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </Button>
                     </Grid>
 
-                    <TextBlock Text="{Binding DestinationLabel}" FontWeight="SemiBold" Foreground="#34495E" Margin="0,0,0,6"/>
-                    <Grid Margin="0,0,0,14">
+                    <!-- Destination -->
+                    <TextBlock Text="{Binding DestinationLabel}" Style="{StaticResource SectionLabelStyle}"/>
+                    <Grid Margin="0,0,0,18">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*"/>
                             <ColumnDefinition Width="Auto"/>
                         </Grid.ColumnDefinitions>
-                        <TextBox Grid.Column="0" Text="{Binding DestinationPath, UpdateSourceTrigger=PropertyChanged}" Height="36" Margin="0,0,10,0"/>
-                        <Button Grid.Column="1" Content="{Binding BrowseButtonText}" Style="{StaticResource SecondaryButtonStyle}" Width="140" Command="{Binding BrowseDestinationCommand}"/>
+                        <TextBox Grid.Column="0" Text="{Binding DestinationPath, UpdateSourceTrigger=PropertyChanged}" 
+                                 Style="{StaticResource ModernTextBoxStyle}" Margin="0,0,10,0"/>
+                        <Button Grid.Column="1" Style="{StaticResource SecondaryButtonStyle}" MinWidth="120" Command="{Binding BrowseDestinationCommand}">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="&#xED25;" FontFamily="Segoe MDL2 Assets" FontSize="13" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                                <TextBlock Text="{Binding BrowseButtonText}" VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </Button>
                     </Grid>
 
-                    <TextBlock Text="{Binding TypeLabel}" FontWeight="SemiBold" Foreground="#34495E" Margin="0,0,0,6"/>
+                    <!-- Type -->
+                    <TextBlock Text="{Binding TypeLabel}" Style="{StaticResource SectionLabelStyle}"/>
                     <ComboBox ItemsSource="{Binding AvailableBackupTypes}"
                               SelectedItem="{Binding SelectedBackupType}"
                               DisplayMemberPath="DisplayName"
-                              Height="36"/>
+                              Style="{StaticResource ModernComboBoxStyle}"/>
                 </StackPanel>
             </ScrollViewer>
+        </Border>
 
-            <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,16,0,0">
-                <Button Content="{Binding CancelButtonText}" Style="{StaticResource SecondaryButtonStyle}" Width="140" Margin="0,0,10,0" Command="{Binding CancelCommand}"/>
-                <Button Content="{Binding SaveButtonText}" Style="{StaticResource PrimaryButtonStyle}" Width="160" Command="{Binding SaveCommand}"/>
-            </StackPanel>
-        </Grid>
-    </Border>
+        <!-- Footer actions -->
+        <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,16,0,0">
+            <Button Content="{Binding CancelButtonText}" Style="{StaticResource SecondaryButtonStyle}" MinWidth="130" Margin="0,0,10,0" Command="{Binding CancelCommand}"/>
+            <Button Style="{StaticResource PrimaryButtonStyle}" MinWidth="150" Command="{Binding SaveCommand}">
+                <StackPanel Orientation="Horizontal">
+                    <TextBlock Text="&#xE74E;" FontFamily="Segoe MDL2 Assets" FontSize="13" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                    <TextBlock Text="{Binding SaveButtonText}" VerticalAlignment="Center"/>
+                </StackPanel>
+            </Button>
+        </StackPanel>
+    </Grid>
 </UserControl>
 

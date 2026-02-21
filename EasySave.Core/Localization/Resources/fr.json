@@ -121,6 +121,7 @@
       "edit": "Modifier",
       "execute": "Exécuter",
       "run_all": "Tout exécuter",
+      "run_selected": "Exécuter sélection",
       "refresh": "Rafraîchir",
       "options": "Options",
       "about": "À propos",
@@ -176,7 +177,8 @@
       "logtype_changed": "Format des logs changé de {0} à {1}",
       "delete_confirm": "Supprimer '{0}' ?",
       "blocked_business": "Sauvegarde bloquée : logiciel métier '{0}' en cours d'exécution",
-      "paused": "Sauvegarde '{0}' en pause"
+      "paused": "Sauvegarde '{0}' en pause",
+      "settings_saved": "Paramètres enregistrés"
     }
   }
 }

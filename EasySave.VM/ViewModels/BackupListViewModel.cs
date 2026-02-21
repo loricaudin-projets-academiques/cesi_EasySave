@@ -17,9 +17,9 @@ public partial class BackupListViewModel : ObservableObject, IBackupEventObserve
     private readonly IUiDispatcher _ui;
     private readonly IAppEvents _events;
 
-    public ObservableCollection<BackupWork> Backups { get; } = new();
+    public ObservableCollection<SelectableBackupItem> Backups { get; } = new();
 
-    [ObservableProperty] private BackupWork? _selectedBackup;
+    [ObservableProperty] private SelectableBackupItem? _selectedBackup;
     [ObservableProperty] private string _statusMessage = string.Empty;
     [ObservableProperty] private double _currentProgress;
     [ObservableProperty] private bool _isRunning;
@@ -32,6 +32,7 @@ public partial class BackupListViewModel : ObservableObject, IBackupEventObserve
     [ObservableProperty] private string _pageTitle = string.Empty;
     [ObservableProperty] private string _addButtonText = string.Empty;
     [ObservableProperty] private string _runAllButtonText = string.Empty;
+    [ObservableProperty] private string _runSelectedButtonText = string.Empty;
     [ObservableProperty] private string _refreshButtonText = string.Empty;
     [ObservableProperty] private string _confirmDeleteText = string.Empty;
     [ObservableProperty] private string _cancelText = string.Empty;
@@ -60,7 +61,7 @@ public partial class BackupListViewModel : ObservableObject, IBackupEventObserve
     {
         Backups.Clear();
         foreach (var work in _backupService.GetAllWorks())
-            Backups.Add(work);
+            Backups.Add(new SelectableBackupItem(work));
 
         StatusMessage = _localization.Get("gui.status.loaded", Backups.Count);
     }
@@ -70,6 +71,7 @@ public partial class BackupListViewModel : ObservableObject, IBackupEventObserve
         PageTitle = _localization.Get("gui.pages.backups_title");
         AddButtonText = _localization.Get("gui.buttons.add");
         RunAllButtonText = _localization.Get("gui.buttons.run_all");
+        RunSelectedButtonText = _localization.Get("gui.buttons.run_selected");
         RefreshButtonText = _localization.Get("gui.buttons.refresh");
         ConfirmDeleteText = _localization.Get("gui.buttons.delete_confirm");
         CancelText = _localization.Get("gui.buttons.cancel");
@@ -83,21 +85,21 @@ public partial class BackupListViewModel : ObservableObject, IBackupEventObserve
     }
 
     [RelayCommand]
-    private void EditBackup(BackupWork? backup)
+    private void EditBackup(SelectableBackupItem? item)
     {
-        if (backup == null || IsRunning) return;
-        var index = Backups.IndexOf(backup);
+        if (item == null || IsRunning) return;
+        var index = Backups.IndexOf(item);
         if (index < 0) return;
         _navigation.RequestNavigate(NavigationTarget.EditorEdit, index);
     }
 
     [RelayCommand]
-    private void RequestDeleteBackup(BackupWork? backup)
+    private void RequestDeleteBackup(SelectableBackupItem? item)
     {
-        if (backup == null || IsRunning) return;
-        PendingDeleteBackup = backup;
+        if (item == null || IsRunning) return;
+        PendingDeleteBackup = item.Backup;
         IsDeleteConfirmVisible = true;
-        StatusMessage = _localization.Get("gui.status.delete_confirm", backup.Name);
+        StatusMessage = _localization.Get("gui.status.delete_confirm", item.Backup.Name);
     }
 
     [RelayCommand]
@@ -113,7 +115,8 @@ public partial class BackupListViewModel : ObservableObject, IBackupEventObserve
     {
         if (PendingDeleteBackup == null || IsRunning) return;
 
-        var index = Backups.IndexOf(PendingDeleteBackup);
+        var item = Backups.FirstOrDefault(b => b.Backup == PendingDeleteBackup);
+        var index = item != null ? Backups.IndexOf(item) : -1;
         if (index >= 0)
         {
             _backupService.RemoveWorkByIndex(index);
@@ -133,23 +136,19 @@ public partial class BackupListViewModel : ObservableObject, IBackupEventObserve
     }
 
     [RelayCommand]
-    private async Task RunBackupAsync(BackupWork? backup)
+    private async Task RunBackupAsync(SelectableBackupItem? item)
     {
-        if (backup == null || IsRunning) return;
-        var index = Backups.IndexOf(backup);
+        if (item == null || IsRunning) return;
+        var index = Backups.IndexOf(item);
         if (index < 0) return;
 
         IsRunning = true;
         CurrentProgress = 0;
-        StatusMessage = _localization.Get("gui.status.running_backup", backup.Name);
+        StatusMessage = _localization.Get("gui.status.running_backup", item.Backup.Name);
 
         try
         {
             await Task.Run(() => _backupService.ExecuteWork(index));
-        }
-        catch (BusinessSoftwareRunningException ex)
-        {
-            StatusMessage = _localization.Get("gui.status.blocked_business", ex.SoftwareName);
         }
         catch (Exception ex)
         {
@@ -174,7 +173,7 @@ public partial class BackupListViewModel : ObservableObject, IBackupEventObserve
         {
             for (int i = 0; i < Backups.Count; i++)
             {
-                var name = Backups[i].Name;
+                var name = Backups[i].Backup.Name;
                 StatusMessage = _localization.Get("gui.status.running_backup", name);
                 await Task.Run(() => _backupService.ExecuteWork(i));
             }
@@ -182,9 +181,41 @@ public partial class BackupListViewModel : ObservableObject, IBackupEventObserve
             CurrentProgress = 100;
             StatusMessage = _localization.Get("gui.status.completed");
         }
-        catch (BusinessSoftwareRunningException ex)
+        catch (Exception ex)
         {
-            StatusMessage = _localization.Get("gui.status.blocked_business", ex.SoftwareName);
+            StatusMessage = _localization.Get("gui.status.error", ex.Message);
+        }
+        finally
+        {
+            IsRunning = false;
+        }
+    }
+
+    [RelayCommand]
+    private async Task RunSelectedAsync()
+    {
+        if (IsRunning) return;
+
+        var selected = Backups.Where(b => b.IsSelected).ToList();
+        if (selected.Count == 0) return;
+
+        IsRunning = true;
+        CurrentProgress = 0;
+        StatusMessage = _localization.Get("gui.status.running");
+
+        try
+        {
+            foreach (var item in selected)
+            {
+                var index = Backups.IndexOf(item);
+                if (index < 0) continue;
+
+                StatusMessage = _localization.Get("gui.status.running_backup", item.Backup.Name);
+                await Task.Run(() => _backupService.ExecuteWork(index));
+            }
+
+            CurrentProgress = 100;
+            StatusMessage = _localization.Get("gui.status.completed");
         }
         catch (Exception ex)
         {

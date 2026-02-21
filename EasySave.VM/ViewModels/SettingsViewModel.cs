@@ -1,4 +1,5 @@
 using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
 using EasySave.Core.Localization;
 using EasySave.Core.Services;
 using EasySave.Core.Settings;
@@ -25,7 +26,6 @@ public partial class SettingsViewModel : ObservableObject
     [ObservableProperty] private string _encryptExtensionsRaw = string.Empty;
     [ObservableProperty] private string _newExtension = string.Empty;
 
-    [ObservableProperty] private string _cryptoSoftPath = string.Empty;
     [ObservableProperty] private string _businessSoftware = string.Empty;
 
     [ObservableProperty] private string _statusMessage = string.Empty;
@@ -34,13 +34,15 @@ public partial class SettingsViewModel : ObservableObject
     [ObservableProperty] private string _pageTitle = string.Empty;
     [ObservableProperty] private string _languageLabel = string.Empty;
     [ObservableProperty] private string _logFormatLabel = string.Empty;
-    [ObservableProperty] private string _cryptoSoftPathLabel = string.Empty;
     [ObservableProperty] private string _encryptExtensionsLabel = string.Empty;
     [ObservableProperty] private string _businessSoftwareLabel = string.Empty;
     [ObservableProperty] private string _runningProcessesLabel = string.Empty;
     [ObservableProperty] private string _addExtensionButtonText = string.Empty;
     [ObservableProperty] private string _removeButtonText = string.Empty;
     [ObservableProperty] private string _refreshProcessesButtonText = string.Empty;
+    [ObservableProperty] private string _saveButtonText = string.Empty;
+
+    [ObservableProperty] private string? _selectedProcess;
 
     public SettingsViewModel(
         Config config,
@@ -65,13 +67,13 @@ public partial class SettingsViewModel : ObservableObject
         PageTitle = _localization.Get("gui.pages.settings_title");
         LanguageLabel = _localization.Get("gui.labels.language");
         LogFormatLabel = _localization.Get("gui.labels.log_format");
-        CryptoSoftPathLabel = _localization.Get("gui.settings.crypto_path");
         EncryptExtensionsLabel = _localization.Get("gui.settings.encrypt_extensions");
         BusinessSoftwareLabel = _localization.Get("gui.settings.business_software");
         RunningProcessesLabel = _localization.Get("gui.pages.running_processes");
         AddExtensionButtonText = _localization.Get("gui.buttons.add_extension");
         RemoveButtonText = _localization.Get("gui.buttons.remove");
         RefreshProcessesButtonText = _localization.Get("gui.buttons.refresh");
+        SaveButtonText = _localization.Get("gui.buttons.save");
     }
 
     public void RefreshFromConfig()
@@ -79,7 +81,6 @@ public partial class SettingsViewModel : ObservableObject
         SelectedLanguage = AvailableLanguages.First(l => l.Value == _config.Language);
         SelectedLogFormat = AvailableLogFormats.Contains(_config.LogType) ? _config.LogType : "json";
 
-        CryptoSoftPath = _config.CryptoSoftPath;
         BusinessSoftware = _config.BusinessSoftware;
 
         EncryptExtensionsRaw = _config.EncryptExtensions;
@@ -134,19 +135,30 @@ public partial class SettingsViewModel : ObservableObject
         StatusMessage = _localization.Get("gui.status.logtype_changed", oldType.ToUpperInvariant(), value.ToUpperInvariant());
     }
 
-    partial void OnCryptoSoftPathChanged(string value)
+    [RelayCommand]
+    private void SelectProcess()
     {
-        if (value == _config.CryptoSoftPath) return;
-        _config.CryptoSoftPath = value ?? string.Empty;
-        _config.Save();
+        if (!string.IsNullOrWhiteSpace(SelectedProcess))
+        {
+            BusinessSoftware = SelectedProcess;
+        }
     }
 
-    partial void OnBusinessSoftwareChanged(string value)
+    [RelayCommand]
+    private void ClearBusinessSoftware()
     {
-        var normalized = (value ?? string.Empty).Replace(".exe", "", StringComparison.OrdinalIgnoreCase).Trim();
-        if (normalized == _config.BusinessSoftware) return;
+        BusinessSoftware = string.Empty;
+        SelectedProcess = null;
+    }
+
+    [RelayCommand]
+    private void SaveSettings()
+    {
+        var normalized = (BusinessSoftware ?? string.Empty).Replace(".exe", "", StringComparison.OrdinalIgnoreCase).Trim();
         _config.BusinessSoftware = normalized;
+
         _config.Save();
+        StatusMessage = _localization.Get("gui.status.settings_saved");
     }
 
     [CommunityToolkit.Mvvm.Input.RelayCommand]

@@ -4,92 +4,142 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              mc:Ignorable="d"
-             d:DesignHeight="600" d:DesignWidth="900">
+             d:DesignHeight="600" d:DesignWidth="750">
 
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
 
-        <!-- Action bar -->
-        <Border Grid.Row="0" Background="White" CornerRadius="8" Padding="16" Margin="0,0,0,10">
-            <DockPanel>
-                <StackPanel Orientation="Horizontal" DockPanel.Dock="Right" HorizontalAlignment="Right">
-                    <Button Content="{Binding RefreshButtonText}" Style="{StaticResource SecondaryButtonStyle}" Margin="0,0,10,0" Command="{Binding RefreshListCommand}" IsEnabled="{Binding IsRunning, Converter={StaticResource InverseBooleanConverter}}"/>
-                    <Button Content="{Binding AddButtonText}" Style="{StaticResource PrimaryButtonStyle}" Margin="0,0,10,0" Command="{Binding AddBackupCommand}" IsEnabled="{Binding IsRunning, Converter={StaticResource InverseBooleanConverter}}"/>
-                    <Button Content="{Binding RunAllButtonText}" Style="{StaticResource SecondaryButtonStyle}" Command="{Binding RunAllCommand}" IsEnabled="{Binding IsRunning, Converter={StaticResource InverseBooleanConverter}}"/>
-                </StackPanel>
+        <!-- Page Header -->
+        <DockPanel Grid.Row="0" Margin="0,0,0,20">
+            <StackPanel DockPanel.Dock="Left">
+                <TextBlock Text="{Binding PageTitle}" FontSize="24" FontWeight="Bold" 
+                           Foreground="{StaticResource TextPrimaryBrush}" FontFamily="{StaticResource AppFont}"/>
+                <TextBlock Text="{Binding StatusMessage}" FontSize="12" 
+                           Foreground="{StaticResource TextMutedBrush}" FontFamily="{StaticResource AppFont}" Margin="0,4,0,0"/>
+            </StackPanel>
+            <StackPanel Orientation="Horizontal" DockPanel.Dock="Right" HorizontalAlignment="Right" VerticalAlignment="Top">
+                <Button Style="{StaticResource IconButtonStyle}" Width="38" Height="38" Margin="0,0,6,0"
+                        Command="{Binding RefreshListCommand}" 
+                        IsEnabled="{Binding IsRunning, Converter={StaticResource InverseBooleanConverter}}"
+                        ToolTip="{Binding RefreshButtonText}">
+                    <TextBlock Text="&#xE72C;" FontFamily="Segoe MDL2 Assets" FontSize="15"/>
+                </Button>
+                <Button Style="{StaticResource SecondaryButtonStyle}" Margin="0,0,8,0"
+                        Command="{Binding RunSelectedCommand}" 
+                        IsEnabled="{Binding IsRunning, Converter={StaticResource InverseBooleanConverter}}"
+                        Content="{Binding RunSelectedButtonText}" MinWidth="100"/>
+                <Button Style="{StaticResource SecondaryButtonStyle}" Margin="0,0,8,0"
+                        Command="{Binding RunAllCommand}" 
+                        IsEnabled="{Binding IsRunning, Converter={StaticResource InverseBooleanConverter}}"
+                        Content="{Binding RunAllButtonText}" MinWidth="100"/>
+                <Button Style="{StaticResource PrimaryButtonStyle}"
+                        Command="{Binding AddBackupCommand}" 
+                        IsEnabled="{Binding IsRunning, Converter={StaticResource InverseBooleanConverter}}">
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="&#xE710;" FontFamily="Segoe MDL2 Assets" FontSize="12" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                        <TextBlock Text="{Binding AddButtonText}" VerticalAlignment="Center"/>
+                    </StackPanel>
+                </Button>
+            </StackPanel>
+        </DockPanel>
 
-                <StackPanel>
-                    <TextBlock Text="{Binding PageTitle}" FontSize="18" FontWeight="Bold" Foreground="#2C3E50"/>
-                    <TextBlock Text="{Binding StatusMessage}" FontSize="12" Foreground="#7F8C8D" Margin="0,4,0,0"/>
-                </StackPanel>
-            </DockPanel>
-        </Border>
-
-        <!-- Delete confirmation inline -->
-        <Border Grid.Row="1" Background="#FEF5E7" BorderBrush="#F39C12" BorderThickness="1" CornerRadius="8" Padding="14" Margin="0,0,0,10"
+        <!-- Delete confirmation banner -->
+        <Border Grid.Row="1" Background="{StaticResource WarningLightBrush}" BorderBrush="{StaticResource WarningBrush}" 
+                BorderThickness="1" CornerRadius="10" Padding="16" Margin="0,0,0,14"
                 Visibility="{Binding IsDeleteConfirmVisible, Converter={StaticResource BooleanToVisibilityConverter}}">
             <DockPanel>
                 <StackPanel Orientation="Horizontal" DockPanel.Dock="Right">
-                    <Button Content="{Binding CancelText}" Style="{StaticResource SecondaryButtonStyle}" Width="120" Margin="0,0,10,0" Command="{Binding CancelDeleteCommand}"/>
-                    <Button Content="{Binding ConfirmDeleteText}" Style="{StaticResource PrimaryButtonStyle}" Width="150" Command="{Binding ConfirmDeleteCommand}"/>
+                    <Button Content="{Binding CancelText}" Style="{StaticResource SecondaryButtonStyle}" MinWidth="100" Margin="0,0,8,0" Command="{Binding CancelDeleteCommand}"/>
+                    <Button Content="{Binding ConfirmDeleteText}" Style="{StaticResource DangerButtonStyle}" MinWidth="120" Command="{Binding ConfirmDeleteCommand}"/>
                 </StackPanel>
-                <TextBlock Text="{Binding StatusMessage}" Foreground="#2C3E50" VerticalAlignment="Center"/>
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                    <TextBlock Text="&#xE7BA;" FontFamily="Segoe MDL2 Assets" FontSize="16" 
+                               Foreground="{StaticResource WarningBrush}" VerticalAlignment="Center" Margin="0,0,10,0"/>
+                    <TextBlock Text="{Binding StatusMessage}" Foreground="{StaticResource TextPrimaryBrush}" 
+                               VerticalAlignment="Center" FontFamily="{StaticResource AppFont}"/>
+                </StackPanel>
             </DockPanel>
         </Border>
 
-        <!-- List -->
-        <ScrollViewer Grid.Row="2">
-            <StackPanel>
-                <ProgressBar Height="10" Margin="0,0,0,10" Minimum="0" Maximum="100" Value="{Binding CurrentProgress}" />
+        <!-- Progress bar -->
+        <ProgressBar Grid.Row="2" Style="{StaticResource ModernProgressBarStyle}" 
+                     Minimum="0" Maximum="100" Value="{Binding CurrentProgress}" Margin="0,0,0,14"/>
 
-                <ItemsControl ItemsSource="{Binding Backups}">
-                    <ItemsControl.ItemTemplate>
-                        <DataTemplate>
-                            <Border Style="{StaticResource CardStyle}">
-                                <Grid>
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="*"/>
-                                        <ColumnDefinition Width="Auto"/>
-                                    </Grid.ColumnDefinitions>
+        <!-- Backup cards list -->
+        <ScrollViewer Grid.Row="3" VerticalScrollBarVisibility="Auto">
+            <ItemsControl ItemsSource="{Binding Backups}">
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <Border Style="{StaticResource CardStyle}">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
 
-                                    <StackPanel>
-                                        <TextBlock FontWeight="Bold" FontSize="16" Foreground="#2C3E50">
-                                            <Run Text="{Binding Name, Mode=OneWay}"/>
-                                            <Run Text="  ("/>
-                                            <Run Text="{Binding Type, Mode=OneWay}"/>
-                                            <Run Text=")"/>
-                                        </TextBlock>
-                                        <TextBlock FontSize="12" Foreground="#7F8C8D" Margin="0,2,0,0">
-                                            <Run Text="Source: "/>
-                                            <Run Text="{Binding SourcePath, Mode=OneWay}"/>
-                                        </TextBlock>
-                                        <TextBlock FontSize="12" Foreground="#7F8C8D">
-                                            <Run Text="Destination: "/>
-                                            <Run Text="{Binding DestinationPath, Mode=OneWay}"/>
-                                        </TextBlock>
+                                <!-- Checkbox for multi-select -->
+                                <CheckBox Grid.Column="0" IsChecked="{Binding IsSelected}" VerticalAlignment="Center" Margin="0,0,12,0"/>
+
+                                <!-- Type badge -->
+                                <Border Grid.Column="1" Width="44" Height="44" CornerRadius="10" 
+                                        Background="{StaticResource AccentLightBrush}" Margin="0,0,16,0" VerticalAlignment="Center">
+                                    <TextBlock Text="&#xE8F1;" FontFamily="Segoe MDL2 Assets" FontSize="18" 
+                                               Foreground="{StaticResource AccentBrush}" 
+                                               HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                </Border>
+
+                                <!-- Info -->
+                                <StackPanel Grid.Column="2" VerticalAlignment="Center">
+                                    <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
+                                        <TextBlock Text="{Binding Backup.Name, Mode=OneWay}" FontWeight="SemiBold" FontSize="15" 
+                                                   Foreground="{StaticResource TextPrimaryBrush}" FontFamily="{StaticResource AppFont}"/>
+                                        <Border Background="{StaticResource InputBgBrush}" CornerRadius="4" Padding="8,2" Margin="10,0,0,0" VerticalAlignment="Center">
+                                            <TextBlock Text="{Binding Backup.Type, Mode=OneWay}" FontSize="11" 
+                                                       Foreground="{StaticResource TextSecondaryBrush}" FontFamily="{StaticResource AppFont}"/>
+                                        </Border>
                                     </StackPanel>
+                                    <TextBlock FontSize="12" Foreground="{StaticResource TextMutedBrush}" FontFamily="{StaticResource AppFont}" Margin="0,0,0,2">
+                                        <Run Text="&#xE8B7;" FontFamily="Segoe MDL2 Assets" FontSize="10"/>
+                                        <Run Text=" "/>
+                                        <Run Text="{Binding Backup.SourcePath, Mode=OneWay}"/>
+                                    </TextBlock>
+                                    <TextBlock FontSize="12" Foreground="{StaticResource TextMutedBrush}" FontFamily="{StaticResource AppFont}">
+                                        <Run Text="&#xE8A9;" FontFamily="Segoe MDL2 Assets" FontSize="10"/>
+                                        <Run Text=" "/>
+                                        <Run Text="{Binding Backup.DestinationPath, Mode=OneWay}"/>
+                                    </TextBlock>
+                                </StackPanel>
 
-                                    <StackPanel Grid.Column="1" Orientation="Vertical" VerticalAlignment="Center" Margin="10,0,0,0">
-                                        <Button Content="▶" Style="{StaticResource PrimaryButtonStyle}" Width="40" Height="40"
-                                                Command="{Binding DataContext.RunBackupCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
-                                                CommandParameter="{Binding}" Margin="0,0,0,5"/>
-                                        <Button Content="✏️" Style="{StaticResource SecondaryButtonStyle}" Width="40" Height="40"
-                                                Command="{Binding DataContext.EditBackupCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
-                                                CommandParameter="{Binding}" Margin="0,0,0,5"/>
-                                        <Button Content="🗑️" Style="{StaticResource SecondaryButtonStyle}" Width="40" Height="40"
-                                                Command="{Binding DataContext.RequestDeleteBackupCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
-                                                CommandParameter="{Binding}"/>
-                                    </StackPanel>
-                                </Grid>
-                            </Border>
-                        </DataTemplate>
-                    </ItemsControl.ItemTemplate>
-                </ItemsControl>
-            </StackPanel>
+                                <!-- Action buttons -->
+                                <StackPanel Grid.Column="3" Orientation="Horizontal" VerticalAlignment="Center" Margin="12,0,0,0">
+                                    <Button Style="{StaticResource SuccessButtonStyle}" Width="38" Height="38" MinWidth="38" Padding="0"
+                                            Command="{Binding DataContext.RunBackupCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                            CommandParameter="{Binding}" Margin="0,0,6,0" ToolTip="Run">
+                                        <TextBlock Text="&#xE768;" FontFamily="Segoe MDL2 Assets" FontSize="14" Foreground="White"/>
+                                    </Button>
+                                    <Button Style="{StaticResource IconButtonStyle}" Width="38" Height="38"
+                                            Command="{Binding DataContext.EditBackupCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                            CommandParameter="{Binding}" Margin="0,0,6,0" ToolTip="Edit">
+                                        <TextBlock Text="&#xE70F;" FontFamily="Segoe MDL2 Assets" FontSize="14"/>
+                                    </Button>
+                                    <Button Style="{StaticResource IconButtonStyle}" Width="38" Height="38"
+                                            Command="{Binding DataContext.RequestDeleteBackupCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                            CommandParameter="{Binding}" ToolTip="Delete">
+                                        <TextBlock Text="&#xE74D;" FontFamily="Segoe MDL2 Assets" FontSize="14"/>
+                                    </Button>
+                                </StackPanel>
+                            </Grid>
+                        </Border>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
         </ScrollViewer>
     </Grid>
 </UserControl>
