@@ -178,6 +178,7 @@
       "delete_confirm": "Supprimer '{0}' ?",
       "blocked_business": "Sauvegarde bloquée : logiciel métier '{0}' en cours d'exécution",
       "paused": "Sauvegarde '{0}' en pause",
+      "stopped": "Sauvegarde '{0}' arrêtée",
       "settings_saved": "Paramètres enregistrés"
     }
   }

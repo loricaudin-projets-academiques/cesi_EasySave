@@ -178,6 +178,7 @@
       "delete_confirm": "Delete '{0}'?",
       "blocked_business": "Backup blocked: business software '{0}' is running",
       "paused": "Backup '{0}' paused",
+      "stopped": "Backup '{0}' stopped",
       "settings_saved": "Settings saved"
     }
   }
