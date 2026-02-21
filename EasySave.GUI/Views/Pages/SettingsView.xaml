@@ -4,77 +4,186 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              mc:Ignorable="d"
-             d:DesignHeight="600" d:DesignWidth="900">
+             d:DesignHeight="700" d:DesignWidth="750">
 
-    <Border Background="White" CornerRadius="8" Padding="20">
-        <Grid>
-            <Grid.RowDefinitions>
-                <RowDefinition Height="Auto"/>
-                <RowDefinition Height="*"/>
-            </Grid.RowDefinitions>
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
 
-            <StackPanel Grid.Row="0" Margin="0,0,0,16">
-                <TextBlock Text="{Binding PageTitle}" FontSize="22" FontWeight="Bold" Foreground="#2C3E50"/>
-                <TextBlock Text="{Binding StatusMessage}" FontSize="12" Foreground="#7F8C8D" Margin="0,6,0,0"/>
+        <!-- Page Header -->
+        <StackPanel Grid.Row="0" Margin="0,0,0,20">
+            <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
+                <Border Width="36" Height="36" CornerRadius="8" Background="{StaticResource AccentLightBrush}" Margin="0,0,12,0">
+                    <TextBlock Text="&#xE713;" FontFamily="Segoe MDL2 Assets" FontSize="16" 
+                               Foreground="{StaticResource AccentBrush}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                </Border>
+                <TextBlock Text="{Binding PageTitle}" FontSize="24" FontWeight="Bold" 
+                           Foreground="{StaticResource TextPrimaryBrush}" FontFamily="{StaticResource AppFont}" VerticalAlignment="Center"/>
             </StackPanel>
+            <TextBlock Text="{Binding StatusMessage}" FontSize="12" 
+                       Foreground="{StaticResource TextMutedBrush}" FontFamily="{StaticResource AppFont}" Margin="48,0,0,0"/>
+        </StackPanel>
 
-            <ScrollViewer Grid.Row="1">
-                <StackPanel Margin="0,0,10,0">
-                    <TextBlock Text="{Binding LanguageLabel}" FontWeight="SemiBold" Foreground="#34495E" Margin="0,0,0,6"/>
-                    <ComboBox ItemsSource="{Binding AvailableLanguages}"
-                              SelectedItem="{Binding SelectedLanguage}"
-                              DisplayMemberPath="DisplayName"
-                              Height="36" Margin="0,0,0,14"/>
+        <!-- Settings sections -->
+        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+            <StackPanel>
 
-                    <TextBlock Text="{Binding LogFormatLabel}" FontWeight="SemiBold" Foreground="#34495E" Margin="0,0,0,6"/>
-                    <ComboBox ItemsSource="{Binding AvailableLogFormats}"
-                              SelectedItem="{Binding SelectedLogFormat}"
-                              Height="36" Margin="0,0,0,14"/>
+                <!-- ===== GENERAL SECTION ===== -->
+                <Border Style="{StaticResource CardStyle}">
+                    <StackPanel>
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,16">
+                            <TextBlock Text="&#xE774;" FontFamily="Segoe MDL2 Assets" FontSize="14" 
+                                       Foreground="{StaticResource AccentBrush}" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                            <TextBlock Text="General" FontSize="15" FontWeight="SemiBold" 
+                                       Foreground="{StaticResource TextPrimaryBrush}" FontFamily="{StaticResource AppFont}"/>
+                        </StackPanel>
 
-                    <TextBlock Text="{Binding CryptoSoftPathLabel}" FontWeight="SemiBold" Foreground="#34495E" Margin="0,0,0,6"/>
-                    <TextBox Text="{Binding CryptoSoftPath, UpdateSourceTrigger=PropertyChanged}" Height="36" Margin="0,0,0,14"/>
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="20"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
 
-                    <TextBlock Text="{Binding BusinessSoftwareLabel}" FontWeight="SemiBold" Foreground="#34495E" Margin="0,0,0,6"/>
-                    <Grid Margin="0,0,0,14">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="Auto"/>
-                        </Grid.ColumnDefinitions>
-                        <TextBox Grid.Column="0" Text="{Binding BusinessSoftware, UpdateSourceTrigger=PropertyChanged}" Height="36" Margin="0,0,10,0"/>
-                        <Button Grid.Column="1" Content="{Binding RefreshProcessesButtonText}" Style="{StaticResource SecondaryButtonStyle}" Width="140" Command="{Binding RefreshProcessesCommand}"/>
-                    </Grid>
+                            <StackPanel Grid.Column="0">
+                                <TextBlock Text="{Binding LanguageLabel}" Style="{StaticResource SectionLabelStyle}"/>
+                                <ComboBox ItemsSource="{Binding AvailableLanguages}"
+                                          SelectedItem="{Binding SelectedLanguage}"
+                                          DisplayMemberPath="DisplayName"
+                                          Style="{StaticResource ModernComboBoxStyle}"/>
+                            </StackPanel>
 
-                    <TextBlock Text="{Binding RunningProcessesLabel}" FontWeight="SemiBold" Foreground="#34495E" Margin="0,0,0,6"/>
-                    <ListBox ItemsSource="{Binding RunningProcesses}" Height="120" Margin="0,0,0,14"/>
+                            <StackPanel Grid.Column="2">
+                                <TextBlock Text="{Binding LogFormatLabel}" Style="{StaticResource SectionLabelStyle}"/>
+                                <ComboBox ItemsSource="{Binding AvailableLogFormats}"
+                                          SelectedItem="{Binding SelectedLogFormat}"
+                                          Style="{StaticResource ModernComboBoxStyle}"/>
+                            </StackPanel>
+                        </Grid>
+                    </StackPanel>
+                </Border>
 
-                    <TextBlock Text="{Binding EncryptExtensionsLabel}" FontWeight="SemiBold" Foreground="#34495E" Margin="0,0,0,6"/>
-                    <Grid Margin="0,0,0,10">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="Auto"/>
-                        </Grid.ColumnDefinitions>
-                        <TextBox Grid.Column="0" Text="{Binding NewExtension, UpdateSourceTrigger=PropertyChanged}" Height="36" Margin="0,0,10,0"/>
-                        <Button Grid.Column="1" Content="{Binding AddExtensionButtonText}" Style="{StaticResource SecondaryButtonStyle}" Width="140" Command="{Binding AddExtensionCommand}"/>
-                    </Grid>
+                <!-- ===== ENCRYPTION SECTION ===== -->
+                <Border Style="{StaticResource CardStyle}">
+                    <StackPanel>
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,16">
+                            <TextBlock Text="&#xE72E;" FontFamily="Segoe MDL2 Assets" FontSize="14" 
+                                       Foreground="{StaticResource AccentBrush}" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                            <TextBlock Text="{Binding EncryptExtensionsLabel}" FontSize="15" FontWeight="SemiBold" 
+                                       Foreground="{StaticResource TextPrimaryBrush}" FontFamily="{StaticResource AppFont}"/>
+                        </StackPanel>
+                        <Grid Margin="0,0,0,12">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBox Grid.Column="0" Text="{Binding NewExtension, UpdateSourceTrigger=PropertyChanged}" 
+                                     Style="{StaticResource ModernTextBoxStyle}" Margin="0,0,10,0"/>
+                            <Button Grid.Column="1" Style="{StaticResource PrimaryButtonStyle}" MinWidth="110" Command="{Binding AddExtensionCommand}">
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="&#xE710;" FontFamily="Segoe MDL2 Assets" FontSize="11" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                                    <TextBlock Text="{Binding AddExtensionButtonText}" VerticalAlignment="Center"/>
+                                </StackPanel>
+                            </Button>
+                        </Grid>
 
-                    <ItemsControl ItemsSource="{Binding EncryptExtensions}">
-                        <ItemsControl.ItemTemplate>
-                            <DataTemplate>
-                                <DockPanel Margin="0,0,0,6">
-                                    <Button DockPanel.Dock="Right"
-                                            Content="{Binding DataContext.RemoveButtonText, RelativeSource={RelativeSource AncestorType=UserControl}}"
-                                            Style="{StaticResource SecondaryButtonStyle}"
-                                            Width="120"
-                                            Command="{Binding DataContext.RemoveExtensionCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
-                                            CommandParameter="{Binding}"/>
-                                    <TextBlock Text="{Binding}" VerticalAlignment="Center" Foreground="#2C3E50"/>
-                                </DockPanel>
-                            </DataTemplate>
-                        </ItemsControl.ItemTemplate>
-                    </ItemsControl>
-                </StackPanel>
-            </ScrollViewer>
-        </Grid>
-    </Border>
+                        <ItemsControl ItemsSource="{Binding EncryptExtensions}">
+                            <ItemsControl.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <WrapPanel/>
+                                </ItemsPanelTemplate>
+                            </ItemsControl.ItemsPanel>
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Border Background="{StaticResource InputBgBrush}" CornerRadius="6" 
+                                            Padding="10,6" Margin="0,0,8,8" BorderBrush="{StaticResource InputBorderBrush}" BorderThickness="1">
+                                        <StackPanel Orientation="Horizontal">
+                                            <TextBlock Text="{Binding}" VerticalAlignment="Center" FontSize="13"
+                                                       Foreground="{StaticResource TextPrimaryBrush}" FontFamily="{StaticResource AppFont}" Margin="0,0,8,0"/>
+                                            <Button Style="{StaticResource IconButtonStyle}" Width="22" Height="22"
+                                                    Command="{Binding DataContext.RemoveExtensionCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                    CommandParameter="{Binding}" ToolTip="Remove">
+                                                <TextBlock Text="&#xE711;" FontFamily="Segoe MDL2 Assets" FontSize="10"/>
+                                            </Button>
+                                        </StackPanel>
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </StackPanel>
+                </Border>
+
+                <!-- ===== BUSINESS SOFTWARE SECTION ===== -->
+                <Border Style="{StaticResource CardStyle}">
+                    <StackPanel>
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,16">
+                            <TextBlock Text="&#xE7EE;" FontFamily="Segoe MDL2 Assets" FontSize="14" 
+                                       Foreground="{StaticResource AccentBrush}" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                            <TextBlock Text="{Binding BusinessSoftwareLabel}" FontSize="15" FontWeight="SemiBold" 
+                                       Foreground="{StaticResource TextPrimaryBrush}" FontFamily="{StaticResource AppFont}"/>
+                        </StackPanel>
+
+                        <!-- Current selection display -->
+                        <TextBlock Style="{StaticResource SectionLabelStyle}" Margin="0,0,0,6" Text="Selected:"/>
+                        <DockPanel Margin="0,0,0,16">
+                            <Button DockPanel.Dock="Right" Style="{StaticResource IconButtonStyle}" Width="36" Height="36" Margin="8,0,0,0"
+                                    Command="{Binding ClearBusinessSoftwareCommand}" ToolTip="Clear">
+                                <TextBlock Text="&#xE711;" FontFamily="Segoe MDL2 Assets" FontSize="12" Foreground="{StaticResource DangerBrush}"/>
+                            </Button>
+                            <Border Background="{StaticResource InputBgBrush}" CornerRadius="8" Padding="12,10"
+                                    BorderBrush="{StaticResource InputBorderBrush}" BorderThickness="1">
+                                <TextBlock Text="{Binding BusinessSoftware}" Foreground="{StaticResource TextPrimaryBrush}" 
+                                           FontSize="13" FontFamily="{StaticResource AppFont}">
+                                    <TextBlock.Style>
+                                        <Style TargetType="TextBlock">
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding BusinessSoftware}" Value="">
+                                                    <Setter Property="Text" Value="—"/>
+                                                    <Setter Property="Foreground" Value="{StaticResource TextMutedBrush}"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </TextBlock.Style>
+                                </TextBlock>
+                            </Border>
+                        </DockPanel>
+
+                        <!-- Running processes list with select -->
+                        <DockPanel Margin="0,0,0,8">
+                            <Button DockPanel.Dock="Right" Style="{StaticResource SecondaryButtonStyle}" MinWidth="120" Command="{Binding RefreshProcessesCommand}">
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="&#xE72C;" FontFamily="Segoe MDL2 Assets" FontSize="12" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                                    <TextBlock Text="{Binding RefreshProcessesButtonText}" VerticalAlignment="Center"/>
+                                </StackPanel>
+                            </Button>
+                            <TextBlock Text="{Binding RunningProcessesLabel}" Style="{StaticResource SectionLabelStyle}" 
+                                       VerticalAlignment="Center" Margin="0,0,10,0"/>
+                        </DockPanel>
+                        <ListBox ItemsSource="{Binding RunningProcesses}" Height="150" Style="{StaticResource ModernListBoxStyle}"
+                                 SelectedItem="{Binding SelectedProcess}"/>
+                        <Button Style="{StaticResource SecondaryButtonStyle}" MinWidth="160" Margin="0,10,0,0"
+                                HorizontalAlignment="Left" Command="{Binding SelectProcessCommand}">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="&#xE73E;" FontFamily="Segoe MDL2 Assets" FontSize="12" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                                <TextBlock Text="Use selected process" VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </Button>
+                    </StackPanel>
+                </Border>
+
+                <!-- ===== SAVE BUTTON ===== -->
+                <Button Style="{StaticResource PrimaryButtonStyle}" MinWidth="180" HorizontalAlignment="Right" Margin="0,4,0,20"
+                        Command="{Binding SaveSettingsCommand}">
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="&#xE74E;" FontFamily="Segoe MDL2 Assets" FontSize="14" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                        <TextBlock Text="{Binding SaveButtonText}" VerticalAlignment="Center"/>
+                    </StackPanel>
+                </Button>
+
+            </StackPanel>
+        </ScrollViewer>
+    </Grid>
 </UserControl>
 

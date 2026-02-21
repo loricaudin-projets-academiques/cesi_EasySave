@@ -205,10 +205,10 @@ namespace EasySave.Core.Services
         /// <summary>
         /// Executes a backup work by index.
         /// Events are captured and emitted automatically.
-        /// Blocks if business software is running.
+        /// If business software is running before start, waits until it closes.
+        /// If business software starts during backup, pauses and resumes automatically.
         /// </summary>
         /// <param name="index">Zero-based index of the work to execute.</param>
-        /// <exception cref="BusinessSoftwareRunningException">Thrown when business software is detected.</exception>
         public void ExecuteWork(int index)
         {
             try
@@ -217,12 +217,17 @@ namespace EasySave.Core.Services
                 if (work == null)
                     return;
 
-                // Check if business software is running BEFORE starting
+                // If business software is running BEFORE starting, wait for it to close
                 if (_businessService != null && _businessService.IsRunning())
                 {
                     var softwareName = _businessService.GetBusinessSoftwareName() ?? "Unknown";
                     _logger.LogBackupBlocked(index, work.Name, softwareName);
-                    throw new BusinessSoftwareRunningException(softwareName);
+                    NotifyObservers(o => o.OnBackupPaused(work.Name));
+
+                    while (_businessService.IsRunning())
+                        Thread.Sleep(500);
+
+                    NotifyObservers(o => o.OnBackupResumed(work.Name));
                 }
 
                 var files = Directory.GetFiles(work.SourcePath, "*", SearchOption.AllDirectories);
@@ -231,23 +236,27 @@ namespace EasySave.Core.Services
                 NotifyObservers(o => o.OnBackupStarted(work.Name, files.Length, totalSize));
                 _logger.StartBackup(index, work.Name, files.Length, totalSize);
 
-                // Track if backup was stopped due to business software
-                bool stoppedByBusinessSoftware = false;
+                // Set up pause checker for business software detection DURING backup
+                if (_businessService != null)
+                {
+                    work.SetPauseChecker(() => _businessService.IsRunning());
+                    work.Paused += () =>
+                    {
+                        var softwareName = _businessService.GetBusinessSoftwareName() ?? "Unknown";
+                        _logger.LogBackupStopped(index, work.Name, softwareName);
+                        NotifyObservers(o => o.OnBackupPaused(work.Name));
+                    };
+                    work.Resumed += () =>
+                    {
+                        NotifyObservers(o => o.OnBackupResumed(work.Name));
+                    };
+                }
 
                 // Connect file transfer events - encryption happens HERE at service level
                 work.FileTransferred += (sender, args) => 
                 {
                     if (args is FileCopiedEventArgs fileArgs)
                     {
-                        // Check if business software started DURING backup
-                        if (_businessService != null && _businessService.IsRunning())
-                        {
-                            stoppedByBusinessSoftware = true;
-                            var softwareName = _businessService.GetBusinessSoftwareName() ?? "Unknown";
-                            _logger.LogBackupStopped(index, work.Name, softwareName);
-                            // Note: The actual stopping will happen after this file completes
-                        }
-
                         // Encrypt file if needed (service responsibility, not model)
                         double encryptionTimeMs = 0;
                         if (_cryptoService != null)
@@ -285,19 +294,8 @@ namespace EasySave.Core.Services
 
                 _workList.ExecuteBackupWork(index);
 
-                if (stoppedByBusinessSoftware)
-                {
-                    NotifyObservers(o => o.OnBackupPaused(work.Name));
-                }
-                else
-                {
-                    _logger.CompleteBackup(index);
-                    NotifyObservers(o => o.OnBackupCompleted(work.Name));
-                }
-            }
-            catch (BusinessSoftwareRunningException)
-            {
-                throw; // Re-throw to let caller handle it
+                _logger.CompleteBackup(index);
+                NotifyObservers(o => o.OnBackupCompleted(work.Name));
             }
             catch (Exception ex)
             {

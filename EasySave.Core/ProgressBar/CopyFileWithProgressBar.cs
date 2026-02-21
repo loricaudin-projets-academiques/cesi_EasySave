@@ -26,6 +26,15 @@ namespace EasySave.Core.ProgressBar
         /// <summary>Event raised when a file transfer fails.</summary>
         public event EventHandler<FileCopyErrorEventArgs>? FileTransferError;
 
+        /// <summary>Called between chunks to check if the backup should pause. Returns true if paused.</summary>
+        public Func<bool>? PauseChecker { get; set; }
+
+        /// <summary>Event raised when the backup is paused due to business software.</summary>
+        public event Action? Paused;
+
+        /// <summary>Event raised when the backup resumes after business software closes.</summary>
+        public event Action? Resumed;
+
         public CopyFileWithProgressBar(BackupState backupState)
         {
             this.State = backupState;
@@ -133,6 +142,15 @@ namespace EasySave.Core.ProgressBar
             int read;
             while ((read = input.Read(buffer, 0, buffer.Length)) > 0)
             {
+                // Check for business software pause between chunks
+                if (PauseChecker != null && PauseChecker())
+                {
+                    Paused?.Invoke();
+                    while (PauseChecker())
+                        Thread.Sleep(500);
+                    Resumed?.Invoke();
+                }
+
                 try
                 {
                     output.Write(buffer, 0, read);

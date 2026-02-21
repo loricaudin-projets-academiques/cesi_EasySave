@@ -69,6 +69,29 @@ namespace EasySave.Core.Models
         public void SetType(BackupType type) => Type = type;
 
         /// <summary>
+        /// Sets a pause checker function that is called between file chunks.
+        /// If it returns true, the copy pauses until it returns false.
+        /// </summary>
+        public void SetPauseChecker(Func<bool>? checker)
+        {
+            _cp.PauseChecker = checker;
+        }
+
+        /// <summary>Event raised when the backup pauses due to business software.</summary>
+        public event Action? Paused
+        {
+            add => _cp.Paused += value;
+            remove => _cp.Paused -= value;
+        }
+
+        /// <summary>Event raised when the backup resumes after pause.</summary>
+        public event Action? Resumed
+        {
+            add => _cp.Resumed += value;
+            remove => _cp.Resumed -= value;
+        }
+
+        /// <summary>
         /// Executes the backup based on its type.
         /// </summary>
         /// <exception cref="Exception">Thrown when paths are invalid or backup type is unknown.</exception>
