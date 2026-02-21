@@ -77,6 +77,14 @@ namespace EasySave.Core.Models
             _cp.PauseChecker = checker;
         }
 
+        /// <summary>
+        /// Sets a cancellation token checked between chunks to support stop.
+        /// </summary>
+        public void SetCancellationToken(CancellationToken ct)
+        {
+            _cp.CancellationToken = ct;
+        }
+
         /// <summary>Event raised when the backup pauses due to business software.</summary>
         public event Action? Paused
         {

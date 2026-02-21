@@ -35,6 +35,12 @@ public static class ServiceCollectionExtensions
             sp.GetService<CryptoSoftService>(),
             sp.GetService<BusinessSoftwareService>()
         ));
+
+        // Parallel backup job engine
+        services.AddSingleton<BackupJobEngine>(sp => new BackupJobEngine(
+            sp.GetRequiredService<BackupWorkService>(),
+            sp.GetService<BusinessSoftwareService>()
+        ));
         
         return services;
     }

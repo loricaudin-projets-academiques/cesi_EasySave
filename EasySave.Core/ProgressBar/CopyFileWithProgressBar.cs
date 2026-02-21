@@ -29,6 +29,9 @@ namespace EasySave.Core.ProgressBar
         /// <summary>Called between chunks to check if the backup should pause. Returns true if paused.</summary>
         public Func<bool>? PauseChecker { get; set; }
 
+        /// <summary>Token checked between chunks to support immediate stop.</summary>
+        public CancellationToken CancellationToken { get; set; }
+
         /// <summary>Event raised when the backup is paused due to business software.</summary>
         public event Action? Paused;
 
@@ -142,12 +145,16 @@ namespace EasySave.Core.ProgressBar
             int read;
             while ((read = input.Read(buffer, 0, buffer.Length)) > 0)
             {
-                // Check for business software pause between chunks
+                // Check for cancellation (Stop)
+                CancellationToken.ThrowIfCancellationRequested();
+
+                // Check for pause between chunks
                 if (PauseChecker != null && PauseChecker())
                 {
                     Paused?.Invoke();
-                    while (PauseChecker())
-                        Thread.Sleep(500);
+                    while (PauseChecker() && !CancellationToken.IsCancellationRequested)
+                        Thread.Sleep(250);
+                    CancellationToken.ThrowIfCancellationRequested();
                     Resumed?.Invoke();
                 }
 

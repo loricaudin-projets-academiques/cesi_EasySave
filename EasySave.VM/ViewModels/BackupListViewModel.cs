@@ -12,6 +12,7 @@ namespace EasySave.VM.ViewModels;
 public partial class BackupListViewModel : ObservableObject, IBackupEventObserver
 {
     private readonly BackupWorkService _backupService;
+    private readonly BackupJobEngine _engine;
     private readonly ILocalizationService _localization;
     private readonly IShellNavigationService _navigation;
     private readonly IUiDispatcher _ui;
@@ -39,16 +40,23 @@ public partial class BackupListViewModel : ObservableObject, IBackupEventObserve
 
     public BackupListViewModel(
         BackupWorkService backupService,
+        BackupJobEngine engine,
         ILocalizationService localization,
         IShellNavigationService navigation,
         IUiDispatcher ui,
         IAppEvents events)
     {
         _backupService = backupService;
+        _engine = engine;
         _localization = localization;
         _navigation = navigation;
         _ui = ui;
         _events = events;
+
+        // Subscribe to engine events
+        _engine.JobStateChanged += OnJobStateChanged;
+        _engine.JobProgressChanged += OnJobProgressChanged;
+        _engine.AllJobsCompleted += OnAllJobsCompleted;
 
         UpdateLocalizedTexts();
         Refresh();
@@ -76,6 +84,8 @@ public partial class BackupListViewModel : ObservableObject, IBackupEventObserve
         ConfirmDeleteText = _localization.Get("gui.buttons.delete_confirm");
         CancelText = _localization.Get("gui.buttons.cancel");
     }
+
+    // ===== Navigation / CRUD commands =====
 
     [RelayCommand]
     private void AddBackup()
@@ -135,150 +145,146 @@ public partial class BackupListViewModel : ObservableObject, IBackupEventObserve
         Refresh();
     }
 
-    [RelayCommand]
-    private async Task RunBackupAsync(SelectableBackupItem? item)
-    {
-        if (item == null || IsRunning) return;
-        var index = Backups.IndexOf(item);
-        if (index < 0) return;
-
-        IsRunning = true;
-        CurrentProgress = 0;
-        StatusMessage = _localization.Get("gui.status.running_backup", item.Backup.Name);
-
-        try
-        {
-            await Task.Run(() => _backupService.ExecuteWork(index));
-        }
-        catch (Exception ex)
-        {
-            StatusMessage = _localization.Get("gui.status.error", ex.Message);
-        }
-        finally
-        {
-            IsRunning = false;
-        }
-    }
+    // ===== Parallel execution commands =====
 
     [RelayCommand]
     private async Task RunAllAsync()
     {
         if (IsRunning) return;
-
-        IsRunning = true;
-        CurrentProgress = 0;
-        StatusMessage = _localization.Get("gui.status.running");
-
-        try
-        {
-            for (int i = 0; i < Backups.Count; i++)
-            {
-                var name = Backups[i].Backup.Name;
-                StatusMessage = _localization.Get("gui.status.running_backup", name);
-                await Task.Run(() => _backupService.ExecuteWork(i));
-            }
-
-            CurrentProgress = 100;
-            StatusMessage = _localization.Get("gui.status.completed");
-        }
-        catch (Exception ex)
-        {
-            StatusMessage = _localization.Get("gui.status.error", ex.Message);
-        }
-        finally
-        {
-            IsRunning = false;
-        }
+        await LaunchJobs(Enumerable.Range(0, Backups.Count));
     }
 
     [RelayCommand]
     private async Task RunSelectedAsync()
     {
         if (IsRunning) return;
+        var indices = Backups
+            .Select((b, i) => (b, i))
+            .Where(x => x.b.IsSelected)
+            .Select(x => x.i)
+            .ToList();
+        if (indices.Count == 0) return;
+        await LaunchJobs(indices);
+    }
 
-        var selected = Backups.Where(b => b.IsSelected).ToList();
-        if (selected.Count == 0) return;
-
+    private async Task LaunchJobs(IEnumerable<int> indices)
+    {
         IsRunning = true;
         CurrentProgress = 0;
         StatusMessage = _localization.Get("gui.status.running");
 
         try
         {
-            foreach (var item in selected)
-            {
-                var index = Backups.IndexOf(item);
-                if (index < 0) continue;
-
-                StatusMessage = _localization.Get("gui.status.running_backup", item.Backup.Name);
-                await Task.Run(() => _backupService.ExecuteWork(index));
-            }
-
-            CurrentProgress = 100;
-            StatusMessage = _localization.Get("gui.status.completed");
+            await _engine.RunJobsAsync(indices);
         }
         catch (Exception ex)
         {
             StatusMessage = _localization.Get("gui.status.error", ex.Message);
         }
-        finally
+    }
+
+    // ===== Per-item Play/Pause toggle + Stop =====
+
+    [RelayCommand]
+    private void TogglePlayPause(SelectableBackupItem? item)
+    {
+        if (item == null) return;
+        var index = Backups.IndexOf(item);
+        var runner = _engine.GetRunner(index);
+
+        // Not yet launched, or finished (Done/Stopped/Error) → (re)launch
+        if (runner == null || runner.State == JobState.Done || runner.State == JobState.Stopped || runner.State == JobState.Error)
         {
-            IsRunning = false;
+            item.JobState = JobState.Idle;
+            item.Progress = 0;
+            _ = LaunchJobs(new[] { index });
+            return;
+        }
+
+        switch (runner.State)
+        {
+            case JobState.Running:
+                runner.Pause();
+                break;
+            case JobState.Paused:
+                runner.Resume();
+                break;
         }
     }
 
-    // ===== Observer callbacks (called from background threads) =====
+    [RelayCommand]
+    private void StopJob(SelectableBackupItem? item)
+    {
+        if (item == null) return;
+        var index = Backups.IndexOf(item);
+        _engine.GetRunner(index)?.Stop();
+    }
 
-    public void OnBackupStarted(string backupName, long totalFiles, long totalSize)
+    // ===== Global controls =====
+
+    [RelayCommand]
+    private void PauseAll() => _engine.PauseAll();
+
+    [RelayCommand]
+    private void ResumeAll() => _engine.ResumeAll();
+
+    [RelayCommand]
+    private void StopAll() => _engine.StopAll();
+
+    // ===== Engine event handlers (called from background threads) =====
+
+    private void OnJobStateChanged(BackupJobRunner runner)
     {
         _ui.Invoke(() =>
         {
-            CurrentProgress = 0;
-            StatusMessage = _localization.Get("gui.status.running_backup", backupName);
+            var item = Backups.ElementAtOrDefault(runner.Index);
+            if (item != null)
+                item.JobState = runner.State;
+
+            // Update global status message
+            StatusMessage = runner.State switch
+            {
+                JobState.Running => _localization.Get("gui.status.running_backup", runner.Name),
+                JobState.Paused => _localization.Get("gui.status.paused", runner.Name),
+                JobState.Stopped => _localization.Get("gui.status.stopped", runner.Name),
+                JobState.Done => _localization.Get("gui.status.backup_completed", runner.Name),
+                JobState.Error => _localization.Get("gui.status.error", runner.Name),
+                _ => StatusMessage
+            };
         });
     }
 
-    public void OnProgressUpdated(string backupName, string currentFile, string targetFile, long filesLeft, long sizeLeft, double progression)
+    private void OnJobProgressChanged(BackupJobRunner runner, double progress)
     {
         _ui.Invoke(() =>
         {
-            CurrentProgress = progression;
+            var item = Backups.ElementAtOrDefault(runner.Index);
+            if (item != null)
+                item.Progress = progress;
+
+            // Update global progress = average of all runners
+            CurrentProgress = _engine.GlobalProgress;
         });
     }
 
-    public void OnBackupCompleted(string backupName)
+    private void OnAllJobsCompleted()
     {
         _ui.Invoke(() =>
         {
+            IsRunning = false;
             CurrentProgress = 100;
-            StatusMessage = _localization.Get("gui.status.backup_completed", backupName);
+            StatusMessage = _localization.Get("gui.status.completed");
         });
     }
 
-    public void OnBackupError(string backupName, Exception ex)
-    {
-        _ui.Invoke(() =>
-        {
-            StatusMessage = _localization.Get("gui.status.error", ex.Message);
-        });
-    }
+    // ===== IBackupEventObserver (kept for logging observer compatibility) =====
 
-    public void OnBackupPaused(string backupName)
-    {
-        _ui.Invoke(() =>
-        {
-            StatusMessage = _localization.Get("gui.status.paused", backupName);
-        });
-    }
-
-    public void OnBackupResumed(string backupName)
-    {
-        _ui.Invoke(() =>
-        {
-            StatusMessage = _localization.Get("gui.status.running_backup", backupName);
-        });
-    }
-
+    public void OnBackupStarted(string backupName, long totalFiles, long totalSize) { }
+    public void OnProgressUpdated(string backupName, string currentFile, string targetFile, long filesLeft, long sizeLeft, double progression) { }
+    public void OnBackupCompleted(string backupName) { }
+    public void OnBackupError(string backupName, Exception ex) { }
+    public void OnBackupPaused(string backupName) { }
+    public void OnBackupResumed(string backupName) { }
     public void OnFileTransferred(string backupName, string sourceFile, string targetFile, long fileSize, double transferTimeMs) { }
     public void OnFileTransferError(string backupName, string sourceFile, string targetFile, long fileSize, Exception ex) { }
 }
