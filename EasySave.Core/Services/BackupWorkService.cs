@@ -218,7 +218,8 @@ namespace EasySave.Core.Services
                     return;
 
                 // If business software is running BEFORE starting, wait for it to close
-                if (_businessService != null && _businessService.IsRunning())
+                // Skip if a BackupJobRunner already configured pause/cancel (HasExternalControls)
+                if (_businessService != null && _businessService.IsRunning() && !work.HasExternalControls)
                 {
                     var softwareName = _businessService.GetBusinessSoftwareName() ?? "Unknown";
                     _logger.LogBackupBlocked(index, work.Name, softwareName);
@@ -235,22 +236,6 @@ namespace EasySave.Core.Services
                 
                 NotifyObservers(o => o.OnBackupStarted(work.Name, files.Length, totalSize));
                 _logger.StartBackup(index, work.Name, files.Length, totalSize);
-
-                // Set up pause checker for business software detection DURING backup
-                if (_businessService != null)
-                {
-                    work.SetPauseChecker(() => _businessService.IsRunning());
-                    work.Paused += () =>
-                    {
-                        var softwareName = _businessService.GetBusinessSoftwareName() ?? "Unknown";
-                        _logger.LogBackupStopped(index, work.Name, softwareName);
-                        NotifyObservers(o => o.OnBackupPaused(work.Name));
-                    };
-                    work.Resumed += () =>
-                    {
-                        NotifyObservers(o => o.OnBackupResumed(work.Name));
-                    };
-                }
 
                 // Connect file transfer events - encryption happens HERE at service level
                 work.FileTransferred += (sender, args) => 
@@ -297,13 +282,23 @@ namespace EasySave.Core.Services
                 _logger.CompleteBackup(index);
                 NotifyObservers(o => o.OnBackupCompleted(work.Name));
             }
+            catch (OperationCanceledException)
+            {
+                // Stopped by user — do NOT log as completed or error
+                var work2 = GetWorkByIndex(index);
+                if (work2 != null)
+                {
+                    _logger.StopBackup(index);
+                }
+                throw; // re-throw so BackupJobRunner catches it as Stopped
+            }
             catch (Exception ex)
             {
-                var work = GetWorkByIndex(index);
-                if (work != null)
+                var work2 = GetWorkByIndex(index);
+                if (work2 != null)
                 {
                     _logger.ErrorBackup(index);
-                    NotifyObservers(o => o.OnBackupError(work.Name, ex));
+                    NotifyObservers(o => o.OnBackupError(work2.Name, ex));
                 }
             }
         }
@@ -321,6 +316,24 @@ namespace EasySave.Core.Services
         /// </summary>
         /// <returns>Number of backup works.</returns>
         public int GetWorkCount() => _workList.GetCount();
+
+        /// <summary>
+        /// Updates the real-time state log to PAUSED for the given work index.
+        /// Called by BackupJobEngine when a runner pauses.
+        /// </summary>
+        public void LogStatePaused(int workIndex) => _logger.PauseBackup(workIndex);
+
+        /// <summary>
+        /// Updates the real-time state log to ACTIVE for the given work index.
+        /// Called by BackupJobEngine when a runner resumes.
+        /// </summary>
+        public void LogStateResumed(int workIndex) => _logger.ResumeBackup(workIndex);
+
+        /// <summary>
+        /// Updates the real-time state log to STOPPED for the given work index.
+        /// Called by BackupJobEngine when a runner is stopped.
+        /// </summary>
+        public void LogStateStopped(int workIndex) => _logger.StopBackup(workIndex);
 
         #endregion
 

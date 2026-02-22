@@ -1,4 +1,4 @@
-using EasyLog.Configuration;
+﻿using EasyLog.Configuration;
 using EasyLog.Models;
 
 namespace EasyLog.Services
@@ -224,6 +224,14 @@ namespace EasyLog.Services
         }
 
         /// <summary>
+        /// Marks a backup as stopped by user (by index).
+        /// </summary>
+        public void StopBackup(int workIndex)
+        {
+            UpdateBackupState(workIndex, BackupState.STOPPED, clearPaths: true);
+        }
+
+        /// <summary>
         /// Marks a backup as error (by index).
         /// </summary>
         public void ErrorBackup(int workIndex)
@@ -288,3 +296,4 @@ namespace EasyLog.Services
         #endregion
     }
 }
+

@@ -147,7 +147,8 @@
     "settings": {
       "crypto_path": "CryptoSoft path:",
       "encrypt_extensions": "Extensions to encrypt:",
-      "business_software": "Business software (process):"
+      "business_software": "Business software (process):",
+      "large_file_threshold": "Large file threshold (KB):"
     },
     "editor": {
       "title_create": "Create backup",
@@ -177,6 +178,7 @@
       "logtype_changed": "Log format changed from {0} to {1}",
       "delete_confirm": "Delete '{0}'?",
       "blocked_business": "Backup blocked: business software '{0}' is running",
+      "pausing": "Backup '{0}' pausing after current file...",
       "paused": "Backup '{0}' paused",
       "stopped": "Backup '{0}' stopped",
       "settings_saved": "Settings saved"

@@ -147,7 +147,8 @@
     "settings": {
       "crypto_path": "Chemin CryptoSoft :",
       "encrypt_extensions": "Extensions à chiffrer :",
-      "business_software": "Logiciel métier (processus) :"
+      "business_software": "Logiciel métier (processus) :",
+      "large_file_threshold": "Seuil fichier volumineux (Ko) :"
     },
     "editor": {
       "title_create": "Créer une sauvegarde",
@@ -177,6 +178,7 @@
       "logtype_changed": "Format des logs changé de {0} à {1}",
       "delete_confirm": "Supprimer '{0}' ?",
       "blocked_business": "Sauvegarde bloquée : logiciel métier '{0}' en cours d'exécution",
+      "pausing": "Sauvegarde '{0}' en pause après le fichier en cours...",
       "paused": "Sauvegarde '{0}' en pause",
       "stopped": "Sauvegarde '{0}' arrêtée",
       "settings_saved": "Paramètres enregistrés"

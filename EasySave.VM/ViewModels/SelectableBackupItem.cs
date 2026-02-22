@@ -19,14 +19,15 @@ public partial class SelectableBackupItem : ObservableObject
     /// </summary>
     public string ToggleIcon => JobState switch
     {
-        JobState.Running => "\uE769",  // Pause icon
-        _ => "\uE768"                   // Play icon
+        JobState.Running => "\uE769",   // Pause icon
+        JobState.Pausing => "\uE769",   // Pause icon (still finishing file)
+        _ => "\uE768"                    // Play icon
     };
 
     /// <summary>
-    /// Whether the stop button should be enabled (only when running or paused).
+    /// Whether the stop button should be enabled (only when active).
     /// </summary>
-    public bool IsStopVisible => JobState == JobState.Running || JobState == JobState.Paused;
+    public bool IsStopVisible => JobState == JobState.Running || JobState == JobState.Paused || JobState == JobState.Pausing;
 
     public SelectableBackupItem(BackupWork backup)
     {

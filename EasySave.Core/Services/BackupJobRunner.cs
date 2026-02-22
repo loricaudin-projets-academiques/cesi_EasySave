@@ -11,6 +11,7 @@ public enum JobState
 {
     Idle,
     Running,
+    Pausing,  // Pause requested, finishing current file
     Paused,
     Stopped,
     Done,
@@ -56,13 +57,14 @@ public class BackupJobRunner
     }
 
     /// <summary>
-    /// Pause this job (effective after current chunk finishes).
+    /// Pause this job (effective after the current file finishes transferring).
+    /// Sets state to Pausing immediately so the UI can inform the user.
     /// </summary>
     public void Pause()
     {
         if (State != JobState.Running) return;
-        _pauseGate.Reset();
-        SetState(JobState.Paused);
+        _pauseGate.Reset();          // signal the gate — will be checked between files
+        SetState(JobState.Pausing);   // UI shows "pausing after current file…"
     }
 
     /// <summary>
@@ -80,63 +82,71 @@ public class BackupJobRunner
     /// </summary>
     public void Stop()
     {
-        if (State != JobState.Running && State != JobState.Paused) return;
+        if (State != JobState.Running && State != JobState.Paused && State != JobState.Pausing) return;
         _cts.Cancel();
         _pauseGate.Set(); // unblock if paused so cancellation can propagate
+        Progress = 0;
         SetState(JobState.Stopped);
+        ProgressChanged?.Invoke(this, 0);
     }
 
     /// <summary>
     /// Runs the backup synchronously (call via Task.Run for parallel).
     /// Wires pause/cancel into the BackupWork, then delegates to BackupWorkService.
     /// </summary>
-    public void Run(Func<bool>? businessSoftwareChecker)
+    public void Run(Func<bool>? businessSoftwareChecker, LargeFileTransferLock? largeFileLock = null)
     {
         if (State != JobState.Idle) return;
 
         SetState(JobState.Running);
 
-        // Combined pause checker: manual pause OR business software running
-        _work.SetPauseChecker(() =>
-        {
-            // If manually paused, block here
-            if (!_pauseGate.IsSet)
-            {
-                _pauseGate.Wait(_cts.Token);
-                return false; // just resumed, don't report as "still paused"
-            }
-            // Business software check
-            return businessSoftwareChecker != null && businessSoftwareChecker();
-        });
+        // Business software pause checker (between chunks, mid-file)
+        if (businessSoftwareChecker != null)
+            _work.SetPauseChecker(businessSoftwareChecker);
+
+        // Manual pause gate (between files, after current file finishes)
+        _work.SetManualPauseGate(_pauseGate);
 
         _work.SetCancellationToken(_cts.Token);
+        _work.SetLargeFileLock(largeFileLock);
 
-        // Subscribe to progress
+        // Subscribe to progress and pause events
         _work.FileProgress += OnFileProgress;
         _work.Paused += OnWorkPaused;
         _work.Resumed += OnWorkResumed;
+        _work.ManualPaused += OnManualPaused;
+        _work.ManualResumed += OnManualResumed;
 
         try
         {
             _service.ExecuteWork(_index);
             if (State == JobState.Running)
+            {
                 SetState(JobState.Done);
-            Progress = 100;
-            ProgressChanged?.Invoke(this, 100);
+                Progress = 100;
+                ProgressChanged?.Invoke(this, 100);
+            }
         }
         catch (OperationCanceledException)
         {
-            SetState(JobState.Stopped);
+            if (State != JobState.Stopped)
+                SetState(JobState.Stopped);
+            Progress = 0;
+            ProgressChanged?.Invoke(this, 0);
         }
         catch (Exception)
         {
             SetState(JobState.Error);
+            Progress = 0;
+            ProgressChanged?.Invoke(this, 0);
         }
         finally
         {
             _work.FileProgress -= OnFileProgress;
             _work.Paused -= OnWorkPaused;
             _work.Resumed -= OnWorkResumed;
+            _work.ManualPaused -= OnManualPaused;
+            _work.ManualResumed -= OnManualResumed;
         }
     }
 
@@ -149,6 +159,7 @@ public class BackupJobRunner
         }
     }
 
+    // Business software pause (between chunks)
     private void OnWorkPaused()
     {
         if (State == JobState.Running)
@@ -156,6 +167,19 @@ public class BackupJobRunner
     }
 
     private void OnWorkResumed()
+    {
+        if (State == JobState.Paused)
+            SetState(JobState.Running);
+    }
+
+    // Manual pause (between files — after current file finishes)
+    private void OnManualPaused()
+    {
+        if (State == JobState.Pausing)
+            SetState(JobState.Paused);
+    }
+
+    private void OnManualResumed()
     {
         if (State == JobState.Paused)
             SetState(JobState.Running);
