@@ -26,17 +26,29 @@ namespace EasySave.Core.ProgressBar
         /// <summary>Event raised when a file transfer fails.</summary>
         public event EventHandler<FileCopyErrorEventArgs>? FileTransferError;
 
-        /// <summary>Called between chunks to check if the backup should pause. Returns true if paused.</summary>
+        /// <summary>Called between chunks to check if the backup should pause (business software). Returns true if paused.</summary>
         public Func<bool>? PauseChecker { get; set; }
+
+        /// <summary>Gate for manual pause: reset = paused, set = running. Checked between files (not mid-file).</summary>
+        public ManualResetEventSlim? ManualPauseGate { get; set; }
 
         /// <summary>Token checked between chunks to support immediate stop.</summary>
         public CancellationToken CancellationToken { get; set; }
+
+        /// <summary>Shared lock that prevents parallel transfer of large files.</summary>
+        public Services.LargeFileTransferLock? LargeFileLock { get; set; }
 
         /// <summary>Event raised when the backup is paused due to business software.</summary>
         public event Action? Paused;
 
         /// <summary>Event raised when the backup resumes after business software closes.</summary>
         public event Action? Resumed;
+
+        /// <summary>Event raised when manual pause takes effect (after current file).</summary>
+        public event Action? ManualPaused;
+
+        /// <summary>Event raised when manual pause is released.</summary>
+        public event Action? ManualResumed;
 
         public CopyFileWithProgressBar(BackupState backupState)
         {
@@ -70,6 +82,17 @@ namespace EasySave.Core.ProgressBar
 
             foreach (string file in files)
             {
+                // Check for cancellation before starting next file
+                CancellationToken.ThrowIfCancellationRequested();
+
+                // Manual pause: wait between files (after current file finished)
+                if (ManualPauseGate != null && !ManualPauseGate.IsSet)
+                {
+                    ManualPaused?.Invoke();
+                    ManualPauseGate.Wait(CancellationToken);
+                    ManualResumed?.Invoke();
+                }
+
                 string fileName = Path.GetFileName(file);
                 string destFile = Path.Combine(dest, fileName);
 
@@ -83,9 +106,15 @@ namespace EasySave.Core.ProgressBar
         private void CopyFile(string source, string dest)
         {
             var stopwatch = Stopwatch.StartNew();
+            var fileSize = new FileInfo(source).Length;
+            bool lockAcquired = false;
 
             try
             {
+                // Acquire large file lock if needed (blocks until no other large file is transferring)
+                if (LargeFileLock != null)
+                    lockAcquired = LargeFileLock.Acquire(fileSize, CancellationToken);
+
                 this.CopyWithProgress(source, dest, bytesCopiedInFile =>
                 {
                     // Mise à jour locale
@@ -114,7 +143,7 @@ namespace EasySave.Core.ProgressBar
                 {
                     SourceFile = source,
                     DestFile = dest,
-                    FileSize = new FileInfo(source).Length,
+                    FileSize = fileSize,
                     TransferTimeMs = stopwatch.Elapsed.TotalMilliseconds
                 });
             }
@@ -126,11 +155,17 @@ namespace EasySave.Core.ProgressBar
                 {
                     SourceFile = source,
                     DestFile = dest,
-                    FileSize = new FileInfo(source).Length,
+                    FileSize = fileSize,
                     Exception = ex
                 });
 
                 throw;
+            }
+            finally
+            {
+                // Always release the lock if we acquired it
+                if (lockAcquired)
+                    LargeFileLock?.Release();
             }
         }
 

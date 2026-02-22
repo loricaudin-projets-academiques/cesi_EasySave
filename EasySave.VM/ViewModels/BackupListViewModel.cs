@@ -157,7 +157,6 @@ public partial class BackupListViewModel : ObservableObject, IBackupEventObserve
     [RelayCommand]
     private async Task RunSelectedAsync()
     {
-        if (IsRunning) return;
         var indices = Backups
             .Select((b, i) => (b, i))
             .Where(x => x.b.IsSelected)
@@ -170,7 +169,6 @@ public partial class BackupListViewModel : ObservableObject, IBackupEventObserve
     private async Task LaunchJobs(IEnumerable<int> indices)
     {
         IsRunning = true;
-        CurrentProgress = 0;
         StatusMessage = _localization.Get("gui.status.running");
 
         try
@@ -205,6 +203,9 @@ public partial class BackupListViewModel : ObservableObject, IBackupEventObserve
         {
             case JobState.Running:
                 runner.Pause();
+                break;
+            case JobState.Pausing:
+                // Already pausing, ignore
                 break;
             case JobState.Paused:
                 runner.Resume();
@@ -241,16 +242,27 @@ public partial class BackupListViewModel : ObservableObject, IBackupEventObserve
             if (item != null)
                 item.JobState = runner.State;
 
+            // Reset individual progress bar on stop/error
+            if (item != null && (runner.State == JobState.Stopped || runner.State == JobState.Error))
+                item.Progress = 0;
+
             // Update global status message
             StatusMessage = runner.State switch
             {
                 JobState.Running => _localization.Get("gui.status.running_backup", runner.Name),
+                JobState.Pausing => _localization.Get("gui.status.pausing", runner.Name),
                 JobState.Paused => _localization.Get("gui.status.paused", runner.Name),
                 JobState.Stopped => _localization.Get("gui.status.stopped", runner.Name),
                 JobState.Done => _localization.Get("gui.status.backup_completed", runner.Name),
                 JobState.Error => _localization.Get("gui.status.error", runner.Name),
                 _ => StatusMessage
             };
+
+            // Update global progress: 0 if nothing active, otherwise average
+            CurrentProgress = _engine.IsAnyActive ? _engine.GlobalProgress : 0;
+
+            // Track IsRunning based on whether any job is still active
+            IsRunning = _engine.IsAnyActive;
         });
     }
 
@@ -258,12 +270,16 @@ public partial class BackupListViewModel : ObservableObject, IBackupEventObserve
     {
         _ui.Invoke(() =>
         {
+            // Ignore late progress events from stopped/error runners
+            if (runner.State == JobState.Stopped || runner.State == JobState.Error)
+                return;
+
             var item = Backups.ElementAtOrDefault(runner.Index);
             if (item != null)
                 item.Progress = progress;
 
-            // Update global progress = average of all runners
-            CurrentProgress = _engine.GlobalProgress;
+            // Update global progress = average of active runners, 0 if none active
+            CurrentProgress = _engine.IsAnyActive ? _engine.GlobalProgress : 0;
         });
     }
 
@@ -272,7 +288,7 @@ public partial class BackupListViewModel : ObservableObject, IBackupEventObserve
         _ui.Invoke(() =>
         {
             IsRunning = false;
-            CurrentProgress = 100;
+            CurrentProgress = 0;
             StatusMessage = _localization.Get("gui.status.completed");
         });
     }

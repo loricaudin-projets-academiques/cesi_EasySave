@@ -10,6 +10,7 @@ public class BackupJobEngine
 {
     private readonly BackupWorkService _service;
     private readonly BusinessSoftwareService? _businessService;
+    private readonly LargeFileTransferLock? _largeFileLock;
     private readonly List<BackupJobRunner> _runners = new();
     private readonly object _lock = new();
 
@@ -22,10 +23,11 @@ public class BackupJobEngine
     /// <summary>Fired when all jobs in a batch are finished (Done/Stopped/Error).</summary>
     public event Action? AllJobsCompleted;
 
-    public BackupJobEngine(BackupWorkService service, BusinessSoftwareService? businessService)
+    public BackupJobEngine(BackupWorkService service, BusinessSoftwareService? businessService, LargeFileTransferLock? largeFileLock = null)
     {
         _service = service;
         _businessService = businessService;
+        _largeFileLock = largeFileLock;
     }
 
     /// <summary>
@@ -38,15 +40,22 @@ public class BackupJobEngine
 
     /// <summary>
     /// Launches the given work indices in parallel.
-    /// Returns a Task that completes when all jobs finish.
+    /// Accumulates runners (does not clear existing ones).
+    /// Returns a Task that completes when the launched jobs finish.
     /// </summary>
     public async Task RunJobsAsync(IEnumerable<int> indices)
     {
-        lock (_lock) _runners.Clear();
-
         var works = new List<(int index, BackupWork work)>();
         foreach (var i in indices)
         {
+            // Skip if a runner for this index is already active
+            var existing = GetRunner(i);
+            if (existing != null && (existing.State == JobState.Running || existing.State == JobState.Paused || existing.State == JobState.Pausing))
+                continue;
+
+            // Remove stale runner for this index (Done/Stopped/Error)
+            lock (_lock) _runners.RemoveAll(r => r.Index == i);
+
             var w = _service.GetWorkByIndex(i);
             if (w != null) works.Add((i, w));
         }
@@ -67,11 +76,14 @@ public class BackupJobEngine
 
             lock (_lock) _runners.Add(runner);
 
-            tasks.Add(Task.Run(() => runner.Run(bizChecker)));
+            tasks.Add(Task.Run(() => runner.Run(bizChecker, _largeFileLock)));
         }
 
         await Task.WhenAll(tasks);
-        AllJobsCompleted?.Invoke();
+
+        // Only fire AllJobsCompleted if no runner is still active
+        if (!IsAnyActive)
+            AllJobsCompleted?.Invoke();
     }
 
     /// <summary>Get a runner by its work index.</summary>
@@ -101,22 +113,40 @@ public class BackupJobEngine
             r.Stop();
     }
 
-    /// <summary>Global progress: average of all runners.</summary>
+    /// <summary>Global progress: average of runners that are Running, Pausing, Paused, or Done.</summary>
     public double GlobalProgress
     {
         get
         {
-            var runners = Runners;
-            if (runners.Count == 0) return 0;
-            return runners.Average(r => r.Progress);
+            var relevant = Runners.Where(r =>
+                r.State == JobState.Running ||
+                r.State == JobState.Pausing ||
+                r.State == JobState.Paused ||
+                r.State == JobState.Done).ToList();
+            if (relevant.Count == 0) return 0;
+            return relevant.Average(r => r.Progress);
         }
     }
 
-    /// <summary>True if any runner is Running or Paused.</summary>
-    public bool IsAnyActive => Runners.Any(r => r.State == JobState.Running || r.State == JobState.Paused);
+    /// <summary>True if any runner is Running, Pausing, or Paused.</summary>
+    public bool IsAnyActive => Runners.Any(r => r.State == JobState.Running || r.State == JobState.Paused || r.State == JobState.Pausing);
 
     private void OnRunnerStateChanged(BackupJobRunner runner)
     {
+        // Update real-time state log file
+        switch (runner.State)
+        {
+            case JobState.Paused:
+                _service.LogStatePaused(runner.Index);
+                break;
+            case JobState.Running:
+                _service.LogStateResumed(runner.Index);
+                break;
+            case JobState.Stopped:
+                _service.LogStateStopped(runner.Index);
+                break;
+        }
+
         JobStateChanged?.Invoke(runner);
     }
 

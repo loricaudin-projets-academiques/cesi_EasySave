@@ -78,11 +78,32 @@ namespace EasySave.Core.Models
         }
 
         /// <summary>
+        /// Returns true if pause/cancel controls have already been configured (e.g. by BackupJobRunner).
+        /// </summary>
+        public bool HasExternalControls => _cp.PauseChecker != null || _cp.ManualPauseGate != null;
+
+        /// <summary>
         /// Sets a cancellation token checked between chunks to support stop.
         /// </summary>
         public void SetCancellationToken(CancellationToken ct)
         {
             _cp.CancellationToken = ct;
+        }
+
+        /// <summary>
+        /// Sets the shared large file transfer lock (prevents parallel large file transfers).
+        /// </summary>
+        public void SetLargeFileLock(Services.LargeFileTransferLock? lockObj)
+        {
+            _cp.LargeFileLock = lockObj;
+        }
+
+        /// <summary>
+        /// Sets the manual pause gate (checked between files, not mid-file).
+        /// </summary>
+        public void SetManualPauseGate(ManualResetEventSlim? gate)
+        {
+            _cp.ManualPauseGate = gate;
         }
 
         /// <summary>Event raised when the backup pauses due to business software.</summary>
@@ -97,6 +118,20 @@ namespace EasySave.Core.Models
         {
             add => _cp.Resumed += value;
             remove => _cp.Resumed -= value;
+        }
+
+        /// <summary>Event raised when manual pause takes effect (after current file).</summary>
+        public event Action? ManualPaused
+        {
+            add => _cp.ManualPaused += value;
+            remove => _cp.ManualPaused -= value;
+        }
+
+        /// <summary>Event raised when manual pause is released.</summary>
+        public event Action? ManualResumed
+        {
+            add => _cp.ManualResumed += value;
+            remove => _cp.ManualResumed -= value;
         }
 
         /// <summary>

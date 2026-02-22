@@ -27,6 +27,7 @@ public partial class SettingsViewModel : ObservableObject
     [ObservableProperty] private string _newExtension = string.Empty;
 
     [ObservableProperty] private string _businessSoftware = string.Empty;
+    [ObservableProperty] private string _largeFileThreshold = "0";
 
     [ObservableProperty] private string _statusMessage = string.Empty;
 
@@ -37,6 +38,7 @@ public partial class SettingsViewModel : ObservableObject
     [ObservableProperty] private string _encryptExtensionsLabel = string.Empty;
     [ObservableProperty] private string _businessSoftwareLabel = string.Empty;
     [ObservableProperty] private string _runningProcessesLabel = string.Empty;
+    [ObservableProperty] private string _largeFileThresholdLabel = string.Empty;
     [ObservableProperty] private string _addExtensionButtonText = string.Empty;
     [ObservableProperty] private string _removeButtonText = string.Empty;
     [ObservableProperty] private string _refreshProcessesButtonText = string.Empty;
@@ -70,6 +72,7 @@ public partial class SettingsViewModel : ObservableObject
         EncryptExtensionsLabel = _localization.Get("gui.settings.encrypt_extensions");
         BusinessSoftwareLabel = _localization.Get("gui.settings.business_software");
         RunningProcessesLabel = _localization.Get("gui.pages.running_processes");
+        LargeFileThresholdLabel = _localization.Get("gui.settings.large_file_threshold");
         AddExtensionButtonText = _localization.Get("gui.buttons.add_extension");
         RemoveButtonText = _localization.Get("gui.buttons.remove");
         RefreshProcessesButtonText = _localization.Get("gui.buttons.refresh");
@@ -82,6 +85,7 @@ public partial class SettingsViewModel : ObservableObject
         SelectedLogFormat = AvailableLogFormats.Contains(_config.LogType) ? _config.LogType : "json";
 
         BusinessSoftware = _config.BusinessSoftware;
+        LargeFileThreshold = _config.LargeFileThresholdKB.ToString();
 
         EncryptExtensionsRaw = _config.EncryptExtensions;
         SyncExtensionsCollection();
@@ -156,6 +160,11 @@ public partial class SettingsViewModel : ObservableObject
     {
         var normalized = (BusinessSoftware ?? string.Empty).Replace(".exe", "", StringComparison.OrdinalIgnoreCase).Trim();
         _config.BusinessSoftware = normalized;
+
+        if (long.TryParse(LargeFileThreshold, out var threshold) && threshold >= 0)
+            _config.LargeFileThresholdKB = threshold;
+        else
+            _config.LargeFileThresholdKB = 0;
 
         _config.Save();
         StatusMessage = _localization.Get("gui.status.settings_saved");

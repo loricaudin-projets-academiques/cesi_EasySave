@@ -31,6 +31,12 @@ namespace EasySave.Core.Settings
         /// Empty string means no blocking.
         /// </summary>
         public string BusinessSoftware { get; set; } = string.Empty;
+
+        /// <summary>
+        /// Large file threshold in KB. Files larger than this cannot be transferred
+        /// in parallel (only one at a time). 0 = disabled (no restriction).
+        /// </summary>
+        public long LargeFileThresholdKB { get; set; } = 0;
         
         /// <summary>Path to the loaded config file.</summary>
         public string ConfigFilePath { get; private set; } = string.Empty;
@@ -214,6 +220,8 @@ namespace EasySave.Core.Settings
                     ? cryptoProp.GetString() ?? "CryptoSoft.exe" : "CryptoSoft.exe";
                 var businessSoftware = appSettings.TryGetProperty("BusinessSoftware", out var businessProp) 
                     ? businessProp.GetString() ?? "" : "";
+                var largeFileThreshold = appSettings.TryGetProperty("LargeFileThresholdKB", out var lfProp) 
+                    ? lfProp.GetInt64() : 0;
 
                 return new Config 
                 { 
@@ -225,6 +233,7 @@ namespace EasySave.Core.Settings
                     EncryptExtensions = encryptExtensions,
                     CryptoSoftPath = cryptoSoftPath,
                     BusinessSoftware = businessSoftware,
+                    LargeFileThresholdKB = largeFileThreshold,
                     LogType = logType.ToLowerInvariant(),
                     ConfigFilePath = Path.GetFullPath(configPath)
                 };
@@ -253,7 +262,8 @@ namespace EasySave.Core.Settings
                     LogType = LogType,
                     EncryptExtensions = EncryptExtensions,
                     CryptoSoftPath = CryptoSoftPath,
-                    BusinessSoftware = BusinessSoftware
+                    BusinessSoftware = BusinessSoftware,
+                    LargeFileThresholdKB = LargeFileThresholdKB
                 } 
             }, new JsonSerializerOptions { WriteIndented = true });
             
