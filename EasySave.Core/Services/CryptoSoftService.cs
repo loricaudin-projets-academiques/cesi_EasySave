@@ -9,6 +9,7 @@ namespace EasySave.Core.Services
     public class CryptoSoftService
     {
         private readonly Config _config;
+        private static Mutex _mutex = new Mutex(false);
 
         public CryptoSoftService(Config config)
         {
@@ -68,7 +69,10 @@ namespace EasySave.Core.Services
                     RedirectStandardError = true
                 };
 
+                _mutex.WaitOne();
                 using var process = Process.Start(psi);
+                _mutex.ReleaseMutex();
+
                 if (process == null)
                 {
                     return new EncryptionResult 
