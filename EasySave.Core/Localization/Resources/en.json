@@ -108,20 +108,61 @@
     "saving": "Saving..."
   },
   "gui": {
+    "nav": {
+      "backups": "Backups",
+      "settings": "Settings",
+      "about": "About"
+    },
     "buttons": {
       "select_all": "Select all",
       "add": "Add",
       "delete": "Delete",
+      "delete_confirm": "Confirm delete",
       "edit": "Edit",
       "execute": "Run",
       "run_all": "Run all",
+      "run_selected": "Run selected",
       "refresh": "Refresh",
       "options": "Options",
-      "about": "About"
+      "about": "About",
+      "save": "Save",
+      "cancel": "Cancel",
+      "browse": "Browse",
+      "remove": "Remove",
+      "add_extension": "Add extension"
     },
     "labels": {
       "language": "Language:",
       "log_format": "Log format:"
+    },
+    "pages": {
+      "backups_title": "Backups",
+      "settings_title": "Settings",
+      "editor_name": "Name",
+      "editor_source": "Source folder",
+      "editor_destination": "Destination folder",
+      "editor_type": "Backup type",
+      "running_processes": "Running processes"
+    },
+    "settings": {
+      "crypto_path": "CryptoSoft path:",
+      "encrypt_extensions": "Extensions to encrypt:",
+      "business_software": "Business software (process):",
+      "large_file_threshold": "Large file threshold (KB):"
+    },
+    "editor": {
+      "title_create": "Create backup",
+      "title_edit": "Edit backup",
+      "saved": "Backup saved",
+      "error_name_required": "Name is required",
+      "error_source_required": "Source folder is required",
+      "error_destination_required": "Destination folder is required",
+      "error_save_failed": "Save failed"
+    },
+    "about": {
+      "title": "About",
+      "config_path": "Configuration file",
+      "logs_path": "Logs directory"
     },
     "status": {
       "ready": "Ready",
@@ -132,7 +173,15 @@
       "loaded": "{0} backup(s) loaded",
       "deleted": "Backup {0} deleted",
       "error": "Error: {0}",
-      "language_changed": "Language changed to {0}"
+      "language_changed": "Language changed to {0}",
+      "invalid_logtype": "Invalid format: {0}. Available formats: {1}",
+      "logtype_changed": "Log format changed from {0} to {1}",
+      "delete_confirm": "Delete '{0}'?",
+      "blocked_business": "Backup blocked: business software '{0}' is running",
+      "pausing": "Backup '{0}' pausing after current file...",
+      "paused": "Backup '{0}' paused",
+      "stopped": "Backup '{0}' stopped",
+      "settings_saved": "Settings saved"
     }
   }
 }

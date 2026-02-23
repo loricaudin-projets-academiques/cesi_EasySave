@@ -7,26 +7,26 @@
       "arg_source": "Chemin source",
       "arg_destination": "Chemin destination",
       "option_type": "Type de sauvegarde (full/diff)",
-      "success": "? Travail '{0}' ajout� avec succ�s",
+      "success": "? Travail '{0}' ajouté avec succés",
       "error_limit": "? Limite de 5 travaux atteinte",
       "error_invalid_path": "? Chemin invalide : {0}",
-      "error_duplicate": "? Un travail avec ce nom existe d�j�",
+      "error_duplicate": "? Un travail avec ce nom existe déjà",
       "error_invalid_type": "? Type invalide : {0} (utiliser 'full' ou 'diff')"
     },
     "delete": {
       "name": "Supprimer",
       "description": "Supprime un travail de sauvegarde",
       "arg_id": "ID ou nom du travail",
-      "success": "? Travail '{0}' supprim� avec succ�s",
+      "success": "? Travail '{0}' supprimé avec succés",
       "error_not_found": "? Travail '{0}' introuvable",
       "error": "? Erreur lors de la suppression du travail"
     },
     "list": {
       "name": "Lister",
       "description": "Affiche tous les travaux de sauvegarde",
-      "header": "Travaux de sauvegarde configur�s",
-      "empty": "Aucun travail configur�",
-      "no_works": "Aucun travail de sauvegarde configur�",
+      "header": "Travaux de sauvegarde configurés",
+      "empty": "Aucun travail configuré",
+      "no_works": "Aucun travail de sauvegarde configuré",
       "column_id": "ID",
       "column_name": "Nom",
       "column_source": "Source",
@@ -38,9 +38,9 @@
       "name": "Modifier",
       "description": "Modifie un travail de sauvegarde existant",
       "arg_id": "ID ou nom du travail",
-      "success": "? Travail '{0}' modifi� avec succ�s",
+      "success": "? Travail '{0}' modifié avec succés",
       "error_not_found": "? Travail '{0}' introuvable",
-      "no_changes": "? Aucune modification sp�cifi�e",
+      "no_changes": "? Aucune modification spécifiée",
       "error": "? Erreur lors de la modification du travail"
     },
     "run": {
@@ -48,11 +48,11 @@
       "description": "Ex�cute un ou plusieurs travaux de sauvegarde",
       "arg_indices": "Indices des travaux (ex: 1-3 ou 1;3)",
       "starting": "? D�marrage de la sauvegarde '{0}'...",
-      "completed": "? Sauvegarde compl�t�e",
+      "completed": "? Sauvegarde complétée",
       "error_not_found": "? Travail '{0}' introuvable",
       "error_invalid_indices": "? Format d'indices invalide : {0}",
       "progress": "Progression : {0}%",
-      "files_transferred": "Fichiers transf�r�s : {0}/{1}",
+      "files_transferred": "Fichiers transférés : {0}/{1}",
       "total_size": "Taille totale : {0}",
       "elapsed_time": "Temps �coul� : {0}ms"
     },
@@ -80,24 +80,24 @@
     "general": "? Une erreur s'est produite : {0}",
     "invalid_argument": "? Argument invalide : {0}",
     "file_not_found": "? Fichier introuvable : {0}",
-    "access_denied": "? Acc�s refus� : {0}",
+    "access_denied": "? Accés refusé : {0}",
     "invalid_path": "? Chemin invalide : {0}",
     "source_not_found": "? Chemin source introuvable : {0}",
     "destination_not_found": "? Chemin destination introuvable : {0}",
-    "work_not_found": "? Travail de sauvegarde {0} non trouv�",
+    "work_not_found": "? Travail de sauvegarde {0} non trouvé",
     "invalid_backup_type": "? Type de sauvegarde invalide : {0}",
-    "execution_failed": "? Erreur d'ex�cution : {0}",
+    "execution_failed": "? Erreur d'exécution : {0}",
     "backup_io_error": "? Erreur lors de la sauvegarde. V�rifiez que les dossiers sont accessibles et qu'il y a suffisamment d'espace disque."
   },
   "backup_types": {
     "full": "Complet",
-    "diff": "Diff�rentiel"
+    "diff": "Différentiel"
   },
   "status": {
     "active": "Actif",
     "inactive": "Inactif",
     "paused": "En pause",
-    "completed": "Termin�",
+    "completed": "Terminé",
     "error": "Erreur"
   },
   "messages": {
@@ -108,20 +108,61 @@
     "saving": "Sauvegarde..."
   },
   "gui": {
+    "nav": {
+      "backups": "Sauvegardes",
+      "settings": "Paramètres",
+      "about": "À propos"
+    },
     "buttons": {
       "select_all": "Tout sélectionner",
       "add": "Ajouter",
       "delete": "Supprimer",
+      "delete_confirm": "Confirmer la suppression",
       "edit": "Modifier",
       "execute": "Exécuter",
       "run_all": "Tout exécuter",
+      "run_selected": "Exécuter sélection",
       "refresh": "Rafraîchir",
       "options": "Options",
-      "about": "À propos"
+      "about": "À propos",
+      "save": "Enregistrer",
+      "cancel": "Annuler",
+      "browse": "Parcourir",
+      "remove": "Retirer",
+      "add_extension": "Ajouter extension"
     },
     "labels": {
       "language": "Langue :",
       "log_format": "Format des logs :"
+    },
+    "pages": {
+      "backups_title": "Sauvegardes",
+      "settings_title": "Paramètres",
+      "editor_name": "Nom",
+      "editor_source": "Dossier source",
+      "editor_destination": "Dossier destination",
+      "editor_type": "Type de sauvegarde",
+      "running_processes": "Processus en cours"
+    },
+    "settings": {
+      "crypto_path": "Chemin CryptoSoft :",
+      "encrypt_extensions": "Extensions à chiffrer :",
+      "business_software": "Logiciel métier (processus) :",
+      "large_file_threshold": "Seuil fichier volumineux (Ko) :"
+    },
+    "editor": {
+      "title_create": "Créer une sauvegarde",
+      "title_edit": "Modifier une sauvegarde",
+      "saved": "Sauvegarde enregistrée",
+      "error_name_required": "Le nom est obligatoire",
+      "error_source_required": "Le dossier source est obligatoire",
+      "error_destination_required": "Le dossier destination est obligatoire",
+      "error_save_failed": "Échec de l'enregistrement"
+    },
+    "about": {
+      "title": "À propos",
+      "config_path": "Fichier de configuration",
+      "logs_path": "Dossier des logs"
     },
     "status": {
       "ready": "Prêt",
@@ -132,7 +173,15 @@
       "loaded": "{0} sauvegarde(s) chargée(s)",
       "deleted": "Sauvegarde {0} supprimée",
       "error": "Erreur : {0}",
-      "language_changed": "Langue changée en {0}"
+      "language_changed": "Langue changée en {0}",
+      "invalid_logtype": "Format invalide : {0}. Formats disponibles : {1}",
+      "logtype_changed": "Format des logs changé de {0} à {1}",
+      "delete_confirm": "Supprimer '{0}' ?",
+      "blocked_business": "Sauvegarde bloquée : logiciel métier '{0}' en cours d'exécution",
+      "pausing": "Sauvegarde '{0}' en pause après le fichier en cours...",
+      "paused": "Sauvegarde '{0}' en pause",
+      "stopped": "Sauvegarde '{0}' arrêtée",
+      "settings_saved": "Paramètres enregistrés"
     }
   }
 }

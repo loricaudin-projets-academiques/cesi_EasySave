@@ -113,25 +113,34 @@ namespace EasySave.Core.Services
         }
 
         /// <summary>
-        /// Finds the CryptoSoft.exe path.
+        /// Finds the CryptoSoft.exe path by probing several well-known locations.
         /// </summary>
         private string? FindCryptoSoftPath()
         {
-            // 1. Check configured path
-            if (!string.IsNullOrEmpty(_config.CryptoSoftPath) && File.Exists(_config.CryptoSoftPath))
-                return _config.CryptoSoftPath;
-
-            // 2. Check in application directory
+            // 1. Check in application directory (deployed side-by-side)
             var appDirPath = Path.Combine(AppContext.BaseDirectory, "CryptoSoft.exe");
             if (File.Exists(appDirPath))
                 return appDirPath;
+
+            // 2. Check sibling project output (dev mode: ../CryptoSave/bin/<config>/net8.0/)
+            var baseDir = AppContext.BaseDirectory;
+            foreach (var config in new[] { "Debug", "Release" })
+            {
+                var siblingPath = Path.GetFullPath(
+                    Path.Combine(baseDir, "..", "..", "..", "..", "CryptoSave", "bin", config, "net8.0", "CryptoSoft.exe"));
+                if (File.Exists(siblingPath))
+                    return siblingPath;
+            }
 
             // 3. Check in current directory
             if (File.Exists("CryptoSoft.exe"))
                 return Path.GetFullPath("CryptoSoft.exe");
 
-            // 4. Check in PATH (just return the name, let OS find it)
-            return _config.CryptoSoftPath;
+            // 4. Fallback: configured path from appsettings.json (advanced users)
+            if (!string.IsNullOrEmpty(_config.CryptoSoftPath) && File.Exists(_config.CryptoSoftPath))
+                return _config.CryptoSoftPath;
+
+            return null;
         }
     }
 

@@ -9,22 +9,59 @@ namespace EasySave.Core.ProgressBar
     /// </summary>
     internal class CopyFileWithProgressBar : ProgressBar
     {
-        private long totalBytes;
-        private long copiedBytes;
+        private long totalBytesLocal;      // Taille des fichiers du dossier courant
+        private long copiedBytesLocal;     // Bytes copiés dans le dossier courant
+
+        private long totalBytesGlobal;     // Taille totale de tous les fichiers du backup
+        private long copiedBytesGlobal;    // Bytes copiés depuis le début du backup
+
         private readonly BackupState State;
-        
+
         /// <summary>Event raised when file copy progress updates.</summary>
         public event EventHandler<FileProgressEventArgs>? FileProgress;
-        
+
         /// <summary>Event raised when a file is successfully transferred.</summary>
         public event EventHandler<FileCopiedEventArgs>? FileTransferred;
-        
+
         /// <summary>Event raised when a file transfer fails.</summary>
         public event EventHandler<FileCopyErrorEventArgs>? FileTransferError;
+
+        /// <summary>Called between chunks to check if the backup should pause (business software). Returns true if paused.</summary>
+        public Func<bool>? PauseChecker { get; set; }
+
+        /// <summary>Gate for manual pause: reset = paused, set = running. Checked between files (not mid-file).</summary>
+        public ManualResetEventSlim? ManualPauseGate { get; set; }
+
+        /// <summary>Token checked between chunks to support immediate stop.</summary>
+        public CancellationToken CancellationToken { get; set; }
+
+        /// <summary>Shared lock that prevents parallel transfer of large files.</summary>
+        public Services.LargeFileTransferLock? LargeFileLock { get; set; }
+
+        /// <summary>Event raised when the backup is paused due to business software.</summary>
+        public event Action? Paused;
+
+        /// <summary>Event raised when the backup resumes after business software closes.</summary>
+        public event Action? Resumed;
+
+        /// <summary>Event raised when manual pause takes effect (after current file).</summary>
+        public event Action? ManualPaused;
+
+        /// <summary>Event raised when manual pause is released.</summary>
+        public event Action? ManualResumed;
 
         public CopyFileWithProgressBar(BackupState backupState)
         {
             this.State = backupState;
+        }
+
+        /// <summary>
+        /// Sets the total number of bytes for the entire backup (global progress).
+        /// </summary>
+        public void SetGlobalTotalBytes(long total)
+        {
+            this.totalBytesGlobal = total;
+            this.copiedBytesGlobal = 0;
         }
 
         /// <summary>
@@ -35,15 +72,27 @@ namespace EasySave.Core.ProgressBar
         /// <param name="files">Array of file paths to copy.</param>
         public void CopyFiles(string source, string dest, string[] files)
         {
-            this.totalBytes = files.Sum(f => new FileInfo(f).Length);
-            this.copiedBytes = 0;
+            // Progression locale (dossier courant)
+            this.totalBytesLocal = files.Sum(f => new FileInfo(f).Length);
+            this.copiedBytesLocal = 0;
 
             this.State.SetLastActionTimestamp(DateTime.UtcNow);
             this.State.SetTotalFiles(files.Length);
-            this.State.SetFileSize(this.totalBytes);
+            this.State.SetFileSize(this.totalBytesLocal);
 
             foreach (string file in files)
             {
+                // Check for cancellation before starting next file
+                CancellationToken.ThrowIfCancellationRequested();
+
+                // Manual pause: wait between files (after current file finished)
+                if (ManualPauseGate != null && !ManualPauseGate.IsSet)
+                {
+                    ManualPaused?.Invoke();
+                    ManualPauseGate.Wait(CancellationToken);
+                    ManualResumed?.Invoke();
+                }
+
                 string fileName = Path.GetFileName(file);
                 string destFile = Path.Combine(dest, fileName);
 
@@ -57,17 +106,29 @@ namespace EasySave.Core.ProgressBar
         private void CopyFile(string source, string dest)
         {
             var stopwatch = Stopwatch.StartNew();
-            
+            var fileSize = new FileInfo(source).Length;
+            bool lockAcquired = false;
+
             try
             {
+                // Acquire large file lock if needed (blocks until no other large file is transferring)
+                if (LargeFileLock != null)
+                    lockAcquired = LargeFileLock.Acquire(fileSize, CancellationToken);
+
                 this.CopyWithProgress(source, dest, bytesCopiedInFile =>
                 {
-                    this.copiedBytes += bytesCopiedInFile;
+                    // Mise à jour locale
+                    this.copiedBytesLocal += bytesCopiedInFile;
 
-                    double progress = (double)this.copiedBytes / this.totalBytes;
+                    // Mise à jour globale
+                    this.copiedBytesGlobal += bytesCopiedInFile;
+
+                    // Progression globale
+                    double progress = (double)this.copiedBytesGlobal / this.totalBytesGlobal;
+
                     this.SetProgressBar(progress);
                     this.State.SetProgress(progress * 100);
-                    
+
                     OnFileProgress(new FileProgressEventArgs
                     {
                         SourceFile = source,
@@ -82,7 +143,7 @@ namespace EasySave.Core.ProgressBar
                 {
                     SourceFile = source,
                     DestFile = dest,
-                    FileSize = new FileInfo(source).Length,
+                    FileSize = fileSize,
                     TransferTimeMs = stopwatch.Elapsed.TotalMilliseconds
                 });
             }
@@ -94,11 +155,17 @@ namespace EasySave.Core.ProgressBar
                 {
                     SourceFile = source,
                     DestFile = dest,
-                    FileSize = new FileInfo(source).Length,
+                    FileSize = fileSize,
                     Exception = ex
                 });
 
                 throw;
+            }
+            finally
+            {
+                // Always release the lock if we acquired it
+                if (lockAcquired)
+                    LargeFileLock?.Release();
             }
         }
 
@@ -113,6 +180,19 @@ namespace EasySave.Core.ProgressBar
             int read;
             while ((read = input.Read(buffer, 0, buffer.Length)) > 0)
             {
+                // Check for cancellation (Stop)
+                CancellationToken.ThrowIfCancellationRequested();
+
+                // Check for pause between chunks
+                if (PauseChecker != null && PauseChecker())
+                {
+                    Paused?.Invoke();
+                    while (PauseChecker() && !CancellationToken.IsCancellationRequested)
+                        Thread.Sleep(250);
+                    CancellationToken.ThrowIfCancellationRequested();
+                    Resumed?.Invoke();
+                }
+
                 try
                 {
                     output.Write(buffer, 0, read);
@@ -158,8 +238,3 @@ namespace EasySave.Core.ProgressBar
         public Exception Exception { get; set; } = null!;
     }
 }
-
-
-
-
-

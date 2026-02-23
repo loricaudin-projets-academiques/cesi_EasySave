@@ -1,13 +1,15 @@
-﻿using EasySave.Core.DependencyInjection;
+using EasySave.Core.DependencyInjection;
 using EasySave.Core.Settings;
+using EasySave.GUI.Services;
 using EasySave.VM.DependencyInjection;
 using EasySave.VM.ViewModels;
+using EasySave.VM.Services;
 using Microsoft.Extensions.DependencyInjection;
 using System.Windows;
 
 namespace EasySave.GUI;
 
-public partial class App : Application
+public partial class App : System.Windows.Application
 {
     public static IServiceProvider Services { get; private set; } = null!;
 
@@ -18,10 +20,19 @@ public partial class App : Application
         var services = new ServiceCollection()
             .AddEasySaveCore(config)
             .AddEasySaveLogging(config)
-            .AddViewModels();  // Extension locale GUI
+            .AddViewModels();  // VM registrations
+
+        // GUI-only services (strict MVVM abstractions)
+        services.AddSingleton<IUiDispatcher, WpfUiDispatcher>();
+        services.AddSingleton<IFolderPickerService, FolderPickerService>();
 
         Services = services.BuildServiceProvider();
         Services.WireEasySaveServices();
+
+        // Subscribe GUI VM to backup events (progress/state) without coupling Core to WPF
+        var backupService = Services.GetRequiredService<EasySave.Core.Services.BackupWorkService>();
+        var backupListVm = Services.GetRequiredService<BackupListViewModel>();
+        backupService.AddObserver(backupListVm);
 
         var mainWindow = new MainWindow
         {

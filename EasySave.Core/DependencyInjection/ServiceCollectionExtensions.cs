@@ -35,6 +35,16 @@ public static class ServiceCollectionExtensions
             sp.GetService<CryptoSoftService>(),
             sp.GetService<BusinessSoftwareService>()
         ));
+
+        // Large file transfer lock (prevents parallel transfer of files > threshold)
+        services.AddSingleton<LargeFileTransferLock>();
+
+        // Parallel backup job engine
+        services.AddSingleton<BackupJobEngine>(sp => new BackupJobEngine(
+            sp.GetRequiredService<BackupWorkService>(),
+            sp.GetService<BusinessSoftwareService>(),
+            sp.GetService<LargeFileTransferLock>()
+        ));
         
         return services;
     }

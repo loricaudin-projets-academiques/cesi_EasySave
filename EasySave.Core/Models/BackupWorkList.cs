@@ -144,6 +144,10 @@ namespace EasySave.Core.Models
             {
                 List[index].Execute();
             }
+            catch (OperationCanceledException)
+            {
+                throw; // Let caller handle stop/cancel
+            }
             catch (Exception e)
             {
                 Console.WriteLine(e.Message);

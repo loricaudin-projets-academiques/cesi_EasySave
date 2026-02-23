@@ -1,9 +1,9 @@
-using System;
+ï»¿using System;
 
 namespace EasyLog.Models
 {
     /// <summary>
-    /// État d'un travail de sauvegarde en temps réel
+    /// Ã‰tat d'un travail de sauvegarde en temps rÃ©el
     /// </summary>
     public enum BackupState
     {
@@ -11,23 +11,24 @@ namespace EasyLog.Models
         ACTIVE,
         PAUSED,
         COMPLETED,
+        STOPPED,
         ERROR
     }
 
     /// <summary>
-    /// Représente l'état d'un travail de sauvegarde à un instant T
-    /// Mis à jour en temps réel durant l'exécution
+    /// ReprÃ©sente l'Ã©tat d'un travail de sauvegarde Ã  un instant T
+    /// Mis Ã  jour en temps rÃ©el durant l'exÃ©cution
     /// </summary>
     public class StateEntry
     {
         /// <summary>
-        /// ID unique du travail (GUID) - Évite les collisions de noms
+        /// ID unique du travail (GUID) - Ã‰vite les collisions de noms
         /// </summary>
         public string Id { get; set; } = Guid.NewGuid().ToString();
 
         /// <summary>
         /// Index du travail de sauvegarde dans BackupWorkList
-        /// ? Utilisé pour reconnaître le même travail entre les exécutions
+        /// ? UtilisÃ© pour reconnaÃ®tre le mÃªme travail entre les exÃ©cutions
         /// </summary>
         public int WorkIndex { get; set; } = -1;
 
@@ -49,22 +50,22 @@ namespace EasyLog.Models
         public string TargetFilePath { get; set; } = string.Empty;
 
         /// <summary>
-        /// État du travail (INACTIVE, ACTIVE, PAUSED, COMPLETED, ERROR)
+        /// Ã‰tat du travail (INACTIVE, ACTIVE, PAUSED, COMPLETED, ERROR)
         /// </summary>
         public string State { get; set; } = BackupState.INACTIVE.ToString();
 
         /// <summary>
-        /// Nombre total de fichiers à copier
+        /// Nombre total de fichiers Ã  copier
         /// </summary>
         public long TotalFilesToCopy { get; set; }
 
         /// <summary>
-        /// Taille totale des fichiers à copier (en octets)
+        /// Taille totale des fichiers Ã  copier (en octets)
         /// </summary>
         public long TotalFilesSize { get; set; }
 
         /// <summary>
-        /// Nombre de fichiers restant à faire
+        /// Nombre de fichiers restant Ã  faire
         /// </summary>
         public long NbFilesLeftToDo { get; set; }
 
@@ -74,7 +75,7 @@ namespace EasyLog.Models
         public double Progression { get; set; }
 
         /// <summary>
-        /// Horodatage de la dernière action
+        /// Horodatage de la derniÃ¨re action
         /// </summary>
         public string LastActionTime { get; set; } = DateTime.Now.ToString("dd/MM/yyyy HH:mm:ss");
 
@@ -84,4 +85,5 @@ namespace EasyLog.Models
         }
     }
 }
+
 
