@@ -22,7 +22,6 @@ public partial class BackupListViewModel : ObservableObject, IBackupEventObserve
 
     [ObservableProperty] private SelectableBackupItem? _selectedBackup;
     [ObservableProperty] private string _statusMessage = string.Empty;
-    [ObservableProperty] private double _currentProgress;
     [ObservableProperty] private bool _isRunning;
 
     // Inline delete confirmation (no popup)
@@ -258,9 +257,6 @@ public partial class BackupListViewModel : ObservableObject, IBackupEventObserve
                 _ => StatusMessage
             };
 
-            // Update global progress: 0 if nothing active, otherwise average
-            CurrentProgress = _engine.IsAnyActive ? _engine.GlobalProgress : 0;
-
             // Track IsRunning based on whether any job is still active
             IsRunning = _engine.IsAnyActive;
         });
@@ -278,8 +274,6 @@ public partial class BackupListViewModel : ObservableObject, IBackupEventObserve
             if (item != null)
                 item.Progress = progress;
 
-            // Update global progress = average of active runners, 0 if none active
-            CurrentProgress = _engine.IsAnyActive ? _engine.GlobalProgress : 0;
         });
     }
 
@@ -288,7 +282,6 @@ public partial class BackupListViewModel : ObservableObject, IBackupEventObserve
         _ui.Invoke(() =>
         {
             IsRunning = false;
-            CurrentProgress = 0;
             StatusMessage = _localization.Get("gui.status.completed");
         });
     }

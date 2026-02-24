@@ -148,7 +148,8 @@
       "crypto_path": "CryptoSoft path:",
       "encrypt_extensions": "Extensions to encrypt:",
       "business_software": "Business software (process):",
-      "large_file_threshold": "Large file threshold (KB):"
+      "large_file_threshold": "Large file threshold (KB):",
+      "priority_extensions": "Priority file extensions:"
     },
     "editor": {
       "title_create": "Create backup",
