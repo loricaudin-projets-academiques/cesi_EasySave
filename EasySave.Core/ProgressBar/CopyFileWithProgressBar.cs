@@ -38,6 +38,9 @@ namespace EasySave.Core.ProgressBar
         /// <summary>Shared lock that prevents parallel transfer of large files.</summary>
         public Services.LargeFileTransferLock? LargeFileLock { get; set; }
 
+        /// <summary>Shared gate that blocks non-priority files until all priority files are done.</summary>
+        public Services.PriorityFileGate? PriorityGate { get; set; }
+
         /// <summary>Event raised when the backup is paused due to business software.</summary>
         public event Action? Paused;
 
@@ -93,13 +96,22 @@ namespace EasySave.Core.ProgressBar
                     ManualResumed?.Invoke();
                 }
 
+                // Priority gate: block non-priority files until all priority files are done
+                PriorityGate?.WaitIfNonPriority(file, CancellationToken);
+
                 string fileName = Path.GetFileName(file);
                 string destFile = Path.Combine(dest, fileName);
 
                 if (File.Exists(destFile))
                     File.Delete(destFile);
 
+                bool isPriority = PriorityGate != null && PriorityGate.IsPriority(file);
+
                 this.CopyFile(file, destFile);
+
+                // Mark priority file as completed so the gate can open for non-priority files
+                if (isPriority)
+                    PriorityGate!.MarkPriorityFileCompleted();
             }
         }
 
