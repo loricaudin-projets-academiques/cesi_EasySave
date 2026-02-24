@@ -39,11 +39,15 @@ public static class ServiceCollectionExtensions
         // Large file transfer lock (prevents parallel transfer of files > threshold)
         services.AddSingleton<LargeFileTransferLock>();
 
+        // Priority file gate (blocks non-priority files until all priority files are done)
+        services.AddSingleton<PriorityFileGate>();
+
         // Parallel backup job engine
         services.AddSingleton<BackupJobEngine>(sp => new BackupJobEngine(
             sp.GetRequiredService<BackupWorkService>(),
             sp.GetService<BusinessSoftwareService>(),
-            sp.GetService<LargeFileTransferLock>()
+            sp.GetService<LargeFileTransferLock>(),
+            sp.GetService<PriorityFileGate>()
         ));
         
         return services;

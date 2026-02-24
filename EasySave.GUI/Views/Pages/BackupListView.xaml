@@ -11,7 +11,6 @@
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
-            <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
 
@@ -67,12 +66,8 @@
             </DockPanel>
         </Border>
 
-        <!-- Global progress bar -->
-        <ProgressBar Grid.Row="2" Style="{StaticResource ModernProgressBarStyle}" 
-                     Minimum="0" Maximum="100" Value="{Binding CurrentProgress}" Margin="0,0,0,6"/>
-
         <!-- Global controls -->
-        <StackPanel Grid.Row="3" Orientation="Horizontal" Margin="0,0,0,14">
+        <StackPanel Grid.Row="2" Orientation="Horizontal" Margin="0,0,0,14">
             <Button Style="{StaticResource SecondaryButtonStyle}" MinWidth="90" Margin="0,0,8,0"
                     Command="{Binding PauseAllCommand}" IsEnabled="{Binding IsRunning}">
                 <StackPanel Orientation="Horizontal">
@@ -94,13 +89,10 @@
                     <TextBlock Text="Stop All" VerticalAlignment="Center"/>
                 </StackPanel>
             </Button>
-            <TextBlock Text="{Binding CurrentProgress, StringFormat={}{0:0.0}%}" VerticalAlignment="Center"
-                       Margin="16,0,0,0" FontSize="13" FontWeight="SemiBold"
-                       Foreground="{StaticResource TextPrimaryBrush}" FontFamily="{StaticResource AppFont}"/>
         </StackPanel>
 
         <!-- Backup cards list -->
-        <ScrollViewer Grid.Row="4" VerticalScrollBarVisibility="Auto">
+        <ScrollViewer Grid.Row="3" VerticalScrollBarVisibility="Auto" Margin="0,0,0,0">
             <ItemsControl ItemsSource="{Binding Backups}">
                 <ItemsControl.ItemTemplate>
                     <DataTemplate>

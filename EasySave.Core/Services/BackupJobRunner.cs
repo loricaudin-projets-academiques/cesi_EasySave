@@ -94,7 +94,7 @@ public class BackupJobRunner
     /// Runs the backup synchronously (call via Task.Run for parallel).
     /// Wires pause/cancel into the BackupWork, then delegates to BackupWorkService.
     /// </summary>
-    public void Run(Func<bool>? businessSoftwareChecker, LargeFileTransferLock? largeFileLock = null)
+    public void Run(Func<bool>? businessSoftwareChecker, LargeFileTransferLock? largeFileLock = null, PriorityFileGate? priorityGate = null)
     {
         if (State != JobState.Idle) return;
 
@@ -109,6 +109,15 @@ public class BackupJobRunner
 
         _work.SetCancellationToken(_cts.Token);
         _work.SetLargeFileLock(largeFileLock);
+        _work.SetPriorityGate(priorityGate);
+
+        // Register all files with the priority gate so it knows how many priority files are pending
+        string[]? allFiles = null;
+        if (priorityGate != null && priorityGate.IsEnabled)
+        {
+            allFiles = Directory.GetFiles(_work.SourcePath, "*", SearchOption.AllDirectories);
+            priorityGate.RegisterPendingFiles(allFiles);
+        }
 
         // Subscribe to progress and pause events
         _work.FileProgress += OnFileProgress;
@@ -133,12 +142,20 @@ public class BackupJobRunner
                 SetState(JobState.Stopped);
             Progress = 0;
             ProgressChanged?.Invoke(this, 0);
+
+            // Unregister remaining priority files to avoid blocking other jobs
+            if (allFiles != null)
+                priorityGate!.UnregisterAll(allFiles);
         }
         catch (Exception)
         {
             SetState(JobState.Error);
             Progress = 0;
             ProgressChanged?.Invoke(this, 0);
+
+            // Unregister remaining priority files to avoid blocking other jobs
+            if (allFiles != null)
+                priorityGate!.UnregisterAll(allFiles);
         }
         finally
         {

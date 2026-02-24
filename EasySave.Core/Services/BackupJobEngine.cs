@@ -11,6 +11,7 @@ public class BackupJobEngine
     private readonly BackupWorkService _service;
     private readonly BusinessSoftwareService? _businessService;
     private readonly LargeFileTransferLock? _largeFileLock;
+    private readonly PriorityFileGate? _priorityGate;
     private readonly List<BackupJobRunner> _runners = new();
     private readonly object _lock = new();
 
@@ -23,11 +24,12 @@ public class BackupJobEngine
     /// <summary>Fired when all jobs in a batch are finished (Done/Stopped/Error).</summary>
     public event Action? AllJobsCompleted;
 
-    public BackupJobEngine(BackupWorkService service, BusinessSoftwareService? businessService, LargeFileTransferLock? largeFileLock = null)
+    public BackupJobEngine(BackupWorkService service, BusinessSoftwareService? businessService, LargeFileTransferLock? largeFileLock = null, PriorityFileGate? priorityGate = null)
     {
         _service = service;
         _businessService = businessService;
         _largeFileLock = largeFileLock;
+        _priorityGate = priorityGate;
     }
 
     /// <summary>
@@ -76,7 +78,7 @@ public class BackupJobEngine
 
             lock (_lock) _runners.Add(runner);
 
-            tasks.Add(Task.Run(() => runner.Run(bizChecker, _largeFileLock)));
+            tasks.Add(Task.Run(() => runner.Run(bizChecker, _largeFileLock, _priorityGate)));
         }
 
         await Task.WhenAll(tasks);
@@ -111,21 +113,6 @@ public class BackupJobEngine
     {
         foreach (var r in Runners)
             r.Stop();
-    }
-
-    /// <summary>Global progress: average of runners that are Running, Pausing, Paused, or Done.</summary>
-    public double GlobalProgress
-    {
-        get
-        {
-            var relevant = Runners.Where(r =>
-                r.State == JobState.Running ||
-                r.State == JobState.Pausing ||
-                r.State == JobState.Paused ||
-                r.State == JobState.Done).ToList();
-            if (relevant.Count == 0) return 0;
-            return relevant.Average(r => r.Progress);
-        }
     }
 
     /// <summary>True if any runner is Running, Pausing, or Paused.</summary>
