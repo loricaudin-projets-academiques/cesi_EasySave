@@ -5,6 +5,16 @@ namespace EasyLog.Models
     /// </summary>
     public class LogEntry
     {
+        /// <summary>
+        /// 
+        /// </summary>
+        public string MachineName { get; set; } = Environment.MachineName;
+
+        /// <summary>
+        /// 
+        /// </summary>
+        public string UserName { get; set; } = Environment.UserName;
+
         /// <summary>Backup job name.</summary>
         public string Name { get; set; } = string.Empty;
 

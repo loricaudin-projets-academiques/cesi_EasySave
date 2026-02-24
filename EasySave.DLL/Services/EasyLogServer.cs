@@ -6,12 +6,26 @@ namespace EasyLog.Services
 {
     internal class EasyLogServer
     {
-        private readonly Socket _client;
+        private Socket _client;
+        private Mutex _mutex = new Mutex();
 
-        public EasyLogServer(string ip, int port)
+        public EasyLogServer()
         {
-            _client = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
-            _client.Connect(ip, port);
+        }
+
+        public bool ConnectToLogServer(string ip, int port)
+        {
+            try
+            {
+                _client = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+                _client.Connect(ip, port);
+                return true;
+            }
+            catch
+            {
+                return false;
+            }
+            
         }
 
         public void SendJson(object data)
@@ -23,8 +37,7 @@ namespace EasyLog.Services
                 Data = data
             };
 
-            string json = JsonSerializer.Serialize(payload);
-            Console.WriteLine($"1 envoi : {json}\n");
+            string json = JsonSerializer.Serialize(payload) + "\n"; // \n pourra servir pour régler le problème d'envoi de plusieurs JSON pouvant se retrouver collé côté serveur.
             byte[] bytes = Encoding.UTF8.GetBytes(json);
 
             _client.Send(bytes);

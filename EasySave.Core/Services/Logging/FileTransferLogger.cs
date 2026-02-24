@@ -7,11 +7,11 @@ namespace EasySave.Core.Services.Logging
     /// </summary>
     public class FileTransferLogger
     {
-        private readonly EasyLogServerLogger _logger;
+        private readonly EasyLogger _logger;
 
-        public FileTransferLogger(EasyLogServerLogger? logger = null)
+        public FileTransferLogger(EasyLogger? logger = null)
         {
-            _logger = logger ?? new EasyLogServerLogger();
+            _logger = logger;
         }
 
         /// <summary>

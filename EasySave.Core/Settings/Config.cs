@@ -42,6 +42,18 @@ namespace EasySave.Core.Settings
         public string ConfigFilePath { get; private set; } = string.Empty;
 
 
+        /// <summary></summary>
+        public string LogServerUrl { get; private set; } = string.Empty;
+
+        /// <summary></summary>
+        public int LogServerPort { get; private set; } = 0;
+
+        /// <summary></summary>
+        public bool LogOnServer { get; private set; } = false;
+
+        /// <summary></summary>
+        public bool LogInLocal { get; private set; } = false;
+
         #region Encryption Extensions Management
 
         /// <summary>
@@ -222,6 +234,14 @@ namespace EasySave.Core.Settings
                     ? businessProp.GetString() ?? "" : "";
                 var largeFileThreshold = appSettings.TryGetProperty("LargeFileThresholdKB", out var lfProp) 
                     ? lfProp.GetInt64() : 0;
+                var logServerUrl = appSettings.TryGetProperty("LogServerUrl", out var logServerUrlProp)
+                    ? logServerUrlProp.GetString() ?? "127.0.0.1" : "127.0.0.1";
+                var logServerPort = appSettings.TryGetProperty("LogServerPort", out var logServerPortProp)
+                    ? logServerPortProp.GetInt32() : 5000;
+                var logOnServer = appSettings.TryGetProperty("LogOnServer", out var logOnServerProp)
+                    ? logOnServerProp.GetBoolean() : false;
+                var logInLocal = appSettings.TryGetProperty("LogInLocal", out var logInLocalProp)
+                    ? logInLocalProp.GetBoolean() : false;
 
                 return new Config 
                 { 
@@ -235,7 +255,11 @@ namespace EasySave.Core.Settings
                     BusinessSoftware = businessSoftware,
                     LargeFileThresholdKB = largeFileThreshold,
                     LogType = logType.ToLowerInvariant(),
-                    ConfigFilePath = Path.GetFullPath(configPath)
+                    ConfigFilePath = Path.GetFullPath(configPath),
+                    LogServerUrl = logServerUrl,
+                    LogServerPort = logServerPort,
+                    LogOnServer = logOnServer,
+                    LogInLocal = logInLocal,
                 };
             }
             catch
@@ -263,7 +287,11 @@ namespace EasySave.Core.Settings
                     EncryptExtensions = EncryptExtensions,
                     CryptoSoftPath = CryptoSoftPath,
                     BusinessSoftware = BusinessSoftware,
-                    LargeFileThresholdKB = LargeFileThresholdKB
+                    LargeFileThresholdKB = LargeFileThresholdKB,
+                    LogServerUrl = LogServerUrl,
+                    LogServerPort = LogServerPort,
+                    LogOnServer = LogOnServer,
+                    LogInLocal = LogInLocal,
                 } 
             }, new JsonSerializerOptions { WriteIndented = true });
             
@@ -281,7 +309,3 @@ namespace EasySave.Core.Settings
         }
     }
 }
-
-
-
-

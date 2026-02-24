@@ -27,6 +27,16 @@ namespace EasyLog.Models
         public string Id { get; set; } = Guid.NewGuid().ToString();
 
         /// <summary>
+        /// 
+        /// </summary>
+        public string MachineName { get; set; } = Environment.MachineName;
+
+        /// <summary>
+        /// 
+        /// </summary>
+        public string UserName { get; set; } = Environment.UserName;
+
+        /// <summary>
         /// Index du travail de sauvegarde dans BackupWorkList
         /// ? Utilisé pour reconnaître le même travail entre les exécutions
         /// </summary>

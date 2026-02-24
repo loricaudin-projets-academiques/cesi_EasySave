@@ -2,6 +2,7 @@
 bin/
 obj/
 log/
+logs/
 
 ## Fichiers de configuration du projet Visual Studio
 .vs/

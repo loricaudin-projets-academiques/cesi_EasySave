@@ -43,23 +43,37 @@ public class Server
         try
         {
             byte[] buffer = new byte[4096];
+            StringBuilder sb = new StringBuilder();
 
             while (true)
             {
                 int received = client.Receive(buffer);
-
                 if (received == 0)
                 {
                     Console.WriteLine("Client déconnecté.");
                     break;
                 }
 
-                string message = Encoding.UTF8.GetString(buffer, 0, received);
+                sb.Append(Encoding.UTF8.GetString(buffer, 0, received));
 
-                string response = MessageReceived(message);
-                byte[] data = Encoding.UTF8.GetBytes(response);
+                string content = sb.ToString();
+                int index;
 
-                client.Send(data);
+                while ((index = content.IndexOf('\n')) >= 0)
+                {
+                    string json = content.Substring(0, index).Trim();
+
+                    if (!string.IsNullOrWhiteSpace(json))
+                    {
+                        string response = MessageReceived(json);
+                        client.Send(Encoding.UTF8.GetBytes(response));
+                    }
+
+                    content = content.Substring(index + 1);
+                }
+
+                sb.Clear();
+                sb.Append(content);
             }
         }
         catch (SocketException e)
@@ -76,9 +90,7 @@ public class Server
     {
         try
         {
-            Console.WriteLine($"1 recpetion : {message}\n");
             using JsonDocument doc = JsonDocument.Parse(message);
-            Console.WriteLine($"{message} OK");
             JsonElement root = doc.RootElement;
 
             string type = root.GetProperty("Type").GetString();
@@ -110,31 +122,14 @@ public class Server
     private static void HandleLogEntry(JsonElement data)
     {
         var log = JsonSerializer.Deserialize<LogEntry>(data);
-
-        logger.LogFileTransfer(
-            log.Name,
-            log.FileSource,
-            log.FileTarget,
-            log.FileSize,
-            log.FileTransferTime,
-            log.EncryptionTime,
-            log.BackupType
-        );
-
+        logger.UpdateLog(log);
         Console.WriteLine("LogEntry traité.");
     }
 
     private static void HandleStateEntry(JsonElement data)
     {
         var state = JsonSerializer.Deserialize<StateEntry>(data);
-
-        logger.StartBackup(
-            state.WorkIndex,
-            state.Name,
-            state.TotalFilesToCopy,
-            state.TotalFilesSize
-        );
-
+        logger.UpdateState(state);
         Console.WriteLine("StateEntry traité.");
     }
 
@@ -155,7 +150,7 @@ public class Server
         }
     }
 
-    static void Main(string[] args)
+    public static void Main(string[] args)
     {
         Socket serverSocket = StartServer();
         try

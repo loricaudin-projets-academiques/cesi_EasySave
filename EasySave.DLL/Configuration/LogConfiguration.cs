@@ -21,6 +21,16 @@ namespace EasyLog.Configuration
         /// <summary>Maximum daily log file size in MB.</summary>
         public int MaxDailyLogSizeMB { get; set; } = 100;
 
+        /// <summary></summary>
+        public bool LogOnServer { get; set; } = false;
+
+        /// <summary></summary>
+        public bool LogInLocal { get; set; } = true;
+
+        public string LogServerUrl { get; set; } = "127.0.0.1";
+
+        public int LogServerPort { get; set; } = 5000;
+
         /// <summary>Auto-create directories if they don't exist.</summary>
         public bool AutoCreateDirectories { get; set; } = true;
 
