@@ -43,16 +43,16 @@ namespace EasySave.Core.Settings
 
 
         /// <summary></summary>
-        public string LogServerUrl { get; private set; } = string.Empty;
+        public string LogServerUrl { get; set; } = "127.0.0.1";
 
         /// <summary></summary>
-        public int LogServerPort { get; private set; } = 0;
+        public int LogServerPort { get; set; } = 5000;
 
         /// <summary></summary>
-        public bool LogOnServer { get; private set; } = false;
+        public bool LogOnServer { get; set; } = false;
 
         /// <summary></summary>
-        public bool LogInLocal { get; private set; } = false;
+        public bool LogInLocal { get; set; } = true;
 
         #region Encryption Extensions Management
 
@@ -241,7 +241,7 @@ namespace EasySave.Core.Settings
                 var logOnServer = appSettings.TryGetProperty("LogOnServer", out var logOnServerProp)
                     ? logOnServerProp.GetBoolean() : false;
                 var logInLocal = appSettings.TryGetProperty("LogInLocal", out var logInLocalProp)
-                    ? logInLocalProp.GetBoolean() : false;
+                    ? logInLocalProp.GetBoolean() : true;
 
                 return new Config 
                 { 
