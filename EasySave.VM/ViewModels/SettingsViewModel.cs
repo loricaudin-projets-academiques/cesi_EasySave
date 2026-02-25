@@ -18,6 +18,7 @@ public partial class SettingsViewModel : ObservableObject
     public ObservableCollection<LanguageOption> AvailableLanguages { get; } = new();
     public ObservableCollection<string> AvailableLogFormats { get; } = new() { "json", "xml" };
     public ObservableCollection<string> EncryptExtensions { get; } = new();
+    public ObservableCollection<string> PriorityExtensions { get; } = new();
     public ObservableCollection<string> RunningProcesses { get; } = new();
 
     [ObservableProperty] private LanguageOption _selectedLanguage = null!;
@@ -25,6 +26,9 @@ public partial class SettingsViewModel : ObservableObject
 
     [ObservableProperty] private string _encryptExtensionsRaw = string.Empty;
     [ObservableProperty] private string _newExtension = string.Empty;
+
+    [ObservableProperty] private string _priorityExtensionsRaw = string.Empty;
+    [ObservableProperty] private string _newPriorityExtension = string.Empty;
 
     [ObservableProperty] private string _businessSoftware = string.Empty;
     [ObservableProperty] private string _largeFileThreshold = "0";
@@ -40,6 +44,7 @@ public partial class SettingsViewModel : ObservableObject
     [ObservableProperty] private string _businessSoftwareLabel = string.Empty;
     [ObservableProperty] private string _runningProcessesLabel = string.Empty;
     [ObservableProperty] private string _largeFileThresholdLabel = string.Empty;
+    [ObservableProperty] private string _priorityExtensionsLabel = string.Empty;
     [ObservableProperty] private string _addExtensionButtonText = string.Empty;
     [ObservableProperty] private string _removeButtonText = string.Empty;
     [ObservableProperty] private string _refreshProcessesButtonText = string.Empty;
@@ -98,6 +103,10 @@ public partial class SettingsViewModel : ObservableObject
         ServerAddressLabel = _localization.Get("gui.labels.server_address");
         ServerPortLabel = _localization.Get("gui.labels.server_port");
         EncryptExtensionsLabel = _localization.Get("gui.settings.encrypt_extensions");
+        BusinessSoftwareLabel = _localization.Get("gui.settings.business_software");
+        RunningProcessesLabel = _localization.Get("gui.pages.running_processes");
+        LargeFileThresholdLabel = _localization.Get("gui.settings.large_file_threshold");
+        PriorityExtensionsLabel = _localization.Get("gui.settings.priority_extensions");
         AddExtensionButtonText = _localization.Get("gui.buttons.add_extension");
         RemoveLabel = _localization.Get("gui.buttons.remove");
         BusinessSoftwareLabel = _localization.Get("gui.settings.business_software");
@@ -122,6 +131,10 @@ public partial class SettingsViewModel : ObservableObject
 
         EncryptExtensionsRaw = _config.EncryptExtensions;
         SyncExtensionsCollection();
+
+        PriorityExtensionsRaw = _config.PriorityExtensions;
+        SyncPriorityExtensionsCollection();
+
         RefreshRunningProcesses();
 
         SaveLogsLocal = _config.LogInLocal;
@@ -138,6 +151,13 @@ public partial class SettingsViewModel : ObservableObject
         EncryptExtensions.Clear();
         foreach (var ext in _config.GetEncryptExtensionsList())
             EncryptExtensions.Add(ext);
+    }
+
+    private void SyncPriorityExtensionsCollection()
+    {
+        PriorityExtensions.Clear();
+        foreach (var ext in _config.GetPriorityExtensionsList())
+            PriorityExtensions.Add(ext);
     }
 
     private void RefreshRunningProcesses()
@@ -257,6 +277,37 @@ public partial class SettingsViewModel : ObservableObject
             _config.Save();
             EncryptExtensionsRaw = _config.EncryptExtensions;
             SyncExtensionsCollection();
+        }
+    }
+
+    [CommunityToolkit.Mvvm.Input.RelayCommand]
+    private void AddPriorityExtension()
+    {
+        if (string.IsNullOrWhiteSpace(NewPriorityExtension))
+            return;
+
+        var ok = _config.AddPriorityExtension(NewPriorityExtension);
+        if (ok)
+        {
+            _config.Save();
+            PriorityExtensionsRaw = _config.PriorityExtensions;
+            SyncPriorityExtensionsCollection();
+            NewPriorityExtension = string.Empty;
+        }
+    }
+
+    [CommunityToolkit.Mvvm.Input.RelayCommand]
+    private void RemovePriorityExtension(string? extension)
+    {
+        if (string.IsNullOrWhiteSpace(extension))
+            return;
+
+        var ok = _config.RemovePriorityExtension(extension);
+        if (ok)
+        {
+            _config.Save();
+            PriorityExtensionsRaw = _config.PriorityExtensions;
+            SyncPriorityExtensionsCollection();
         }
     }
 }

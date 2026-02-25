@@ -198,6 +198,56 @@
                     </StackPanel>
                 </Border>
 
+                <!-- ===== PRIORITY EXTENSIONS SECTION ===== -->
+                <Border Style="{StaticResource CardStyle}">
+                    <StackPanel>
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,16">
+                            <TextBlock Text="&#xE8CB;" FontFamily="Segoe MDL2 Assets" FontSize="14" 
+                                       Foreground="{StaticResource AccentBrush}" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                            <TextBlock Text="{Binding PriorityExtensionsLabel}" FontSize="15" FontWeight="SemiBold" 
+                                       Foreground="{StaticResource TextPrimaryBrush}" FontFamily="{StaticResource AppFont}"/>
+                        </StackPanel>
+                        <Grid Margin="0,0,0,12">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBox Grid.Column="0" Text="{Binding NewPriorityExtension, UpdateSourceTrigger=PropertyChanged}" 
+                                     Style="{StaticResource ModernTextBoxStyle}" Margin="0,0,10,0"/>
+                            <Button Grid.Column="1" Style="{StaticResource PrimaryButtonStyle}" MinWidth="110" Command="{Binding AddPriorityExtensionCommand}">
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="&#xE710;" FontFamily="Segoe MDL2 Assets" FontSize="11" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                                    <TextBlock Text="{Binding AddExtensionButtonText}" VerticalAlignment="Center"/>
+                                </StackPanel>
+                            </Button>
+                        </Grid>
+
+                        <ItemsControl ItemsSource="{Binding PriorityExtensions}">
+                            <ItemsControl.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <WrapPanel/>
+                                </ItemsPanelTemplate>
+                            </ItemsControl.ItemsPanel>
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Border Background="{StaticResource InputBgBrush}" CornerRadius="6" 
+                                            Padding="10,6" Margin="0,0,8,8" BorderBrush="{StaticResource InputBorderBrush}" BorderThickness="1">
+                                        <StackPanel Orientation="Horizontal">
+                                            <TextBlock Text="{Binding}" VerticalAlignment="Center" FontSize="13"
+                                                       Foreground="{StaticResource TextPrimaryBrush}" FontFamily="{StaticResource AppFont}" Margin="0,0,8,0"/>
+                                            <Button Style="{StaticResource IconButtonStyle}" Width="22" Height="22"
+                                                    Command="{Binding DataContext.RemovePriorityExtensionCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                    CommandParameter="{Binding}" ToolTip="Remove">
+                                                <TextBlock Text="&#xE711;" FontFamily="Segoe MDL2 Assets" FontSize="10"/>
+                                            </Button>
+                                        </StackPanel>
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </StackPanel>
+                </Border>
+
                 <!-- ===== LARGE FILE THRESHOLD SECTION ===== -->
                 <Border Style="{StaticResource CardStyle}">
                     <StackPanel>

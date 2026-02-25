@@ -37,6 +37,14 @@ namespace EasySave.Core.Settings
         /// in parallel (only one at a time). 0 = disabled (no restriction).
         /// </summary>
         public long LargeFileThresholdKB { get; set; } = 0;
+
+        /// <summary>
+        /// Priority file extensions (comma-separated, e.g., ".docx,.pdf").
+        /// Files with these extensions are copied first; non-priority files are blocked
+        /// until all priority files across all jobs are done.
+        /// Empty string means no priority ordering.
+        /// </summary>
+        public string PriorityExtensions { get; set; } = string.Empty;
         
         /// <summary>Path to the loaded config file.</summary>
         public string ConfigFilePath { get; private set; } = string.Empty;
@@ -136,6 +144,76 @@ namespace EasySave.Core.Settings
             ".ppt", ".pptx", ".csv", ".xml", ".json", ".zip",
             ".rar", ".7z", ".sql", ".db", ".mdb", ".accdb"
         };
+
+        #endregion
+
+        #region Priority Extensions Management
+
+        /// <summary>
+        /// Gets the list of priority extensions.
+        /// </summary>
+        public string[] GetPriorityExtensionsList()
+        {
+            if (string.IsNullOrWhiteSpace(PriorityExtensions))
+                return Array.Empty<string>();
+
+            return PriorityExtensions
+                .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+                .Select(ext => ext.StartsWith('.') ? ext.ToLowerInvariant() : $".{ext.ToLowerInvariant()}")
+                .ToArray();
+        }
+
+        /// <summary>
+        /// Checks if a file has a priority extension.
+        /// </summary>
+        public bool IsPriorityFile(string filePath)
+        {
+            if (string.IsNullOrWhiteSpace(PriorityExtensions))
+                return false;
+
+            var extension = Path.GetExtension(filePath).ToLowerInvariant();
+            return GetPriorityExtensionsList().Contains(extension);
+        }
+
+        /// <summary>
+        /// Adds an extension to the priority list.
+        /// </summary>
+        public bool AddPriorityExtension(string extension)
+        {
+            var ext = extension.StartsWith('.') ? extension.ToLowerInvariant() : $".{extension.ToLowerInvariant()}";
+            var currentList = GetPriorityExtensionsList().ToList();
+
+            if (currentList.Contains(ext))
+                return false;
+
+            currentList.Add(ext);
+            PriorityExtensions = string.Join(",", currentList);
+            return true;
+        }
+
+        /// <summary>
+        /// Removes an extension from the priority list.
+        /// </summary>
+        public bool RemovePriorityExtension(string extension)
+        {
+            var ext = extension.StartsWith('.') ? extension.ToLowerInvariant() : $".{extension.ToLowerInvariant()}";
+            var currentList = GetPriorityExtensionsList().ToList();
+
+            if (!currentList.Contains(ext))
+                return false;
+
+            currentList.Remove(ext);
+            PriorityExtensions = string.Join(",", currentList);
+            return true;
+        }
+
+        /// <summary>
+        /// Clears all priority extensions.
+        /// </summary>
+        public void ClearPriorityExtensions()
+        {
+            PriorityExtensions = string.Empty;
+        }
 
         #endregion
 
@@ -241,7 +319,9 @@ namespace EasySave.Core.Settings
                 var logOnServer = appSettings.TryGetProperty("LogOnServer", out var logOnServerProp)
                     ? logOnServerProp.GetBoolean() : false;
                 var logInLocal = appSettings.TryGetProperty("LogInLocal", out var logInLocalProp)
-                    ? logInLocalProp.GetBoolean() : true;
+                    ? logInLocalProp.GetBoolean() : false;
+                var priorityExtensions = appSettings.TryGetProperty("PriorityExtensions", out var prioProp) 
+                    ? prioProp.GetString() ?? "" : "";
 
                 return new Config 
                 { 
@@ -254,6 +334,7 @@ namespace EasySave.Core.Settings
                     CryptoSoftPath = cryptoSoftPath,
                     BusinessSoftware = businessSoftware,
                     LargeFileThresholdKB = largeFileThreshold,
+                    PriorityExtensions = priorityExtensions,
                     LogType = logType.ToLowerInvariant(),
                     ConfigFilePath = Path.GetFullPath(configPath),
                     LogServerUrl = logServerUrl,
@@ -292,6 +373,7 @@ namespace EasySave.Core.Settings
                     LogServerPort = LogServerPort,
                     LogOnServer = LogOnServer,
                     LogInLocal = LogInLocal,
+                    PriorityExtensions = PriorityExtensions
                 } 
             }, new JsonSerializerOptions { WriteIndented = true });
             

@@ -106,6 +106,14 @@ namespace EasySave.Core.Models
             _cp.ManualPauseGate = gate;
         }
 
+        /// <summary>
+        /// Sets the shared priority file gate (blocks non-priority files until all priority files are done).
+        /// </summary>
+        public void SetPriorityGate(Services.PriorityFileGate? gate)
+        {
+            _cp.PriorityGate = gate;
+        }
+
         /// <summary>Event raised when the backup pauses due to business software.</summary>
         public event Action? Paused
         {
@@ -228,16 +236,28 @@ namespace EasySave.Core.Models
         private void ExecuteFullBackup()
         {
             _cp.InitProgressBar($"Full Backup in progress for: {this.Name}");
-            CopyDirectoryRecursively(this.SourcePath, this.DestinationPath, differential: false);
+            var filePairs = CollectFilePairs(this.SourcePath, this.DestinationPath, differential: false);
+            CopyCollectedFiles(filePairs);
         }
 
         private void ExecuteDifferentialBackup()
         {
             _cp.InitProgressBar($"Differential Backup in progress for: {this.Name}");
-            CopyDirectoryRecursively(this.SourcePath, this.DestinationPath, differential: true);
+            var filePairs = CollectFilePairs(this.SourcePath, this.DestinationPath, differential: true);
+            CopyCollectedFiles(filePairs);
         }
 
-        private void CopyDirectoryRecursively(string sourceDir, string destDir, bool differential)
+        /// <summary>
+        /// Collects all (source, destDir) pairs recursively, filtering for differential if needed.
+        /// </summary>
+        private List<(string sourceFile, string destDir)> CollectFilePairs(string sourceDir, string destDir, bool differential)
+        {
+            var pairs = new List<(string sourceFile, string destDir)>();
+            CollectFilePairsRecursive(sourceDir, destDir, differential, pairs);
+            return pairs;
+        }
+
+        private void CollectFilePairsRecursive(string sourceDir, string destDir, bool differential, List<(string sourceFile, string destDir)> pairs)
         {
             if (!Directory.Exists(destDir))
                 Directory.CreateDirectory(destDir);
@@ -260,7 +280,7 @@ namespace EasySave.Core.Models
                 }
 
                 if (shouldCopy)
-                    _cp.CopyFiles(sourceDir, destDir, new[] { file });
+                    pairs.Add((file, destDir));
             }
 
             foreach (string directory in Directory.GetDirectories(sourceDir))
@@ -268,8 +288,59 @@ namespace EasySave.Core.Models
                 string dirName = Path.GetFileName(directory);
                 string destSubDir = Path.Combine(destDir, dirName);
 
-                CopyDirectoryRecursively(directory, destSubDir, differential);
+                CollectFilePairsRecursive(directory, destSubDir, differential, pairs);
             }
+        }
+
+        /// <summary>
+        /// Copies collected file pairs, sorting priority files first when a PriorityGate is active.
+        /// </summary>
+        private void CopyCollectedFiles(List<(string sourceFile, string destDir)> pairs)
+        {
+            // Sort: priority files first, then non-priority (stable sort preserves original order within each group)
+            if (_cp.PriorityGate != null && _cp.PriorityGate.IsEnabled)
+            {
+                pairs = pairs
+                    .OrderByDescending(p => _cp.PriorityGate.IsPriority(p.sourceFile))
+                    .ToList();
+            }
+
+            // Group consecutive files by destDir to batch CopyFiles calls
+            foreach (var group in GroupByConsecutiveDestDir(pairs))
+            {
+                _cp.CopyFiles(
+                    Path.GetDirectoryName(group.files[0])!,
+                    group.destDir,
+                    group.files.ToArray());
+            }
+        }
+
+        /// <summary>
+        /// Groups consecutive file pairs that share the same destDir.
+        /// </summary>
+        private static IEnumerable<(string destDir, List<string> files)> GroupByConsecutiveDestDir(
+            List<(string sourceFile, string destDir)> pairs)
+        {
+            if (pairs.Count == 0) yield break;
+
+            string currentDest = pairs[0].destDir;
+            var currentFiles = new List<string> { pairs[0].sourceFile };
+
+            for (int i = 1; i < pairs.Count; i++)
+            {
+                if (pairs[i].destDir == currentDest)
+                {
+                    currentFiles.Add(pairs[i].sourceFile);
+                }
+                else
+                {
+                    yield return (currentDest, currentFiles);
+                    currentDest = pairs[i].destDir;
+                    currentFiles = new List<string> { pairs[i].sourceFile };
+                }
+            }
+
+            yield return (currentDest, currentFiles);
         }
     }
 }

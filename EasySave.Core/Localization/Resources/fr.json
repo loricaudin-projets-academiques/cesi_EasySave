@@ -166,7 +166,8 @@
       "crypto_path": "Chemin CryptoSoft :",
       "encrypt_extensions": "Extensions à chiffrer :",
       "business_software": "Logiciel métier (processus) :",
-      "large_file_threshold": "Seuil fichier volumineux (Ko) :"
+      "large_file_threshold": "Seuil fichier volumineux (Ko) :",
+      "priority_extensions": "Extensions de fichiers prioritaires :"
     },
     "editor": {
       "title_create": "Créer une sauvegarde",
