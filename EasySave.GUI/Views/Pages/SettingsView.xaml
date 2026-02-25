@@ -36,7 +36,7 @@
                         <StackPanel Orientation="Horizontal" Margin="0,0,0,16">
                             <TextBlock Text="&#xE774;" FontFamily="Segoe MDL2 Assets" FontSize="14" 
                                        Foreground="{StaticResource AccentBrush}" VerticalAlignment="Center" Margin="0,0,8,0"/>
-                            <TextBlock Text="General" FontSize="15" FontWeight="SemiBold" 
+                            <TextBlock Text="{Binding GeneralLabel}" FontSize="15" FontWeight="SemiBold" 
                                        Foreground="{StaticResource TextPrimaryBrush}" FontFamily="{StaticResource AppFont}"/>
                         </StackPanel>
 
@@ -52,16 +52,99 @@
                                 <ComboBox ItemsSource="{Binding AvailableLanguages}"
                                           SelectedItem="{Binding SelectedLanguage}"
                                           DisplayMemberPath="DisplayName"
-                                          Style="{StaticResource ModernComboBoxStyle}"/>
-                            </StackPanel>
-
-                            <StackPanel Grid.Column="2">
-                                <TextBlock Text="{Binding LogFormatLabel}" Style="{StaticResource SectionLabelStyle}"/>
-                                <ComboBox ItemsSource="{Binding AvailableLogFormats}"
-                                          SelectedItem="{Binding SelectedLogFormat}"
+                                          HorizontalAlignment="Left"
                                           Style="{StaticResource ModernComboBoxStyle}"/>
                             </StackPanel>
                         </Grid>
+                    </StackPanel>
+                </Border>
+
+                <!-- ===== LOGS SECTION ===== -->
+                <Border Style="{StaticResource CardStyle}">
+                    <StackPanel>
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,16">
+                            <TextBlock Text="&#xE7F4;" FontFamily="Segoe MDL2 Assets" FontSize="14"
+                                       Foreground="{StaticResource AccentBrush}" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                            <TextBlock Text="{Binding LogsLabel}" FontSize="15" FontWeight="SemiBold"
+                                       Foreground="{StaticResource TextPrimaryBrush}" FontFamily="{StaticResource AppFont}"/>
+                        </StackPanel>
+
+                        <StackPanel Margin="0,20,0,0">
+                            <TextBlock Text="{Binding LogsLocalLabel}" FontSize="14" FontWeight="SemiBold"
+                                       Foreground="{StaticResource TextPrimaryBrush}" FontFamily="{StaticResource AppFont}"/>
+
+                            <CheckBox Content="{Binding SaveLogsLocalLabel}"
+                                      IsChecked="{Binding SaveLogsLocal}"
+                                      Margin="0,10,0,10"/>
+
+                            <Grid Margin="0,0,0,10">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="150"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+
+                                <TextBlock Text="{Binding LogFormatLabel}"
+                                           Style="{StaticResource SectionLabelStyle}"
+                                           Grid.Column="0"
+                                           VerticalAlignment="Center"/>
+
+                                <ComboBox ItemsSource="{Binding AvailableLogFormats}"
+                                          SelectedItem="{Binding SelectedLogFormat}"
+                                          Style="{StaticResource ModernComboBoxStyle}"
+                                          MaxWidth="200"
+                                          HorizontalAlignment="Left"
+                                          IsEnabled="{Binding SaveLogsLocal}"
+                                          Grid.Column="1"/>
+                            </Grid>
+                        </StackPanel>
+
+                        <StackPanel Margin="0,20,0,0">
+                            <TextBlock Text="{Binding LogsServerLabel}" FontSize="14" FontWeight="SemiBold"
+                                       Foreground="{StaticResource TextPrimaryBrush}" FontFamily="{StaticResource AppFont}"/>
+
+                            <CheckBox Content="{Binding SaveLogsServerLabel}"
+                                      IsChecked="{Binding SaveLogsServer}"
+                                      Margin="0,10,0,10"/>
+
+                            <Grid Margin="0,10,0,0">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="150"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+
+                                <TextBlock Text="{Binding ServerAddressLabel}"
+                                           Style="{StaticResource SectionLabelStyle}"
+                                           Grid.Column="0"
+                                           VerticalAlignment="Center"/>
+
+                                <TextBox Text="{Binding ServerAddress}"
+                                         Style="{StaticResource ModernTextBoxStyle}"
+                                         MaxWidth="250"
+                                         HorizontalAlignment="Left"
+                                         IsEnabled="{Binding SaveLogsServer}"
+                                         Grid.Column="1"/>
+                            </Grid>
+
+                            <Grid Margin="0,10,0,0">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="150"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+
+                                <TextBlock Text="{Binding ServerPortLabel}"
+                                           Style="{StaticResource SectionLabelStyle}"
+                                           Grid.Column="0"
+                                           VerticalAlignment="Center"/>
+
+                                <TextBox Text="{Binding ServerPort}"
+                                         Style="{StaticResource ModernTextBoxStyle}"
+                                         MaxWidth="120"
+                                         HorizontalAlignment="Left"
+                                         IsEnabled="{Binding SaveLogsServer}"
+                                         Grid.Column="1"/>
+                            </Grid>
+
+                        </StackPanel>
                     </StackPanel>
                 </Border>
 
@@ -104,7 +187,7 @@
                                                        Foreground="{StaticResource TextPrimaryBrush}" FontFamily="{StaticResource AppFont}" Margin="0,0,8,0"/>
                                             <Button Style="{StaticResource IconButtonStyle}" Width="22" Height="22"
                                                     Command="{Binding DataContext.RemoveExtensionCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
-                                                    CommandParameter="{Binding}" ToolTip="Remove">
+                                                    CommandParameter="{Binding}" ToolTip="{Binding RemoveLabel}">
                                                 <TextBlock Text="&#xE711;" FontFamily="Segoe MDL2 Assets" FontSize="10"/>
                                             </Button>
                                         </StackPanel>
@@ -176,7 +259,7 @@
                         </StackPanel>
                         <TextBox Text="{Binding LargeFileThreshold, UpdateSourceTrigger=PropertyChanged}" 
                                  Style="{StaticResource ModernTextBoxStyle}" MaxWidth="200" HorizontalAlignment="Left"/>
-                        <TextBlock Text="0 = disabled" FontSize="11" Foreground="{StaticResource TextMutedBrush}" 
+                        <TextBlock Text="{Binding LargeFileDisabledLabel}" FontSize="11" Foreground="{StaticResource TextMutedBrush}" 
                                    FontFamily="{StaticResource AppFont}" Margin="0,4,0,0"/>
                     </StackPanel>
                 </Border>
@@ -192,10 +275,10 @@
                         </StackPanel>
 
                         <!-- Current selection display -->
-                        <TextBlock Style="{StaticResource SectionLabelStyle}" Margin="0,0,0,6" Text="Selected:"/>
+                        <TextBlock Style="{StaticResource SectionLabelStyle}" Margin="0,0,0,6" Text="{Binding SelectedLabel}"/>
                         <DockPanel Margin="0,0,0,16">
                             <Button DockPanel.Dock="Right" Style="{StaticResource IconButtonStyle}" Width="36" Height="36" Margin="8,0,0,0"
-                                    Command="{Binding ClearBusinessSoftwareCommand}" ToolTip="Clear">
+                                    Command="{Binding ClearBusinessSoftwareCommand}" ToolTip="{Binding ClearLabel}">
                                 <TextBlock Text="&#xE711;" FontFamily="Segoe MDL2 Assets" FontSize="12" Foreground="{StaticResource DangerBrush}"/>
                             </Button>
                             <Border Background="{StaticResource InputBgBrush}" CornerRadius="8" Padding="12,10"
@@ -233,23 +316,22 @@
                                 HorizontalAlignment="Left" Command="{Binding SelectProcessCommand}">
                             <StackPanel Orientation="Horizontal">
                                 <TextBlock Text="&#xE73E;" FontFamily="Segoe MDL2 Assets" FontSize="12" VerticalAlignment="Center" Margin="0,0,8,0"/>
-                                <TextBlock Text="Use selected process" VerticalAlignment="Center"/>
+                                <TextBlock Text="{Binding UseSelectedProcessLabel}" VerticalAlignment="Center"/>
                             </StackPanel>
                         </Button>
                     </StackPanel>
                 </Border>
 
-                <!-- ===== SAVE BUTTON ===== -->
-                <Button Style="{StaticResource PrimaryButtonStyle}" MinWidth="180" HorizontalAlignment="Right" Margin="0,4,0,20"
-                        Command="{Binding SaveSettingsCommand}">
-                    <StackPanel Orientation="Horizontal">
-                        <TextBlock Text="&#xE74E;" FontFamily="Segoe MDL2 Assets" FontSize="14" VerticalAlignment="Center" Margin="0,0,8,0"/>
-                        <TextBlock Text="{Binding SaveButtonText}" VerticalAlignment="Center"/>
-                    </StackPanel>
-                </Button>
-
             </StackPanel>
         </ScrollViewer>
+
+        <!-- ===== SAVE BUTTON ===== -->
+        <Button Style="{StaticResource PrimaryButtonStyle}" MinWidth="180" HorizontalAlignment="Right" Margin="0,4,0,20"
+                Command="{Binding SaveSettingsCommand}">
+            <StackPanel Orientation="Horizontal">
+                <TextBlock Text="&#xE74E;" FontFamily="Segoe MDL2 Assets" FontSize="14" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                <TextBlock Text="{Binding SaveButtonText}" VerticalAlignment="Center"/>
+            </StackPanel>
+        </Button>
     </Grid>
 </UserControl>
-

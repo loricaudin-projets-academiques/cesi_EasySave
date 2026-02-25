@@ -129,11 +129,29 @@
       "cancel": "Cancel",
       "browse": "Browse",
       "remove": "Remove",
-      "add_extension": "Add extension"
+      "add_extension": "Add extension",
+
+      "clear": "Clear",
+      "use_selected_process": "Use selected process",
+      "remove_extension": "Remove extension"
     },
     "labels": {
       "language": "Language:",
-      "log_format": "Log format:"
+      "log_format": "Log format:",
+      "server_address": "Server address",
+      "server_port": "Port",
+      "selected": "Selected:",
+      "disabled_hint": "0 = disabled"
+    },
+    "sections": {
+      "general": "General",
+      "logs": "Logs"
+    },
+    "logs": {
+      "local": "Local",
+      "save_local": "Save logs locally",
+      "server": "Server",
+      "save_server": "Save logs to a server"
     },
     "pages": {
       "backups_title": "Backups",

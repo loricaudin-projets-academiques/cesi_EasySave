@@ -60,7 +60,7 @@ public static class ServiceCollectionExtensions
     {
         config ??= Config.Load();
         
-        var logConfig = new LogConfiguration { LogFormat = config.LogType };
+        var logConfig = new LogConfiguration { LogFormat = config.LogType, LogOnServer = config.LogOnServer, LogInLocal = config.LogInLocal };
         services.AddSingleton(_ => new EasyLog.Services.EasyLogger(logConfig));
         // FileTransferLogger removed - BackupWorkService handles logging with EncryptionTime
         services.AddSingleton<IBackupEventObserver, EasyLogObserver>();
