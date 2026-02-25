@@ -278,7 +278,7 @@ namespace EasySave.Core.Settings
                 if (string.IsNullOrEmpty(configPath) || !File.Exists(configPath))
                 {
                     // Create default config file
-                    configPath = Path.Combine(AppContext.BaseDirectory, "appsettings.json");
+                    configPath = GetSettingsFileLocation();
                     var defaultConfig = new Config { ConfigFilePath = configPath };
                     defaultConfig.Save();
                     return defaultConfig;
@@ -321,7 +321,7 @@ namespace EasySave.Core.Settings
             }
             catch
             {
-                var defaultPath = Path.Combine(AppContext.BaseDirectory, "appsettings.json");
+                var defaultPath = GetSettingsFileLocation();
                 return new Config { ConfigFilePath = defaultPath };
             }
         }
@@ -331,14 +331,20 @@ namespace EasySave.Core.Settings
         /// </summary>
         public void Save()
         {
-            var configPath = !string.IsNullOrEmpty(ConfigFilePath) 
-                ? ConfigFilePath 
-                : Path.Combine(AppContext.BaseDirectory, "appsettings.json");
-                
-            var json = JsonSerializer.Serialize(new 
-            { 
-                AppSettings = new 
-                { 
+            var configPath = !string.IsNullOrEmpty(ConfigFilePath)
+                ? ConfigFilePath
+                : GetSettingsFileLocation();
+
+            var directory = Path.GetDirectoryName(configPath);
+            if (!Directory.Exists(directory))
+            {
+                Directory.CreateDirectory(directory);
+            }
+
+            var json = JsonSerializer.Serialize(new
+            {
+                AppSettings = new
+                {
                     Language = Language.GetCode(),
                     LogType = LogType,
                     EncryptExtensions = EncryptExtensions,
@@ -346,18 +352,23 @@ namespace EasySave.Core.Settings
                     BusinessSoftware = BusinessSoftware,
                     LargeFileThresholdKB = LargeFileThresholdKB,
                     PriorityExtensions = PriorityExtensions
-                } 
+                }
             }, new JsonSerializerOptions { WriteIndented = true });
-            
+
             File.WriteAllText(configPath, json);
             ConfigFilePath = configPath;
         }
 
+
+        private static string GetSettingsFileLocation()
+        {
+            return Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), "ProSoft", "EasySave", "configs", "appsettings.json");
+        }
+
         private static string? FindConfigFile()
         {
-            var paths = new[] { 
-                Path.Combine(AppContext.BaseDirectory, "appsettings.json"),
-                "appsettings.json"
+            var paths = new[] {
+                GetSettingsFileLocation()
             };
             return paths.FirstOrDefault(File.Exists);
         }
