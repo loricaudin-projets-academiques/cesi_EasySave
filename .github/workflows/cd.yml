@@ -1,0 +1,78 @@
+name: CD - Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  release:
+    runs-on: windows-latest
+    if: github.ref_type == 'tag' && contains(github.ref, 'refs/tags/v')
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - name: Verify tag is on main
+        shell: pwsh
+        run: |
+          git fetch origin main
+          $mainHead = git rev-parse origin/main
+          $tagCommit = git rev-list -n 1 ${{ github.ref_name }}
+          if ($mainHead -ne $tagCommit) {
+            Write-Error "Tag ${{ github.ref_name }} is not on main branch. Release aborted."
+            exit 1
+          }
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: |
+            8.0.x
+            9.0.x
+
+      - name: Restore dependencies
+        run: |
+          dotnet restore cesi_EasySave.slnx
+          dotnet restore EasyLog.Server/EasyLog.Server.csproj
+
+      - name: Build solution
+        run: dotnet build cesi_EasySave.slnx --configuration Release --no-restore
+
+      - name: Run tests
+        run: dotnet test EasySave.Tests/EasySave.Tests.csproj --configuration Release --no-build --verbosity normal
+
+      - name: Publish EasySave.GUI
+        run: dotnet publish EasySave.GUI/EasySave.GUI.csproj -c Release -r win-x64 --self-contained -o ./publish/EasySave.GUI
+
+      - name: Publish EasySave.CLI
+        run: dotnet publish EasySave.CLI/EasySave.CLI.csproj -c Release -r win-x64 --self-contained -o ./publish/EasySave.CLI
+
+      - name: Publish CryptoSoft
+        run: dotnet publish CryptoSave/CryptoSoft.csproj -c Release -r win-x64 --self-contained -o ./publish/CryptoSoft
+
+      - name: Publish EasyLog.Server
+        run: dotnet publish EasyLog.Server/EasyLog.Server.csproj -c Release -r win-x64 --self-contained -o ./publish/EasyLog.Server
+
+      - name: Create release archives
+        shell: pwsh
+        run: |
+          Compress-Archive -Path ./publish/EasySave.GUI/* -DestinationPath ./publish/EasySave.GUI.zip
+          Compress-Archive -Path ./publish/EasySave.CLI/* -DestinationPath ./publish/EasySave.CLI.zip
+          Compress-Archive -Path ./publish/CryptoSoft/* -DestinationPath ./publish/CryptoSoft.zip
+          Compress-Archive -Path ./publish/EasyLog.Server/* -DestinationPath ./publish/EasyLog.Server.zip
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@da05d552573ad5aba039eaac05058a918a7bf631 # v2
+        with:
+          files: |
+            ./publish/EasySave.GUI.zip
+            ./publish/EasySave.CLI.zip
+            ./publish/CryptoSoft.zip
+            ./publish/EasyLog.Server.zip
+          generate_release_notes: true

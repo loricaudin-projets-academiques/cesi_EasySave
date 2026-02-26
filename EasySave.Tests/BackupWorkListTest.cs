@@ -11,8 +11,9 @@ namespace EasySave.Tests
         {
             // Arrange
             BackupWorkList list = new BackupWorkList(new List<BackupWork>());
-            BackupWork oldBackup = new BackupWork("OldName", @"C:\OldSource", @"C:\OldDest", BackupType.DIFFERENTIAL_BACKUP);
-            BackupWork newBackup = new BackupWork("NewName", @"C:\NewSource", @"C:\NewDest", BackupType.FULL_BACKUP);
+            string tempDir = Path.GetTempPath();
+            BackupWork oldBackup = new BackupWork("OldName", Path.Combine(tempDir, "OldSource"), Path.Combine(tempDir, "OldDest"), BackupType.DIFFERENTIAL_BACKUP);
+            BackupWork newBackup = new BackupWork("NewName", Path.Combine(tempDir, "NewSource"), Path.Combine(tempDir, "NewDest"), BackupType.FULL_BACKUP);
             list.AddBackupWork(oldBackup);
 
             // Act
@@ -22,8 +23,8 @@ namespace EasySave.Tests
             Assert.NotNull(result);
             Assert.Equal(1, list.GetCount());
             Assert.Equal("NewName", result!.GetName());
-            Assert.Equal(@"C:\NewSource", result.GetSourcePath());
-            Assert.Equal(@"C:\NewDest", result.GetDestinationPath());
+            Assert.Equal(Path.Combine(tempDir, "NewSource"), result.GetSourcePath());
+            Assert.Equal(Path.Combine(tempDir, "NewDest"), result.GetDestinationPath());
             Assert.Equal(BackupType.FULL_BACKUP, result.GetBackupType());
         }
 
@@ -32,7 +33,7 @@ namespace EasySave.Tests
         {
 
             BackupWorkList list = new BackupWorkList(new List<BackupWork>());
-            BackupWork backupWork = new BackupWork(@"C:\Test_1", @"C:\Test_2", "TestBackup", BackupType.DIFFERENTIAL_BACKUP);
+            BackupWork backupWork = new BackupWork(Path.Combine(Path.GetTempPath(), "Test_1"), Path.Combine(Path.GetTempPath(), "Test_2"), "TestBackup", BackupType.DIFFERENTIAL_BACKUP);
 
             list.AddBackupWork(backupWork);
 
@@ -54,7 +55,7 @@ namespace EasySave.Tests
 
             for (int i = 0; i < 10; i++)
             {
-                list.AddBackupWork(new BackupWork($"Backup{i}", @"C:\Source", @"C:\Destination", BackupType.FULL_BACKUP));
+                list.AddBackupWork(new BackupWork($"Backup{i}", Path.Combine(Path.GetTempPath(), "Source"), Path.Combine(Path.GetTempPath(), "Destination"), BackupType.FULL_BACKUP));
             }
 
             Assert.Equal(10, list.GetCount());
