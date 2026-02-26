@@ -53,6 +53,21 @@ namespace EasySave.Core.ProgressBar
         /// <summary>Event raised when manual pause is released.</summary>
         public event Action? ManualResumed;
 
+        /// <summary>Event raised when a non-priority file starts waiting for priority files to complete.</summary>
+        public event Action? PriorityWaiting;
+
+        /// <summary>Event raised when a non-priority file finishes waiting (priority gate opened).</summary>
+        public event Action? PriorityResumed;
+
+        /// <summary>Event raised when a large file starts waiting for the transfer lock.</summary>
+        public event Action? LargeFileWaiting;
+
+        /// <summary>Event raised when the large file lock is acquired.</summary>
+        public event Action? LargeFileAcquired;
+
+        /// <summary>Event raised when a new file starts being copied. Contains the source file path.</summary>
+        public event Action<string>? FileCopyStarted;
+
         public CopyFileWithProgressBar(BackupState backupState)
         {
             this.State = backupState;
@@ -97,7 +112,18 @@ namespace EasySave.Core.ProgressBar
                 }
 
                 // Priority gate: block non-priority files until all priority files are done
-                PriorityGate?.WaitIfNonPriority(file, CancellationToken);
+                if (PriorityGate != null && PriorityGate.IsEnabled && !PriorityGate.IsPriority(file) && PriorityGate.HasPendingPriority)
+                {
+                    PriorityWaiting?.Invoke();
+                    PriorityGate.WaitIfNonPriority(file, CancellationToken);
+                    PriorityResumed?.Invoke();
+                }
+                else
+                {
+                    PriorityGate?.WaitIfNonPriority(file, CancellationToken);
+                }
+
+                FileCopyStarted?.Invoke(file);
 
                 string fileName = Path.GetFileName(file);
                 string destFile = Path.Combine(dest, fileName);
@@ -124,8 +150,16 @@ namespace EasySave.Core.ProgressBar
             try
             {
                 // Acquire large file lock if needed (blocks until no other large file is transferring)
-                if (LargeFileLock != null)
+                if (LargeFileLock != null && LargeFileLock.IsLargeFile(fileSize))
+                {
+                    LargeFileWaiting?.Invoke();
                     lockAcquired = LargeFileLock.Acquire(fileSize, CancellationToken);
+                    LargeFileAcquired?.Invoke();
+                }
+                else if (LargeFileLock != null)
+                {
+                    lockAcquired = LargeFileLock.Acquire(fileSize, CancellationToken);
+                }
 
                 this.CopyWithProgress(source, dest, bytesCopiedInFile =>
                 {

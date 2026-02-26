@@ -10,6 +10,7 @@
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
         <!-- Page Header -->
@@ -157,7 +158,13 @@
                             <TextBlock Text="{Binding EncryptExtensionsLabel}" FontSize="15" FontWeight="SemiBold" 
                                        Foreground="{StaticResource TextPrimaryBrush}" FontFamily="{StaticResource AppFont}"/>
                         </StackPanel>
-                        <Grid Margin="0,0,0,12">
+
+                        <TextBlock Text="{Binding ExtensionPlaceholder}" FontSize="11" 
+
+                                   Foreground="{StaticResource TextMutedBrush}" FontFamily="{StaticResource AppFont}" Margin="0,0,0,6"/>
+
+                        <Grid Margin="0,0,0,4">
+
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*"/>
                                 <ColumnDefinition Width="Auto"/>
@@ -171,6 +178,14 @@
                                 </StackPanel>
                             </Button>
                         </Grid>
+
+                        <TextBlock Text="{Binding ExtensionError}" FontSize="11" Foreground="{StaticResource DangerBrush}" 
+
+                                   FontFamily="{StaticResource AppFont}" Margin="0,0,0,8"
+
+                                   Visibility="{Binding ExtensionError, Converter={StaticResource StringToVisibilityConverter}}"/>
+
+
 
                         <ItemsControl ItemsSource="{Binding EncryptExtensions}">
                             <ItemsControl.ItemsPanel>
@@ -207,7 +222,13 @@
                             <TextBlock Text="{Binding PriorityExtensionsLabel}" FontSize="15" FontWeight="SemiBold" 
                                        Foreground="{StaticResource TextPrimaryBrush}" FontFamily="{StaticResource AppFont}"/>
                         </StackPanel>
-                        <Grid Margin="0,0,0,12">
+
+                        <TextBlock Text="{Binding ExtensionPlaceholder}" FontSize="11" 
+
+                                   Foreground="{StaticResource TextMutedBrush}" FontFamily="{StaticResource AppFont}" Margin="0,0,0,6"/>
+
+                        <Grid Margin="0,0,0,4">
+
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*"/>
                                 <ColumnDefinition Width="Auto"/>
@@ -221,6 +242,14 @@
                                 </StackPanel>
                             </Button>
                         </Grid>
+
+                        <TextBlock Text="{Binding PriorityExtensionError}" FontSize="11" Foreground="{StaticResource DangerBrush}" 
+
+                                   FontFamily="{StaticResource AppFont}" Margin="0,0,0,8"
+
+                                   Visibility="{Binding PriorityExtensionError, Converter={StaticResource StringToVisibilityConverter}}"/>
+
+
 
                         <ItemsControl ItemsSource="{Binding PriorityExtensions}">
                             <ItemsControl.ItemsPanel>
@@ -257,10 +286,17 @@
                             <TextBlock Text="{Binding LargeFileThresholdLabel}" FontSize="15" FontWeight="SemiBold" 
                                        Foreground="{StaticResource TextPrimaryBrush}" FontFamily="{StaticResource AppFont}"/>
                         </StackPanel>
+
+                        <TextBlock Text="{Binding ThresholdPlaceholder}" FontSize="11" 
+                                   Foreground="{StaticResource TextMutedBrush}" FontFamily="{StaticResource AppFont}" Margin="0,0,0,6"/>
                         <TextBox Text="{Binding LargeFileThreshold, UpdateSourceTrigger=PropertyChanged}" 
-                                 Style="{StaticResource ModernTextBoxStyle}" MaxWidth="200" HorizontalAlignment="Left"/>
-                        <TextBlock Text="{Binding LargeFileDisabledLabel}" FontSize="11" Foreground="{StaticResource TextMutedBrush}" 
+                                 Style="{StaticResource ModernTextBoxStyle}" MaxWidth="200" HorizontalAlignment="Left"
+                                 PreviewTextInput="NumericOnly_PreviewTextInput"/>
+                        <TextBlock Text="0 = disabled" FontSize="11" Foreground="{StaticResource TextMutedBrush}" 
                                    FontFamily="{StaticResource AppFont}" Margin="0,4,0,0"/>
+                        <TextBlock Text="{Binding ThresholdError}" FontSize="11" Foreground="{StaticResource DangerBrush}" 
+                                   FontFamily="{StaticResource AppFont}" Margin="0,2,0,0"
+                                   Visibility="{Binding ThresholdError, Converter={StaticResource StringToVisibilityConverter}}"/>
                     </StackPanel>
                 </Border>
 
@@ -276,27 +312,19 @@
 
                         <!-- Current selection display -->
                         <TextBlock Style="{StaticResource SectionLabelStyle}" Margin="0,0,0,6" Text="{Binding SelectedLabel}"/>
+                        <TextBlock Text="{Binding BusinessSoftwarePlaceholder}" FontSize="11" 
+
+                                   Foreground="{StaticResource TextMutedBrush}" FontFamily="{StaticResource AppFont}" Margin="0,0,0,6"/>
                         <DockPanel Margin="0,0,0,16">
                             <Button DockPanel.Dock="Right" Style="{StaticResource IconButtonStyle}" Width="36" Height="36" Margin="8,0,0,0"
                                     Command="{Binding ClearBusinessSoftwareCommand}" ToolTip="{Binding ClearLabel}">
                                 <TextBlock Text="&#xE711;" FontFamily="Segoe MDL2 Assets" FontSize="12" Foreground="{StaticResource DangerBrush}"/>
                             </Button>
-                            <Border Background="{StaticResource InputBgBrush}" CornerRadius="8" Padding="12,10"
-                                    BorderBrush="{StaticResource InputBorderBrush}" BorderThickness="1">
-                                <TextBlock Text="{Binding BusinessSoftware}" Foreground="{StaticResource TextPrimaryBrush}" 
-                                           FontSize="13" FontFamily="{StaticResource AppFont}">
-                                    <TextBlock.Style>
-                                        <Style TargetType="TextBlock">
-                                            <Style.Triggers>
-                                                <DataTrigger Binding="{Binding BusinessSoftware}" Value="">
-                                                    <Setter Property="Text" Value="—"/>
-                                                    <Setter Property="Foreground" Value="{StaticResource TextMutedBrush}"/>
-                                                </DataTrigger>
-                                            </Style.Triggers>
-                                        </Style>
-                                    </TextBlock.Style>
-                                </TextBlock>
-                            </Border>
+
+                            <TextBox Text="{Binding BusinessSoftware, UpdateSourceTrigger=PropertyChanged}" 
+
+                                     Style="{StaticResource ModernTextBoxStyle}"/>
+
                         </DockPanel>
 
                         <!-- Running processes list with select -->
@@ -325,13 +353,30 @@
             </StackPanel>
         </ScrollViewer>
 
-        <!-- ===== SAVE BUTTON ===== -->
-        <Button Style="{StaticResource PrimaryButtonStyle}" MinWidth="180" HorizontalAlignment="Right" Margin="0,4,0,20"
-                Command="{Binding SaveSettingsCommand}">
-            <StackPanel Orientation="Horizontal">
-                <TextBlock Text="&#xE74E;" FontFamily="Segoe MDL2 Assets" FontSize="14" VerticalAlignment="Center" Margin="0,0,8,0"/>
-                <TextBlock Text="{Binding SaveButtonText}" VerticalAlignment="Center"/>
+        <!-- ===== STICKY SAVE FOOTER ===== -->
+        <Border Grid.Row="2" Background="{StaticResource CardBackgroundBrush}"
+                BorderBrush="{StaticResource InputBorderBrush}" BorderThickness="0,1,0,0" Padding="16,12">
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                <!-- Save confirmation -->
+                <Border Background="#E8F5E9" BorderBrush="#4CAF50" BorderThickness="1" CornerRadius="8"
+                        Padding="12,8" Margin="0,0,12,0" VerticalAlignment="Center"
+                        Visibility="{Binding IsSaveConfirmVisible, Converter={StaticResource BooleanToVisibilityConverter}}">
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="&#xE73E;" FontFamily="Segoe MDL2 Assets" FontSize="14"
+                                   Foreground="#4CAF50" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                        <TextBlock Text="{Binding StatusMessage}" FontSize="13" Foreground="#2E7D32"
+                                   FontFamily="{StaticResource AppFont}" VerticalAlignment="Center"/>
+                    </StackPanel>
+                </Border>
+                <!-- Save button -->
+                <Button Style="{StaticResource PrimaryButtonStyle}" MinWidth="180"
+                        Command="{Binding SaveSettingsCommand}">
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="&#xE74E;" FontFamily="Segoe MDL2 Assets" FontSize="14" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                        <TextBlock Text="{Binding SaveButtonText}" VerticalAlignment="Center"/>
+                    </StackPanel>
+                </Button>
             </StackPanel>
-        </Button>
+        </Border>
     </Grid>
 </UserControl>

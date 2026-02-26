@@ -34,6 +34,7 @@ public partial class SettingsViewModel : ObservableObject
     [ObservableProperty] private string _largeFileThreshold = "0";
 
     [ObservableProperty] private string _statusMessage = string.Empty;
+    [ObservableProperty] private bool _isSaveConfirmVisible;
 
     // Localized texts
     [ObservableProperty] private string _pageTitle = string.Empty;
@@ -239,6 +240,7 @@ public partial class SettingsViewModel : ObservableObject
 
         _config.Save();
         StatusMessage = _localization.Get("gui.status.settings_saved");
+        IsSaveConfirmVisible = true;
     }
 
 

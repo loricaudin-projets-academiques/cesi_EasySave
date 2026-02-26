@@ -30,6 +30,11 @@ public class PriorityFileGate
     public bool IsEnabled => _config.GetPriorityExtensionsList().Length > 0;
 
     /// <summary>
+    /// True if there are still priority files pending (gate is closed for non-priority files).
+    /// </summary>
+    public bool HasPendingPriority { get { lock (_lock) return _pendingPriorityCount > 0; } }
+
+    /// <summary>
     /// Checks if a file has a priority extension.
     /// </summary>
     public bool IsPriority(string filePath) => _config.IsPriorityFile(filePath);

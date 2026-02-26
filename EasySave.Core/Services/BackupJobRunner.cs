@@ -19,6 +19,17 @@ public enum JobState
 }
 
 /// <summary>
+/// Reason why a backup job is currently blocked.
+/// </summary>
+public enum BlockReason
+{
+    None,
+    BusinessSoftware,
+    PriorityFile,
+    LargeFile
+}
+
+/// <summary>
 /// Wraps a single BackupWork execution with pause/resume/stop controls
 /// and progress tracking. One runner per launched job.
 /// </summary>
@@ -37,6 +48,15 @@ public class BackupJobRunner
     /// <summary>Progress 0-100.</summary>
     public double Progress { get; private set; }
 
+    /// <summary>True when this job is paused due to business software detection.</summary>
+    public bool IsBusinessBlocked { get; private set; }
+
+    /// <summary>Current blocking reason for this job.</summary>
+    public BlockReason CurrentBlockReason { get; private set; } = BlockReason.None;
+
+    /// <summary>Path of the file currently being copied.</summary>
+    public string CurrentFile { get; private set; } = string.Empty;
+
     /// <summary>Name of the backup work.</summary>
     public string Name => _work.Name;
 
@@ -48,6 +68,9 @@ public class BackupJobRunner
 
     /// <summary>Fired when Progress changes.</summary>
     public event Action<BackupJobRunner, double>? ProgressChanged;
+
+    /// <summary>Fired when CurrentFile or CurrentBlockReason changes.</summary>
+    public event Action<BackupJobRunner>? InfoChanged;
 
     public BackupJobRunner(BackupWorkService service, int index, BackupWork work)
     {
@@ -85,6 +108,7 @@ public class BackupJobRunner
         if (State != JobState.Running && State != JobState.Paused && State != JobState.Pausing) return;
         _cts.Cancel();
         _pauseGate.Set(); // unblock if paused so cancellation can propagate
+        IsBusinessBlocked = false;
         Progress = 0;
         SetState(JobState.Stopped);
         ProgressChanged?.Invoke(this, 0);
@@ -125,12 +149,18 @@ public class BackupJobRunner
         _work.Resumed += OnWorkResumed;
         _work.ManualPaused += OnManualPaused;
         _work.ManualResumed += OnManualResumed;
+        _work.FileCopyStarted += OnFileCopyStarted;
+        _work.PriorityWaiting += OnPriorityWaiting;
+        _work.PriorityResumed += OnPriorityResumed;
+        _work.LargeFileWaiting += OnLargeFileWaiting;
+        _work.LargeFileAcquired += OnLargeFileAcquired;
 
         try
         {
             _service.ExecuteWork(_index);
-            if (State == JobState.Running)
+            if (State == JobState.Running || State == JobState.Pausing)
             {
+                IsBusinessBlocked = false;
                 SetState(JobState.Done);
                 Progress = 100;
                 ProgressChanged?.Invoke(this, 100);
@@ -138,6 +168,7 @@ public class BackupJobRunner
         }
         catch (OperationCanceledException)
         {
+            IsBusinessBlocked = false;
             if (State != JobState.Stopped)
                 SetState(JobState.Stopped);
             Progress = 0;
@@ -149,6 +180,7 @@ public class BackupJobRunner
         }
         catch (Exception)
         {
+            IsBusinessBlocked = false;
             SetState(JobState.Error);
             Progress = 0;
             ProgressChanged?.Invoke(this, 0);
@@ -164,6 +196,13 @@ public class BackupJobRunner
             _work.Resumed -= OnWorkResumed;
             _work.ManualPaused -= OnManualPaused;
             _work.ManualResumed -= OnManualResumed;
+            _work.FileCopyStarted -= OnFileCopyStarted;
+            _work.PriorityWaiting -= OnPriorityWaiting;
+            _work.PriorityResumed -= OnPriorityResumed;
+            _work.LargeFileWaiting -= OnLargeFileWaiting;
+            _work.LargeFileAcquired -= OnLargeFileAcquired;
+            CurrentFile = string.Empty;
+            CurrentBlockReason = BlockReason.None;
         }
     }
 
@@ -180,13 +219,19 @@ public class BackupJobRunner
     private void OnWorkPaused()
     {
         if (State == JobState.Running)
+        {
+            IsBusinessBlocked = true;
             SetState(JobState.Paused);
+        }
     }
 
     private void OnWorkResumed()
     {
         if (State == JobState.Paused)
+        {
+            IsBusinessBlocked = false;
             SetState(JobState.Running);
+        }
     }
 
     // Manual pause (between files — after current file finishes)
@@ -200,6 +245,37 @@ public class BackupJobRunner
     {
         if (State == JobState.Paused)
             SetState(JobState.Running);
+    }
+
+    private void OnFileCopyStarted(string filePath)
+    {
+        CurrentFile = filePath;
+        CurrentBlockReason = BlockReason.None;
+        InfoChanged?.Invoke(this);
+    }
+
+    private void OnPriorityWaiting()
+    {
+        CurrentBlockReason = BlockReason.PriorityFile;
+        InfoChanged?.Invoke(this);
+    }
+
+    private void OnPriorityResumed()
+    {
+        CurrentBlockReason = BlockReason.None;
+        InfoChanged?.Invoke(this);
+    }
+
+    private void OnLargeFileWaiting()
+    {
+        CurrentBlockReason = BlockReason.LargeFile;
+        InfoChanged?.Invoke(this);
+    }
+
+    private void OnLargeFileAcquired()
+    {
+        CurrentBlockReason = BlockReason.None;
+        InfoChanged?.Invoke(this);
     }
 
     private void SetState(JobState newState)

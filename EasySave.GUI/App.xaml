@@ -11,6 +11,8 @@
             </ResourceDictionary.MergedDictionaries>
 
             <conv:InverseBooleanConverter x:Key="InverseBooleanConverter"/>
+            <conv:StringToVisibilityConverter x:Key="StringToVisibilityConverter"/>
+            <conv:StringToColorBrushConverter x:Key="StringToColorBrushConverter"/>
             <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
 
             <!-- ViewModel -> View mapping (strict MVVM) -->

@@ -142,6 +142,41 @@ namespace EasySave.Core.Models
             remove => _cp.ManualResumed -= value;
         }
 
+        /// <summary>Event raised when a non-priority file starts waiting for priority files.</summary>
+        public event Action? PriorityWaiting
+        {
+            add => _cp.PriorityWaiting += value;
+            remove => _cp.PriorityWaiting -= value;
+        }
+
+        /// <summary>Event raised when the priority gate opens for non-priority files.</summary>
+        public event Action? PriorityResumed
+        {
+            add => _cp.PriorityResumed += value;
+            remove => _cp.PriorityResumed -= value;
+        }
+
+        /// <summary>Event raised when a large file starts waiting for the transfer lock.</summary>
+        public event Action? LargeFileWaiting
+        {
+            add => _cp.LargeFileWaiting += value;
+            remove => _cp.LargeFileWaiting -= value;
+        }
+
+        /// <summary>Event raised when the large file lock is acquired.</summary>
+        public event Action? LargeFileAcquired
+        {
+            add => _cp.LargeFileAcquired += value;
+            remove => _cp.LargeFileAcquired -= value;
+        }
+
+        /// <summary>Event raised when a new file starts being copied.</summary>
+        public event Action<string>? FileCopyStarted
+        {
+            add => _cp.FileCopyStarted += value;
+            remove => _cp.FileCopyStarted -= value;
+        }
+
         /// <summary>
         /// Executes the backup based on its type.
         /// </summary>

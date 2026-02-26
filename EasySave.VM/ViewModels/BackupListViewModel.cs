@@ -23,6 +23,7 @@ public partial class BackupListViewModel : ObservableObject, IBackupEventObserve
     [ObservableProperty] private SelectableBackupItem? _selectedBackup;
     [ObservableProperty] private string _statusMessage = string.Empty;
     [ObservableProperty] private bool _isRunning;
+    [ObservableProperty] private bool _isBusinessBlocked;
 
     // Inline delete confirmation (no popup)
     [ObservableProperty] private bool _isDeleteConfirmVisible;
@@ -55,6 +56,7 @@ public partial class BackupListViewModel : ObservableObject, IBackupEventObserve
         // Subscribe to engine events
         _engine.JobStateChanged += OnJobStateChanged;
         _engine.JobProgressChanged += OnJobProgressChanged;
+        _engine.JobInfoChanged += OnJobInfoChanged;
         _engine.AllJobsCompleted += OnAllJobsCompleted;
 
         UpdateLocalizedTexts();
@@ -68,7 +70,7 @@ public partial class BackupListViewModel : ObservableObject, IBackupEventObserve
     {
         Backups.Clear();
         foreach (var work in _backupService.GetAllWorks())
-            Backups.Add(new SelectableBackupItem(work));
+            Backups.Add(new SelectableBackupItem(work, _localization));
 
         StatusMessage = _localization.Get("gui.status.loaded", Backups.Count);
     }
@@ -149,13 +151,14 @@ public partial class BackupListViewModel : ObservableObject, IBackupEventObserve
     [RelayCommand]
     private async Task RunAllAsync()
     {
-        if (IsRunning) return;
+        if (IsRunning || IsBusinessBlocked) return;
         await LaunchJobs(Enumerable.Range(0, Backups.Count));
     }
 
     [RelayCommand]
     private async Task RunSelectedAsync()
     {
+        if (IsBusinessBlocked) return;
         var indices = Backups
             .Select((b, i) => (b, i))
             .Where(x => x.b.IsSelected)
@@ -185,7 +188,7 @@ public partial class BackupListViewModel : ObservableObject, IBackupEventObserve
     [RelayCommand]
     private void TogglePlayPause(SelectableBackupItem? item)
     {
-        if (item == null) return;
+        if (item == null || IsBusinessBlocked) return;
         var index = Backups.IndexOf(item);
         var runner = _engine.GetRunner(index);
 
@@ -223,10 +226,16 @@ public partial class BackupListViewModel : ObservableObject, IBackupEventObserve
     // ===== Global controls =====
 
     [RelayCommand]
-    private void PauseAll() => _engine.PauseAll();
+    private void PauseAll()
+    {
+        if (!IsBusinessBlocked) _engine.PauseAll();
+    }
 
     [RelayCommand]
-    private void ResumeAll() => _engine.ResumeAll();
+    private void ResumeAll()
+    {
+        if (!IsBusinessBlocked) _engine.ResumeAll();
+    }
 
     [RelayCommand]
     private void StopAll() => _engine.StopAll();
@@ -257,6 +266,23 @@ public partial class BackupListViewModel : ObservableObject, IBackupEventObserve
                 _ => StatusMessage
             };
 
+            // Track business software blocking
+            IsBusinessBlocked = _engine.IsAnyBusinessBlocked;
+
+            // Propagate global block to ALL items so every Play button is greyed
+            foreach (var b in Backups)
+                b.IsGloballyBlocked = IsBusinessBlocked;
+
+            if (runner.IsBusinessBlocked && item != null)
+            {
+                item.BlockReason = BlockReason.BusinessSoftware;
+                StatusMessage = _localization.Get("gui.status.blocked_business", _engine.BusinessSoftwareName ?? "");
+            }
+            else if (!runner.IsBusinessBlocked && item != null && item.BlockReason == BlockReason.BusinessSoftware)
+            {
+                item.BlockReason = BlockReason.None;
+            }
+
             // Track IsRunning based on whether any job is still active
             IsRunning = _engine.IsAnyActive;
         });
@@ -274,6 +300,18 @@ public partial class BackupListViewModel : ObservableObject, IBackupEventObserve
             if (item != null)
                 item.Progress = progress;
 
+        });
+    }
+
+    private void OnJobInfoChanged(BackupJobRunner runner)
+    {
+        _ui.Invoke(() =>
+        {
+            var item = Backups.ElementAtOrDefault(runner.Index);
+            if (item == null) return;
+
+            item.CurrentFile = runner.CurrentFile;
+            item.BlockReason = runner.CurrentBlockReason;
         });
     }
 
