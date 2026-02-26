@@ -8,8 +8,8 @@ jobs:
   check-source-branch:
     runs-on: ubuntu-latest
     steps:
-      - name: Block PRs not from develop
-        if: github.head_ref != 'develop'
+      - name: Block PRs not from develop or hotfix
+        if: ${{ !startsWith(github.head_ref, 'develop') && !startsWith(github.head_ref, 'hotfix/') }}
         run: |
-          echo "Erreur : Seules les PR depuis 'develop' sont autorisées vers 'main'. Vous devez obligatoirement merger vers 'develop'"
+          echo "Error: Only PRs from 'develop*' or 'hotfix/*' branches are allowed to merge into 'main'."
           exit 1

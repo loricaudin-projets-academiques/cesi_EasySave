@@ -1,5 +1,6 @@
 using Xunit;
 using EasySave.Core.Models;
+using System.IO;
 
 namespace EasySave.Tests
 {
@@ -8,8 +9,9 @@ namespace EasySave.Tests
         [Fact]
         public void BackupWork_Execute()
         {
-            string sourcePath = @"C:\Test_1";
-            string sourceDest = @"C:\Test_2";
+            string testRoot = Path.Combine(Path.GetTempPath(), "EasySave_Tests", Guid.NewGuid().ToString());
+            string sourcePath = Path.Combine(testRoot, "Source");
+            string sourceDest = Path.Combine(testRoot, "Dest");
             BackupWork backupWork_1 = new BackupWork("Test", sourcePath, sourceDest, BackupType.FULL_BACKUP);
             BackupWork backupWork_2 = new BackupWork("Test", sourcePath, sourceDest, BackupType.DIFFERENTIAL_BACKUP);
 
