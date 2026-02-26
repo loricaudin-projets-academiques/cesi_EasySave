@@ -140,7 +140,12 @@ namespace EasySave.Core.Services
             if (File.Exists(appDirPath))
                 return appDirPath;
 
-            // 2. Check sibling project output (dev mode: ../CryptoSave/bin/<config>/net8.0/)
+            // 2. Check in CryptoSoft subfolder (installed via setup)
+            var subfolderPath = Path.Combine(AppContext.BaseDirectory, "CryptoSoft", "CryptoSoft.exe");
+            if (File.Exists(subfolderPath))
+                return subfolderPath;
+
+            // 3. Check sibling project output (dev mode: ../CryptoSave/bin/<config>/net8.0/)
             var baseDir = AppContext.BaseDirectory;
             foreach (var config in new[] { "Debug", "Release" })
             {
@@ -150,11 +155,11 @@ namespace EasySave.Core.Services
                     return siblingPath;
             }
 
-            // 3. Check in current directory
+            // 4. Check in current directory
             if (File.Exists("CryptoSoft.exe"))
                 return Path.GetFullPath("CryptoSoft.exe");
 
-            // 4. Fallback: configured path from appsettings.json (advanced users)
+            // 5. Fallback: configured path from appsettings.json (advanced users)
             if (!string.IsNullOrEmpty(_config.CryptoSoftPath) && File.Exists(_config.CryptoSoftPath))
                 return _config.CryptoSoftPath;
 

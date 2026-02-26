@@ -24,3 +24,6 @@ artifacts/
 Thumbs.db
 *.log
 *.env
+
+## Publication
+publish/

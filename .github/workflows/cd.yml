@@ -67,10 +67,20 @@ jobs:
           Compress-Archive -Path ./publish/CryptoSoft/* -DestinationPath ./publish/CryptoSoft.zip
           Compress-Archive -Path ./publish/EasyLog.Server/* -DestinationPath ./publish/EasyLog.Server.zip
 
+      - name: Install Inno Setup
+        run: choco install innosetup -y --no-progress
+
+      - name: Build installer
+        shell: pwsh
+        run: |
+          $version = "${{ github.ref_name }}".TrimStart('v')
+          & "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" /DMyAppVersion=$version setup.iss
+
       - name: Create GitHub Release
-        uses: softprops/action-gh-release@da05d552573ad5aba039eaac05058a918a7bf631 # v2
+        uses: softprops/action-gh-release@da05d552573ad5aba039eaac05058a918a7bf631
         with:
           files: |
+            ./publish/EasySave-Setup-*.exe
             ./publish/EasySave.GUI.zip
             ./publish/EasySave.CLI.zip
             ./publish/CryptoSoft.zip
