@@ -36,7 +36,7 @@
                         <StackPanel VerticalAlignment="Center">
                             <TextBlock Text="EasySave" FontSize="20" FontWeight="Bold" 
                                        Foreground="{StaticResource TextPrimaryBrush}" FontFamily="{StaticResource AppFont}"/>
-                            <TextBlock Text="ProSoft Suite - v2.0.0" FontSize="12" 
+                            <TextBlock Text="ProSoft Suite - v3.0.0" FontSize="12" 
                                        Foreground="{StaticResource TextMutedBrush}" FontFamily="{StaticResource AppFont}"/>
                         </StackPanel>
                     </StackPanel>
