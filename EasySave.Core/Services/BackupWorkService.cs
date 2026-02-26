@@ -19,6 +19,7 @@ namespace EasySave.Core.Services
         private readonly EasyLogServerLogger _serverLogger;
         private readonly CryptoSoftService? _cryptoService;
         private readonly BusinessSoftwareService? _businessService;
+        private readonly Config _config;
         
         /// <summary>Event raised when a file transfer completes.</summary>
         public event EventHandler<FileTransferredEventArgs>? FileTransferred;
@@ -41,13 +42,15 @@ namespace EasySave.Core.Services
             BackupWorkList workList,
             EasyLogger? logger = null,
             CryptoSoftService? cryptoService = null,
-            BusinessSoftwareService? businessService = null)
+            BusinessSoftwareService? businessService = null,
+            Config? config = null)
         {
             _localization = localization;
             _workList = workList;
             _logger = logger;
             _cryptoService = cryptoService;
             _businessService = businessService;
+            _config = config ?? new Config();
         }
 
         #region Observer Pattern
@@ -245,10 +248,15 @@ namespace EasySave.Core.Services
                     {
                         // Encrypt file if needed (service responsibility, not model)
                         double encryptionTimeMs = 0;
-                        if (_cryptoService != null)
+                        if (_cryptoService != null && _config.ShouldEncrypt(fileArgs.DestFile))
                         {
-                            var encryptResult = _cryptoService.EncryptIfNeeded(fileArgs.DestFile);
+                            work.RaiseEncryptionWaiting();
+                            void onStarted(string f) => work.RaiseEncryptionStarted(f);
+                            _cryptoService.EncryptionStarted += onStarted;
+                            var encryptResult = _cryptoService.Encrypt(fileArgs.DestFile);
+                            _cryptoService.EncryptionStarted -= onStarted;
                             encryptionTimeMs = encryptResult.EncryptionTimeMs;
+                            work.RaiseEncryptionCompleted();
                         }
 
                         _logger.LogFileTransfer(work.Name, fileArgs.SourceFile, fileArgs.DestFile, fileArgs.FileSize, fileArgs.TransferTimeMs, encryptionTimeMs);

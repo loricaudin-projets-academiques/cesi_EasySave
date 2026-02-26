@@ -26,7 +26,9 @@ public enum BlockReason
     None,
     BusinessSoftware,
     PriorityFile,
-    LargeFile
+    LargeFile,
+    Encrypting,
+    EncryptionQueue
 }
 
 /// <summary>
@@ -154,6 +156,9 @@ public class BackupJobRunner
         _work.PriorityResumed += OnPriorityResumed;
         _work.LargeFileWaiting += OnLargeFileWaiting;
         _work.LargeFileAcquired += OnLargeFileAcquired;
+        _work.EncryptionWaiting += OnEncryptionWaiting;
+        _work.EncryptionStarted += OnEncryptionStarted;
+        _work.EncryptionCompleted += OnEncryptionCompleted;
 
         try
         {
@@ -201,6 +206,9 @@ public class BackupJobRunner
             _work.PriorityResumed -= OnPriorityResumed;
             _work.LargeFileWaiting -= OnLargeFileWaiting;
             _work.LargeFileAcquired -= OnLargeFileAcquired;
+            _work.EncryptionWaiting -= OnEncryptionWaiting;
+            _work.EncryptionStarted -= OnEncryptionStarted;
+            _work.EncryptionCompleted -= OnEncryptionCompleted;
             CurrentFile = string.Empty;
             CurrentBlockReason = BlockReason.None;
         }
@@ -276,6 +284,25 @@ public class BackupJobRunner
     {
         CurrentBlockReason = BlockReason.None;
         InfoChanged?.Invoke(this);
+    }
+
+    private void OnEncryptionWaiting()
+    {
+        CurrentBlockReason = BlockReason.EncryptionQueue;
+        InfoChanged?.Invoke(this);
+    }
+
+    private void OnEncryptionStarted(string filePath)
+    {
+        CurrentBlockReason = BlockReason.Encrypting;
+        InfoChanged?.Invoke(this);
+    }
+
+    private void OnEncryptionCompleted()
+    {
+        // Don't reset to None here — FileCopyStarted on the next file will clear it.
+        // Resetting here causes a visible flicker between "Encrypting" and "None"
+        // when two jobs alternate on the mutex.
     }
 
     private void SetState(JobState newState)

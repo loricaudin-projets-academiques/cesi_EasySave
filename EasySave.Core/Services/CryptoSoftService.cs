@@ -11,6 +11,9 @@ namespace EasySave.Core.Services
         private readonly Config _config;
         private static Mutex _mutex = new Mutex(false);
 
+        /// <summary>Fired when the encryption mutex is acquired (encryption actually starts).</summary>
+        public event Action<string>? EncryptionStarted;
+
         public CryptoSoftService(Config config)
         {
             _config = config;
@@ -59,10 +62,14 @@ namespace EasySave.Core.Services
                     };
                 }
 
+                var arguments = string.IsNullOrWhiteSpace(_config.EncryptionPassword)
+                    ? $"\"{filePath}\""
+                    : $"\"{filePath}\" \"{_config.EncryptionPassword}\"";
+
                 var psi = new ProcessStartInfo
                 {
                     FileName = cryptoSoftPath,
-                    Arguments = $"\"{filePath}\"",
+                    Arguments = arguments,
                     UseShellExecute = false,
                     CreateNoWindow = true,
                     RedirectStandardOutput = true,
@@ -70,38 +77,45 @@ namespace EasySave.Core.Services
                 };
 
                 _mutex.WaitOne();
-                using var process = Process.Start(psi);
-                _mutex.ReleaseMutex();
-
-                if (process == null)
+                try
                 {
-                    return new EncryptionResult 
-                    { 
-                        WasEncrypted = false, 
-                        EncryptionTimeMs = -2,  // Error: Process failed to start
-                        ErrorMessage = "Failed to start CryptoSoft process"
-                    };
+                    EncryptionStarted?.Invoke(filePath);
+                    using var process = Process.Start(psi);
+
+                    if (process == null)
+                    {
+                        return new EncryptionResult 
+                        { 
+                            WasEncrypted = false, 
+                            EncryptionTimeMs = -2,  // Error: Process failed to start
+                            ErrorMessage = "Failed to start CryptoSoft process"
+                        };
+                    }
+
+                    process.WaitForExit();
+                    stopwatch.Stop();
+
+                    if (process.ExitCode == 0)
+                    {
+                        return new EncryptionResult 
+                        { 
+                            WasEncrypted = true, 
+                            EncryptionTimeMs = stopwatch.Elapsed.TotalMilliseconds 
+                        };
+                    }
+                    else
+                    {
+                        return new EncryptionResult 
+                        { 
+                            WasEncrypted = false, 
+                            EncryptionTimeMs = -process.ExitCode,  // Negative exit code as error
+                            ErrorMessage = $"CryptoSoft returned error code: {process.ExitCode}"
+                        };
+                    }
                 }
-
-                process.WaitForExit();
-                stopwatch.Stop();
-
-                if (process.ExitCode == 0)
+                finally
                 {
-                    return new EncryptionResult 
-                    { 
-                        WasEncrypted = true, 
-                        EncryptionTimeMs = stopwatch.Elapsed.TotalMilliseconds 
-                    };
-                }
-                else
-                {
-                    return new EncryptionResult 
-                    { 
-                        WasEncrypted = false, 
-                        EncryptionTimeMs = -process.ExitCode,  // Negative exit code as error
-                        ErrorMessage = $"CryptoSoft returned error code: {process.ExitCode}"
-                    };
+                    _mutex.ReleaseMutex();
                 }
             }
             catch (Exception ex)

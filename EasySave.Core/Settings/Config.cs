@@ -45,6 +45,12 @@ namespace EasySave.Core.Settings
         /// Empty string means no priority ordering.
         /// </summary>
         public string PriorityExtensions { get; set; } = string.Empty;
+
+        /// <summary>
+        /// Password used to derive the AES-256 encryption key via PBKDF2.
+        /// Empty string means use the default hardcoded key in CryptoSoft.
+        /// </summary>
+        public string EncryptionPassword { get; set; } = string.Empty;
         
         /// <summary>Path to the loaded config file.</summary>
         public string ConfigFilePath { get; private set; } = string.Empty;
@@ -322,6 +328,8 @@ namespace EasySave.Core.Settings
                     ? logInLocalProp.GetBoolean() : false;
                 var priorityExtensions = appSettings.TryGetProperty("PriorityExtensions", out var prioProp) 
                     ? prioProp.GetString() ?? "" : "";
+                var encryptionPassword = appSettings.TryGetProperty("EncryptionPassword", out var keyProp) 
+                    ? keyProp.GetString() ?? "" : "";
 
                 return new Config 
                 { 
@@ -335,6 +343,7 @@ namespace EasySave.Core.Settings
                     BusinessSoftware = businessSoftware,
                     LargeFileThresholdKB = largeFileThreshold,
                     PriorityExtensions = priorityExtensions,
+                    EncryptionPassword = encryptionPassword,
                     LogType = logType.ToLowerInvariant(),
                     ConfigFilePath = Path.GetFullPath(configPath),
                     LogServerUrl = logServerUrl,
@@ -379,7 +388,8 @@ namespace EasySave.Core.Settings
                     LogServerPort = LogServerPort,
                     LogOnServer = LogOnServer,
                     LogInLocal = LogInLocal,
-                    PriorityExtensions = PriorityExtensions
+                    PriorityExtensions = PriorityExtensions,
+                    EncryptionPassword = EncryptionPassword
                 }
             }, new JsonSerializerOptions { WriteIndented = true });
 

@@ -312,7 +312,11 @@
 
       "large_file_threshold": "Large file threshold (KB):",
 
-      "priority_extensions": "Priority file extensions:"
+      "priority_extensions": "Priority file extensions:",
+
+      "encryption_password": "Encryption password",
+
+      "encryption_password_hint": "Leave empty to use the default key. The password is used to derive an AES-256 key."
 
     },
 
@@ -418,7 +422,11 @@
 
       "waiting_large_file": "Waiting (large file transfer)",
 
-      "blocked_business": "Blocked (business software)"
+      "blocked_business": "Blocked (business software)",
+
+      "encrypting": "Encrypting...",
+
+      "encryption_queue": "Waiting (encryption)"
 
     }
 

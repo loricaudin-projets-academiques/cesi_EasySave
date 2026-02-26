@@ -61,6 +61,8 @@ public partial class SelectableBackupItem : ObservableObject
         {
             BlockReason.PriorityFile => _localization?.Get("gui.job_state.waiting_priority") ?? "Waiting (priority)",
             BlockReason.LargeFile => _localization?.Get("gui.job_state.waiting_large_file") ?? "Waiting (large file)",
+            BlockReason.Encrypting => _localization?.Get("gui.job_state.encrypting") ?? "Encrypting...",
+            BlockReason.EncryptionQueue => _localization?.Get("gui.job_state.encryption_queue") ?? "Waiting (encryption)",
             _ => _localization?.Get("gui.job_state.running") ?? "Running"
         },
         JobState.Pausing => _localization?.Get("gui.job_state.pausing") ?? "Pausing...",
@@ -80,7 +82,12 @@ public partial class SelectableBackupItem : ObservableObject
     /// </summary>
     public string StateColor => JobState switch
     {
-        JobState.Running => BlockReason != BlockReason.None ? "#FFF3E0" : "#E8F5E9",
+        JobState.Running => BlockReason switch
+        {
+            BlockReason.Encrypting or BlockReason.EncryptionQueue => "#EDE7F6",
+            BlockReason.None => "#E8F5E9",
+            _ => "#FFF3E0"
+        },
         JobState.Pausing => "#FFF3E0",
         JobState.Paused => "#FFF3E0",
         JobState.Stopped => "#FFEBEE",
@@ -94,7 +101,12 @@ public partial class SelectableBackupItem : ObservableObject
     /// </summary>
     public string StateTextColor => JobState switch
     {
-        JobState.Running => BlockReason != BlockReason.None ? "#E65100" : "#2E7D32",
+        JobState.Running => BlockReason switch
+        {
+            BlockReason.Encrypting or BlockReason.EncryptionQueue => "#4527A0",
+            BlockReason.None => "#2E7D32",
+            _ => "#E65100"
+        },
         JobState.Pausing => "#E65100",
         JobState.Paused => "#E65100",
         JobState.Stopped => "#C62828",
