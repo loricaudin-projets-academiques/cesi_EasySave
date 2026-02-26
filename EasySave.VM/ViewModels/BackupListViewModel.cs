@@ -268,6 +268,11 @@ public partial class BackupListViewModel : ObservableObject, IBackupEventObserve
 
             // Track business software blocking
             IsBusinessBlocked = _engine.IsAnyBusinessBlocked;
+
+            // Propagate global block to ALL items so every Play button is greyed
+            foreach (var b in Backups)
+                b.IsGloballyBlocked = IsBusinessBlocked;
+
             if (runner.IsBusinessBlocked && item != null)
             {
                 item.BlockReason = BlockReason.BusinessSoftware;

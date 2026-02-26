@@ -34,9 +34,11 @@ public partial class SettingsViewModel : ObservableObject
     [ObservableProperty] private string _largeFileThreshold = "0";
 
     [ObservableProperty] private string _statusMessage = string.Empty;
+    [ObservableProperty] private bool _isSaveConfirmVisible;
 
     // Localized texts
     [ObservableProperty] private string _pageTitle = string.Empty;
+    [ObservableProperty] private string _generalLabel = string.Empty;
     [ObservableProperty] private string _languageLabel = string.Empty;
     [ObservableProperty] private string _logFormatLabel = string.Empty;
     [ObservableProperty] private string _encryptExtensionsLabel = string.Empty;
@@ -48,8 +50,27 @@ public partial class SettingsViewModel : ObservableObject
     [ObservableProperty] private string _removeButtonText = string.Empty;
     [ObservableProperty] private string _refreshProcessesButtonText = string.Empty;
     [ObservableProperty] private string _saveButtonText = string.Empty;
+    [ObservableProperty] private string _logsLabel = string.Empty;
+    [ObservableProperty] private string _logsLocalLabel = string.Empty;
+    [ObservableProperty] private string _saveLogsLocalLabel = string.Empty;
+    [ObservableProperty] private string _logsServerLabel = string.Empty;
+    [ObservableProperty] private string _saveLogsServerLabel = string.Empty;
+    [ObservableProperty] private string _serverAddressLabel = string.Empty;
+    [ObservableProperty] private string _serverPortLabel = string.Empty;
+    [ObservableProperty] private string _largeFileDisabledLabel = string.Empty;
+    [ObservableProperty] private string _selectedLabel = string.Empty;
+    [ObservableProperty] private string _clearLabel = string.Empty;
+    [ObservableProperty] private string _useSelectedProcessLabel = string.Empty;
+    [ObservableProperty] private string _removeLabel = string.Empty;
+    
 
     [ObservableProperty] private string? _selectedProcess;
+
+    [ObservableProperty] private bool _saveLogsLocal;
+    [ObservableProperty] private bool _saveLogsServer;
+    [ObservableProperty] private string _serverAddress = string.Empty;
+    [ObservableProperty] private string _serverPort = "0";
+
 
     public SettingsViewModel(
         Config config,
@@ -73,17 +94,33 @@ public partial class SettingsViewModel : ObservableObject
     {
         PageTitle = _localization.Get("gui.pages.settings_title");
         LanguageLabel = _localization.Get("gui.labels.language");
+        GeneralLabel = _localization.Get("gui.sections.general");
+        LogsLabel = _localization.Get("gui.sections.logs");
+        LogsLocalLabel = _localization.Get("gui.logs.local");
+        SaveLogsLocalLabel = _localization.Get("gui.logs.save_local");
         LogFormatLabel = _localization.Get("gui.labels.log_format");
+        LogsServerLabel = _localization.Get("gui.logs.server");
+        SaveLogsServerLabel = _localization.Get("gui.logs.save_server");
+        ServerAddressLabel = _localization.Get("gui.labels.server_address");
+        ServerPortLabel = _localization.Get("gui.labels.server_port");
         EncryptExtensionsLabel = _localization.Get("gui.settings.encrypt_extensions");
         BusinessSoftwareLabel = _localization.Get("gui.settings.business_software");
         RunningProcessesLabel = _localization.Get("gui.pages.running_processes");
         LargeFileThresholdLabel = _localization.Get("gui.settings.large_file_threshold");
         PriorityExtensionsLabel = _localization.Get("gui.settings.priority_extensions");
         AddExtensionButtonText = _localization.Get("gui.buttons.add_extension");
-        RemoveButtonText = _localization.Get("gui.buttons.remove");
+        RemoveLabel = _localization.Get("gui.buttons.remove");
+        BusinessSoftwareLabel = _localization.Get("gui.settings.business_software");
+        SelectedLabel = _localization.Get("gui.labels.selected");
+        ClearLabel = _localization.Get("gui.buttons.clear");
+        UseSelectedProcessLabel = _localization.Get("gui.buttons.use_selected_process");
+        RunningProcessesLabel = _localization.Get("gui.pages.running_processes");
         RefreshProcessesButtonText = _localization.Get("gui.buttons.refresh");
+        LargeFileThresholdLabel = _localization.Get("gui.settings.large_file_threshold");
+        LargeFileDisabledLabel = _localization.Get("gui.labels.disabled_hint");
         SaveButtonText = _localization.Get("gui.buttons.save");
     }
+
 
     public void RefreshFromConfig()
     {
@@ -101,8 +138,14 @@ public partial class SettingsViewModel : ObservableObject
 
         RefreshRunningProcesses();
 
+        SaveLogsLocal = _config.LogInLocal;
+        SaveLogsServer = _config.LogOnServer;
+        ServerAddress = _config.LogServerUrl;
+        ServerPort = _config.LogServerPort.ToString();
+
         StatusMessage = _localization.Get("gui.status.ready");
     }
+
 
     private void SyncExtensionsCollection()
     {
@@ -175,7 +218,10 @@ public partial class SettingsViewModel : ObservableObject
     [RelayCommand]
     private void SaveSettings()
     {
-        var normalized = (BusinessSoftware ?? string.Empty).Replace(".exe", "", StringComparison.OrdinalIgnoreCase).Trim();
+        var normalized = (BusinessSoftware ?? string.Empty)
+            .Replace(".exe", "", StringComparison.OrdinalIgnoreCase)
+            .Trim();
+
         _config.BusinessSoftware = normalized;
 
         if (long.TryParse(LargeFileThreshold, out var threshold) && threshold >= 0)
@@ -183,9 +229,20 @@ public partial class SettingsViewModel : ObservableObject
         else
             _config.LargeFileThresholdKB = 0;
 
+        _config.LogInLocal = SaveLogsLocal;
+        _config.LogOnServer = SaveLogsServer;
+        _config.LogServerUrl = ServerAddress;
+
+        if (int.TryParse(ServerPort, out var port))
+            _config.LogServerPort = port;
+        else
+            _config.LogServerPort = 0;
+
         _config.Save();
         StatusMessage = _localization.Get("gui.status.settings_saved");
+        IsSaveConfirmVisible = true;
     }
+
 
     [CommunityToolkit.Mvvm.Input.RelayCommand]
     private void RefreshProcesses()

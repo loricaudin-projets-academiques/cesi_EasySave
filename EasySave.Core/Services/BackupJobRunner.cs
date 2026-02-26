@@ -108,6 +108,7 @@ public class BackupJobRunner
         if (State != JobState.Running && State != JobState.Paused && State != JobState.Pausing) return;
         _cts.Cancel();
         _pauseGate.Set(); // unblock if paused so cancellation can propagate
+        IsBusinessBlocked = false;
         Progress = 0;
         SetState(JobState.Stopped);
         ProgressChanged?.Invoke(this, 0);
@@ -157,8 +158,9 @@ public class BackupJobRunner
         try
         {
             _service.ExecuteWork(_index);
-            if (State == JobState.Running)
+            if (State == JobState.Running || State == JobState.Pausing)
             {
+                IsBusinessBlocked = false;
                 SetState(JobState.Done);
                 Progress = 100;
                 ProgressChanged?.Invoke(this, 100);
@@ -166,6 +168,7 @@ public class BackupJobRunner
         }
         catch (OperationCanceledException)
         {
+            IsBusinessBlocked = false;
             if (State != JobState.Stopped)
                 SetState(JobState.Stopped);
             Progress = 0;
@@ -177,6 +180,7 @@ public class BackupJobRunner
         }
         catch (Exception)
         {
+            IsBusinessBlocked = false;
             SetState(JobState.Error);
             Progress = 0;
             ProgressChanged?.Invoke(this, 0);

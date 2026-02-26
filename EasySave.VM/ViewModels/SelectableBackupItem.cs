@@ -17,6 +17,7 @@ public partial class SelectableBackupItem : ObservableObject
     [ObservableProperty] private JobState _jobState = JobState.Idle;
     [ObservableProperty] private string _currentFile = string.Empty;
     [ObservableProperty] private BlockReason _blockReason = BlockReason.None;
+    [ObservableProperty] private bool _isGloballyBlocked;
 
     /// <summary>
     /// Icon for the toggle button: Play → Pause → Play (resume).
@@ -43,7 +44,7 @@ public partial class SelectableBackupItem : ObservableObject
     /// Whether the Play/Pause button should be enabled.
     /// Disabled when: pausing (waiting for current file), or blocked by system (priority/large file/business).
     /// </summary>
-    public bool IsPlayPauseEnabled => JobState != JobState.Pausing && BlockReason == BlockReason.None;
+    public bool IsPlayPauseEnabled => JobState != JobState.Pausing && BlockReason == BlockReason.None && !IsGloballyBlocked;
 
     /// <summary>
     /// Short display name for the current file (filename only).
@@ -138,5 +139,10 @@ public partial class SelectableBackupItem : ObservableObject
         OnPropertyChanged(nameof(StateDisplayText));
         OnPropertyChanged(nameof(StateColor));
         OnPropertyChanged(nameof(StateTextColor));
+    }
+
+    partial void OnIsGloballyBlockedChanged(bool value)
+    {
+        OnPropertyChanged(nameof(IsPlayPauseEnabled));
     }
 }

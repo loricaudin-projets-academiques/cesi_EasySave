@@ -259,17 +259,31 @@
       "browse": "Parcourir",
 
       "remove": "Retirer",
+      "add_extension": "Ajouter extension",
 
-      "add_extension": "Ajouter extension"
-
+      "clear": "Effacer",
+      "use_selected_process": "Utiliser le processus sélectionné",
+      "remove_extension": "Retirer l’extension"
     },
 
     "labels": {
 
       "language": "Langue :",
-
-      "log_format": "Format des logs :"
-
+      "log_format": "Format des logs :",
+      "server_address": "Adresse du serveur",
+      "server_port": "Port",
+      "selected": "Sélectionné :",
+      "disabled_hint": "0 = désactivé"
+    },
+    "sections": {
+      "general": "Général",
+      "logs": "Logs"
+    },
+    "logs": {
+      "local": "Local",
+      "save_local": "Enregistrer les logs en local",
+      "server": "Serveur",
+      "save_server": "Enregistrer les logs sur un serveur"
     },
 
     "pages": {

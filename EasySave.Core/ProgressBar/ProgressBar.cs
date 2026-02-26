@@ -42,7 +42,7 @@
             int emptyBars = barSize - filledBars;
 
             string bar = new string('█', filledBars) + new string('░', emptyBars);
-            Console.Write($"\r[{bar}] {progress * 100:0.0}%");
+            //Console.Write($"\r[{bar}] {progress * 100:0.0}%");
         }
     }
 }
