@@ -61,13 +61,13 @@ jobs:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         shell: powershell
         run: |
-          ${{ runner.temp }}\scanner\dotnet-sonarscanner begin /k:"loricaudin-projets-academiques_cesi-easysave" /o:"loricaudin-projets-academiques" /d:sonar.token="$env:SONAR_TOKEN" /d:sonar.cs.opencover.reportsPaths="**/coverage.opencover.xml"
+          ${{ runner.temp }}\scanner\dotnet-sonarscanner begin /k:"loricaudin-projets-academiques_cesi-easysave" /o:"loricaudin-projets-academiques" /d:sonar.token="$env:SONAR_TOKEN"
 
       - name: Build solution
         run: dotnet build cesi_EasySave.slnx --configuration Release --no-restore
 
-      - name: Run tests with coverage
-        run: dotnet test EasySave.Tests/EasySave.Tests.csproj --configuration Release --no-build --verbosity normal --collect:"XPlat Code Coverage" -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=opencover
+      - name: Run tests
+        run: dotnet test EasySave.Tests/EasySave.Tests.csproj --configuration Release --no-build --verbosity normal
 
       - name: End SonarQube analysis
         env:
