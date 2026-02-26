@@ -21,6 +21,9 @@ public class BackupJobEngine
     /// <summary>Fired when any runner's progress changes.</summary>
     public event Action<BackupJobRunner, double>? JobProgressChanged;
 
+    /// <summary>Fired when any runner's info (current file, block reason) changes.</summary>
+    public event Action<BackupJobRunner>? JobInfoChanged;
+
     /// <summary>Fired when all jobs in a batch are finished (Done/Stopped/Error).</summary>
     public event Action? AllJobsCompleted;
 
@@ -75,6 +78,7 @@ public class BackupJobEngine
             var runner = new BackupJobRunner(_service, index, work);
             runner.StateChanged += OnRunnerStateChanged;
             runner.ProgressChanged += OnRunnerProgressChanged;
+            runner.InfoChanged += OnRunnerInfoChanged;
 
             lock (_lock) _runners.Add(runner);
 
@@ -118,6 +122,12 @@ public class BackupJobEngine
     /// <summary>True if any runner is Running, Pausing, or Paused.</summary>
     public bool IsAnyActive => Runners.Any(r => r.State == JobState.Running || r.State == JobState.Paused || r.State == JobState.Pausing);
 
+    /// <summary>True if any runner is currently blocked by business software detection.</summary>
+    public bool IsAnyBusinessBlocked => Runners.Any(r => r.IsBusinessBlocked);
+
+    /// <summary>Name of the configured business software (for UI display).</summary>
+    public string? BusinessSoftwareName => _businessService?.GetBusinessSoftwareName();
+
     private void OnRunnerStateChanged(BackupJobRunner runner)
     {
         // Update real-time state log file
@@ -140,5 +150,10 @@ public class BackupJobEngine
     private void OnRunnerProgressChanged(BackupJobRunner runner, double progress)
     {
         JobProgressChanged?.Invoke(runner, progress);
+    }
+
+    private void OnRunnerInfoChanged(BackupJobRunner runner)
+    {
+        JobInfoChanged?.Invoke(runner);
     }
 }
