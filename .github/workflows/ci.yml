@@ -20,7 +20,9 @@ jobs:
           dotnet-version: '8.0.x'
 
       - name: Restore dependencies
-        run: dotnet restore cesi_EasySave.slnx
+        run: |
+          dotnet restore cesi_EasySave.slnx
+          dotnet restore EasyLog.Server/EasyLog.Server.csproj
 
       - name: Build solution
         run: dotnet build cesi_EasySave.slnx --configuration Release --no-restore
