@@ -1,4 +1,4 @@
-using EasyLog.Configuration;
+﻿using EasyLog.Configuration;
 using EasyLog.Models;
 
 namespace EasyLog.Services
@@ -8,43 +8,25 @@ namespace EasyLog.Services
     /// Facade exposing daily logs and real-time state services.
     /// Uses workIndex as key for IDs (not backup name).
     /// </summary>
-    public class EasyLogger
+    public class EasyLogger : IEasyLogger
     {
         private readonly DailyLogService _dailyLogService;
         private readonly StateLogService _stateService;
         private readonly Dictionary<int, string> _workIndexToStateId = new();
 
-        /// <summary>
-        /// Creates a new EasyLogger with LogConfiguration.
-        /// </summary>
-        public EasyLogger(LogConfiguration? config = null)
-        {
-            var logConfig = config ?? new LogConfiguration();
-            _dailyLogService = new DailyLogService(logConfig);
-            _stateService = new StateLogService(logConfig);
-            LoadExistingStateIds();
-        }
+        private List<IEasyLogger> _loggers = new();
 
-        /// <summary>
-        /// Creates a new EasyLogger from application Config object.
-        /// Reads LogType property to determine format (json/xml).
-        /// </summary>
-        public EasyLogger(object configObj)
-        {
-            var logConfig = new LogConfiguration();
-            
-            if (configObj != null)
-            {
-                var logTypeProp = configObj.GetType().GetProperty("LogType");
-                if (logTypeProp != null)
-                {
-                    var logType = logTypeProp.GetValue(configObj)?.ToString() ?? "json";
-                    logConfig.LogFormat = logType.ToLowerInvariant();
-                }
-            }
-            
+
+        public EasyLogger(LogConfiguration logConfig) 
+        { 
             _dailyLogService = new DailyLogService(logConfig);
             _stateService = new StateLogService(logConfig);
+            
+            if (logConfig.LogOnServer) {
+                _loggers.Add(new EasyLogServerLogger(logConfig));
+            } if (logConfig.LogInLocal) {
+                _loggers.Add(new EasyLogLocalLogger(logConfig, _dailyLogService, _stateService));
+            }
             LoadExistingStateIds();
         }
 
@@ -58,13 +40,12 @@ namespace EasyLog.Services
             }
         }
 
-
         #region Daily Logs
 
         /// <summary>
         /// Logs a file transfer action.
         /// </summary>
-        public void LogFileTransfer(string backupName, string sourceFile, string targetFile, 
+        public void LogFileTransfer(string backupName, string sourceFile, string targetFile,
                                    long fileSize, double transferTimeMs, double encryptionTimeMs = 0, string backupType = "")
         {
             var entry = new LogEntry
@@ -79,13 +60,13 @@ namespace EasyLog.Services
                 BackupType = backupType
             };
 
-            _dailyLogService.AddLogEntry(entry);
+            UpdateLog(entry);
         }
 
         /// <summary>
         /// Logs a file transfer error.
         /// </summary>
-        public void LogFileTransferError(string backupName, string sourceFile, string targetFile, 
+        public void LogFileTransferError(string backupName, string sourceFile, string targetFile,
                                         long fileSize, string backupType = "")
         {
             LogFileTransfer(backupName, sourceFile, targetFile, fileSize, -1, 0, backupType);
@@ -108,7 +89,7 @@ namespace EasyLog.Services
                 BackupType = "BLOCKED"
             };
 
-            _dailyLogService.AddLogEntry(entry);
+            UpdateLog(entry);
         }
 
         /// <summary>
@@ -128,7 +109,7 @@ namespace EasyLog.Services
                 BackupType = "STOPPED"
             };
 
-            _dailyLogService.AddLogEntry(entry);
+            UpdateLog(entry);
         }
 
         /// <summary>Gets today's logs.</summary>
@@ -150,7 +131,7 @@ namespace EasyLog.Services
         public void StartBackup(int workIndex, string backupName, long totalFiles, long totalSize)
         {
             StateEntry state;
-            
+
             if (_workIndexToStateId.TryGetValue(workIndex, out var existingStateId))
             {
                 var existingState = _stateService.GetStateById(existingStateId);
@@ -175,7 +156,7 @@ namespace EasyLog.Services
                 state = CreateNewState(workIndex, backupName, totalFiles, totalSize);
             }
 
-            _stateService.UpdateState(state);
+            UpdateState(state);
         }
 
         private StateEntry CreateNewState(int workIndex, string backupName, long totalFiles, long totalSize)
@@ -212,7 +193,7 @@ namespace EasyLog.Services
             state.NbFilesLeftToDo = filesLeft;
             state.Progression = progression;
 
-            _stateService.UpdateState(state);
+            UpdateState(state);
         }
 
         /// <summary>
@@ -221,6 +202,14 @@ namespace EasyLog.Services
         public void CompleteBackup(int workIndex)
         {
             UpdateBackupState(workIndex, BackupState.COMPLETED, clearPaths: true, progression: 100);
+        }
+
+        /// <summary>
+        /// Marks a backup as stopped by user (by index).
+        /// </summary>
+        public void StopBackup(int workIndex)
+        {
+            UpdateBackupState(workIndex, BackupState.STOPPED, clearPaths: true);
         }
 
         /// <summary>
@@ -271,20 +260,37 @@ namespace EasyLog.Services
                 return;
 
             state.State = newState.ToString();
-            
+
             if (clearPaths)
             {
                 state.SourceFilePath = string.Empty;
                 state.TargetFilePath = string.Empty;
                 state.NbFilesLeftToDo = 0;
             }
-            
+
             if (progression.HasValue)
                 state.Progression = progression.Value;
 
-            _stateService.UpdateState(state);
+            UpdateState(state);
+        }
+
+        public void UpdateLog(LogEntry entry)
+        {
+            foreach (IEasyLogger logger in _loggers)
+            {
+                logger.UpdateLog(entry);
+            }
+        }
+
+        public void UpdateState(StateEntry state)
+        {
+            foreach (IEasyLogger logger in _loggers)
+            {
+                logger.UpdateState(state);
+            }
         }
 
         #endregion
     }
 }
+

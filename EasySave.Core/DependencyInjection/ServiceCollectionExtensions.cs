@@ -33,7 +33,22 @@ public static class ServiceCollectionExtensions
             sp.GetRequiredService<BackupWorkList>(),
             sp.GetService<EasyLog.Services.EasyLogger>(),
             sp.GetService<CryptoSoftService>(),
-            sp.GetService<BusinessSoftwareService>()
+            sp.GetService<BusinessSoftwareService>(),
+            sp.GetRequiredService<Config>()
+        ));
+
+        // Large file transfer lock (prevents parallel transfer of files > threshold)
+        services.AddSingleton<LargeFileTransferLock>();
+
+        // Priority file gate (blocks non-priority files until all priority files are done)
+        services.AddSingleton<PriorityFileGate>();
+
+        // Parallel backup job engine
+        services.AddSingleton<BackupJobEngine>(sp => new BackupJobEngine(
+            sp.GetRequiredService<BackupWorkService>(),
+            sp.GetService<BusinessSoftwareService>(),
+            sp.GetService<LargeFileTransferLock>(),
+            sp.GetService<PriorityFileGate>()
         ));
         
         return services;
@@ -46,7 +61,7 @@ public static class ServiceCollectionExtensions
     {
         config ??= Config.Load();
         
-        var logConfig = new LogConfiguration { LogFormat = config.LogType };
+        var logConfig = new LogConfiguration { LogFormat = config.LogType, LogOnServer = config.LogOnServer, LogInLocal = config.LogInLocal };
         services.AddSingleton(_ => new EasyLog.Services.EasyLogger(logConfig));
         // FileTransferLogger removed - BackupWorkService handles logging with EncryptionTime
         services.AddSingleton<IBackupEventObserver, EasyLogObserver>();

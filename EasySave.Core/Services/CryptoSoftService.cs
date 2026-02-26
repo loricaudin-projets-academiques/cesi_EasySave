@@ -9,6 +9,10 @@ namespace EasySave.Core.Services
     public class CryptoSoftService
     {
         private readonly Config _config;
+        private static Mutex _mutex = new Mutex(false);
+
+        /// <summary>Fired when the encryption mutex is acquired (encryption actually starts).</summary>
+        public event Action<string>? EncryptionStarted;
 
         public CryptoSoftService(Config config)
         {
@@ -58,46 +62,60 @@ namespace EasySave.Core.Services
                     };
                 }
 
+                var arguments = string.IsNullOrWhiteSpace(_config.EncryptionPassword)
+                    ? $"\"{filePath}\""
+                    : $"\"{filePath}\" \"{_config.EncryptionPassword}\"";
+
                 var psi = new ProcessStartInfo
                 {
                     FileName = cryptoSoftPath,
-                    Arguments = $"\"{filePath}\"",
+                    Arguments = arguments,
                     UseShellExecute = false,
                     CreateNoWindow = true,
                     RedirectStandardOutput = true,
                     RedirectStandardError = true
                 };
 
-                using var process = Process.Start(psi);
-                if (process == null)
+                _mutex.WaitOne();
+                try
                 {
-                    return new EncryptionResult 
-                    { 
-                        WasEncrypted = false, 
-                        EncryptionTimeMs = -2,  // Error: Process failed to start
-                        ErrorMessage = "Failed to start CryptoSoft process"
-                    };
-                }
+                    EncryptionStarted?.Invoke(filePath);
+                    using var process = Process.Start(psi);
 
-                process.WaitForExit();
-                stopwatch.Stop();
+                    if (process == null)
+                    {
+                        return new EncryptionResult 
+                        { 
+                            WasEncrypted = false, 
+                            EncryptionTimeMs = -2,  // Error: Process failed to start
+                            ErrorMessage = "Failed to start CryptoSoft process"
+                        };
+                    }
 
-                if (process.ExitCode == 0)
-                {
-                    return new EncryptionResult 
-                    { 
-                        WasEncrypted = true, 
-                        EncryptionTimeMs = stopwatch.Elapsed.TotalMilliseconds 
-                    };
+                    process.WaitForExit();
+                    stopwatch.Stop();
+
+                    if (process.ExitCode == 0)
+                    {
+                        return new EncryptionResult 
+                        { 
+                            WasEncrypted = true, 
+                            EncryptionTimeMs = stopwatch.Elapsed.TotalMilliseconds 
+                        };
+                    }
+                    else
+                    {
+                        return new EncryptionResult 
+                        { 
+                            WasEncrypted = false, 
+                            EncryptionTimeMs = -process.ExitCode,  // Negative exit code as error
+                            ErrorMessage = $"CryptoSoft returned error code: {process.ExitCode}"
+                        };
+                    }
                 }
-                else
+                finally
                 {
-                    return new EncryptionResult 
-                    { 
-                        WasEncrypted = false, 
-                        EncryptionTimeMs = -process.ExitCode,  // Negative exit code as error
-                        ErrorMessage = $"CryptoSoft returned error code: {process.ExitCode}"
-                    };
+                    _mutex.ReleaseMutex();
                 }
             }
             catch (Exception ex)
@@ -113,25 +131,39 @@ namespace EasySave.Core.Services
         }
 
         /// <summary>
-        /// Finds the CryptoSoft.exe path.
+        /// Finds the CryptoSoft.exe path by probing several well-known locations.
         /// </summary>
         private string? FindCryptoSoftPath()
         {
-            // 1. Check configured path
-            if (!string.IsNullOrEmpty(_config.CryptoSoftPath) && File.Exists(_config.CryptoSoftPath))
-                return _config.CryptoSoftPath;
-
-            // 2. Check in application directory
+            // 1. Check in application directory (deployed side-by-side)
             var appDirPath = Path.Combine(AppContext.BaseDirectory, "CryptoSoft.exe");
             if (File.Exists(appDirPath))
                 return appDirPath;
 
-            // 3. Check in current directory
+            // 2. Check in CryptoSoft subfolder (installed via setup)
+            var subfolderPath = Path.Combine(AppContext.BaseDirectory, "CryptoSoft", "CryptoSoft.exe");
+            if (File.Exists(subfolderPath))
+                return subfolderPath;
+
+            // 3. Check sibling project output (dev mode: ../CryptoSave/bin/<config>/net8.0/)
+            var baseDir = AppContext.BaseDirectory;
+            foreach (var config in new[] { "Debug", "Release" })
+            {
+                var siblingPath = Path.GetFullPath(
+                    Path.Combine(baseDir, "..", "..", "..", "..", "CryptoSave", "bin", config, "net8.0", "CryptoSoft.exe"));
+                if (File.Exists(siblingPath))
+                    return siblingPath;
+            }
+
+            // 4. Check in current directory
             if (File.Exists("CryptoSoft.exe"))
                 return Path.GetFullPath("CryptoSoft.exe");
 
-            // 4. Check in PATH (just return the name, let OS find it)
-            return _config.CryptoSoftPath;
+            // 5. Fallback: configured path from appsettings.json (advanced users)
+            if (!string.IsNullOrEmpty(_config.CryptoSoftPath) && File.Exists(_config.CryptoSoftPath))
+                return _config.CryptoSoftPath;
+
+            return null;
         }
     }
 

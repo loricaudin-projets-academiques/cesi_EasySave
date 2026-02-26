@@ -31,10 +31,42 @@ namespace EasySave.Core.Settings
         /// Empty string means no blocking.
         /// </summary>
         public string BusinessSoftware { get; set; } = string.Empty;
+
+        /// <summary>
+        /// Large file threshold in KB. Files larger than this cannot be transferred
+        /// in parallel (only one at a time). 0 = disabled (no restriction).
+        /// </summary>
+        public long LargeFileThresholdKB { get; set; } = 0;
+
+        /// <summary>
+        /// Priority file extensions (comma-separated, e.g., ".docx,.pdf").
+        /// Files with these extensions are copied first; non-priority files are blocked
+        /// until all priority files across all jobs are done.
+        /// Empty string means no priority ordering.
+        /// </summary>
+        public string PriorityExtensions { get; set; } = string.Empty;
+
+        /// <summary>
+        /// Password used to derive the AES-256 encryption key via PBKDF2.
+        /// Empty string means use the default hardcoded key in CryptoSoft.
+        /// </summary>
+        public string EncryptionPassword { get; set; } = string.Empty;
         
         /// <summary>Path to the loaded config file.</summary>
         public string ConfigFilePath { get; private set; } = string.Empty;
 
+
+        /// <summary></summary>
+        public string LogServerUrl { get; set; } = "127.0.0.1";
+
+        /// <summary></summary>
+        public int LogServerPort { get; set; } = 5000;
+
+        /// <summary></summary>
+        public bool LogOnServer { get; set; } = false;
+
+        /// <summary></summary>
+        public bool LogInLocal { get; set; } = true;
 
         #region Encryption Extensions Management
 
@@ -121,6 +153,76 @@ namespace EasySave.Core.Settings
 
         #endregion
 
+        #region Priority Extensions Management
+
+        /// <summary>
+        /// Gets the list of priority extensions.
+        /// </summary>
+        public string[] GetPriorityExtensionsList()
+        {
+            if (string.IsNullOrWhiteSpace(PriorityExtensions))
+                return Array.Empty<string>();
+
+            return PriorityExtensions
+                .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+                .Select(ext => ext.StartsWith('.') ? ext.ToLowerInvariant() : $".{ext.ToLowerInvariant()}")
+                .ToArray();
+        }
+
+        /// <summary>
+        /// Checks if a file has a priority extension.
+        /// </summary>
+        public bool IsPriorityFile(string filePath)
+        {
+            if (string.IsNullOrWhiteSpace(PriorityExtensions))
+                return false;
+
+            var extension = Path.GetExtension(filePath).ToLowerInvariant();
+            return GetPriorityExtensionsList().Contains(extension);
+        }
+
+        /// <summary>
+        /// Adds an extension to the priority list.
+        /// </summary>
+        public bool AddPriorityExtension(string extension)
+        {
+            var ext = extension.StartsWith('.') ? extension.ToLowerInvariant() : $".{extension.ToLowerInvariant()}";
+            var currentList = GetPriorityExtensionsList().ToList();
+
+            if (currentList.Contains(ext))
+                return false;
+
+            currentList.Add(ext);
+            PriorityExtensions = string.Join(",", currentList);
+            return true;
+        }
+
+        /// <summary>
+        /// Removes an extension from the priority list.
+        /// </summary>
+        public bool RemovePriorityExtension(string extension)
+        {
+            var ext = extension.StartsWith('.') ? extension.ToLowerInvariant() : $".{extension.ToLowerInvariant()}";
+            var currentList = GetPriorityExtensionsList().ToList();
+
+            if (!currentList.Contains(ext))
+                return false;
+
+            currentList.Remove(ext);
+            PriorityExtensions = string.Join(",", currentList);
+            return true;
+        }
+
+        /// <summary>
+        /// Clears all priority extensions.
+        /// </summary>
+        public void ClearPriorityExtensions()
+        {
+            PriorityExtensions = string.Empty;
+        }
+
+        #endregion
+
         #region Business Software Management
 
         /// <summary>
@@ -194,7 +296,7 @@ namespace EasySave.Core.Settings
                 if (string.IsNullOrEmpty(configPath) || !File.Exists(configPath))
                 {
                     // Create default config file
-                    configPath = Path.Combine(AppContext.BaseDirectory, "appsettings.json");
+                    configPath = GetSettingsFileLocation();
                     var defaultConfig = new Config { ConfigFilePath = configPath };
                     defaultConfig.Save();
                     return defaultConfig;
@@ -214,6 +316,20 @@ namespace EasySave.Core.Settings
                     ? cryptoProp.GetString() ?? "CryptoSoft.exe" : "CryptoSoft.exe";
                 var businessSoftware = appSettings.TryGetProperty("BusinessSoftware", out var businessProp) 
                     ? businessProp.GetString() ?? "" : "";
+                var largeFileThreshold = appSettings.TryGetProperty("LargeFileThresholdKB", out var lfProp) 
+                    ? lfProp.GetInt64() : 0;
+                var logServerUrl = appSettings.TryGetProperty("LogServerUrl", out var logServerUrlProp)
+                    ? logServerUrlProp.GetString() ?? "127.0.0.1" : "127.0.0.1";
+                var logServerPort = appSettings.TryGetProperty("LogServerPort", out var logServerPortProp)
+                    ? logServerPortProp.GetInt32() : 5000;
+                var logOnServer = appSettings.TryGetProperty("LogOnServer", out var logOnServerProp)
+                    ? logOnServerProp.GetBoolean() : false;
+                var logInLocal = appSettings.TryGetProperty("LogInLocal", out var logInLocalProp)
+                    ? logInLocalProp.GetBoolean() : false;
+                var priorityExtensions = appSettings.TryGetProperty("PriorityExtensions", out var prioProp) 
+                    ? prioProp.GetString() ?? "" : "";
+                var encryptionPassword = appSettings.TryGetProperty("EncryptionPassword", out var keyProp) 
+                    ? keyProp.GetString() ?? "" : "";
 
                 return new Config 
                 { 
@@ -225,13 +341,20 @@ namespace EasySave.Core.Settings
                     EncryptExtensions = encryptExtensions,
                     CryptoSoftPath = cryptoSoftPath,
                     BusinessSoftware = businessSoftware,
+                    LargeFileThresholdKB = largeFileThreshold,
+                    PriorityExtensions = priorityExtensions,
+                    EncryptionPassword = encryptionPassword,
                     LogType = logType.ToLowerInvariant(),
-                    ConfigFilePath = Path.GetFullPath(configPath)
+                    ConfigFilePath = Path.GetFullPath(configPath),
+                    LogServerUrl = logServerUrl,
+                    LogServerPort = logServerPort,
+                    LogOnServer = logOnServer,
+                    LogInLocal = logInLocal,
                 };
             }
             catch
             {
-                var defaultPath = Path.Combine(AppContext.BaseDirectory, "appsettings.json");
+                var defaultPath = GetSettingsFileLocation();
                 return new Config { ConfigFilePath = defaultPath };
             }
         }
@@ -241,37 +364,51 @@ namespace EasySave.Core.Settings
         /// </summary>
         public void Save()
         {
-            var configPath = !string.IsNullOrEmpty(ConfigFilePath) 
-                ? ConfigFilePath 
-                : Path.Combine(AppContext.BaseDirectory, "appsettings.json");
-                
-            var json = JsonSerializer.Serialize(new 
-            { 
-                AppSettings = new 
-                { 
+            var configPath = !string.IsNullOrEmpty(ConfigFilePath)
+                ? ConfigFilePath
+                : GetSettingsFileLocation();
+
+            var directory = Path.GetDirectoryName(configPath);
+            if (!Directory.Exists(directory))
+            {
+                Directory.CreateDirectory(directory);
+            }
+
+            var json = JsonSerializer.Serialize(new
+            {
+                AppSettings = new
+                {
                     Language = Language.GetCode(),
                     LogType = LogType,
                     EncryptExtensions = EncryptExtensions,
                     CryptoSoftPath = CryptoSoftPath,
-                    BusinessSoftware = BusinessSoftware
-                } 
+                    BusinessSoftware = BusinessSoftware,
+                    LargeFileThresholdKB = LargeFileThresholdKB,
+                    LogServerUrl = LogServerUrl,
+                    LogServerPort = LogServerPort,
+                    LogOnServer = LogOnServer,
+                    LogInLocal = LogInLocal,
+                    PriorityExtensions = PriorityExtensions,
+                    EncryptionPassword = EncryptionPassword
+                }
             }, new JsonSerializerOptions { WriteIndented = true });
-            
+
             File.WriteAllText(configPath, json);
             ConfigFilePath = configPath;
         }
 
+
+        private static string GetSettingsFileLocation()
+        {
+            return Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), "ProSoft", "EasySave", "configs", "appsettings.json");
+        }
+
         private static string? FindConfigFile()
         {
-            var paths = new[] { 
-                Path.Combine(AppContext.BaseDirectory, "appsettings.json"),
-                "appsettings.json"
+            var paths = new[] {
+                GetSettingsFileLocation()
             };
             return paths.FirstOrDefault(File.Exists);
         }
     }
 }
-
-
-
-

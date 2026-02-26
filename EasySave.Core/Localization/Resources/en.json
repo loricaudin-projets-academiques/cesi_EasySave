@@ -1,138 +1,436 @@
 {
   "commands": {
+
     "add": {
       "name": "Add",
+
       "description": "Adds a new backup job",
+
       "arg_name": "Job name",
+
       "arg_source": "Source path",
+
       "arg_destination": "Destination path",
+
       "option_type": "Backup type (full/diff)",
+
       "success": "? Job '{0}' added successfully",
+
       "error_limit": "? Limit of 5 jobs reached",
+
       "error_invalid_path": "? Invalid path: {0}",
+
       "error_duplicate": "? A job with this name already exists",
+
       "error_invalid_type": "? Invalid type: {0} (use 'full' or 'diff')"
+
     },
+
     "delete": {
+
       "name": "Delete",
+
       "description": "Deletes a backup job",
+
       "arg_id": "Job ID or name",
+
       "success": "? Job '{0}' deleted successfully",
+
       "error_not_found": "? Job '{0}' not found",
+
       "error": "? Failed to delete job"
+
     },
+
     "list": {
+
       "name": "List",
+
       "description": "Displays all backup jobs",
+
       "header": "Configured Backup Jobs",
+
       "empty": "No jobs configured",
+
       "no_works": "No backup jobs configured",
+
       "column_id": "ID",
+
       "column_name": "Name",
+
       "column_source": "Source",
+
       "column_destination": "Destination",
+
       "column_type": "Type",
+
       "total": "Total: {0} job(s)"
+
     },
+
     "modify": {
+
       "name": "Modify",
+
       "description": "Modifies an existing backup job",
+
       "arg_id": "Job ID or name",
+
       "success": "? Job '{0}' modified successfully",
+
       "error_not_found": "? Job '{0}' not found",
+
       "no_changes": "? No modifications specified",
+
       "error": "? Failed to modify job"
+
     },
+
     "run": {
+
       "name": "Run",
+
       "description": "Executes one or more backup jobs",
+
       "arg_indices": "Job indices (e.g. 1-3 or 1;3)",
+
       "starting": "? Starting backup '{0}'...",
+
       "completed": "? Backup completed",
+
       "error_not_found": "? Job '{0}' not found",
+
       "error_invalid_indices": "? Invalid indices format: {0}",
+
       "progress": "Progress: {0}%",
+
       "files_transferred": "Files transferred: {0}/{1}",
+
       "total_size": "Total size: {0}",
+
       "elapsed_time": "Elapsed time: {0}ms"
+
     },
+
     "config": {
+
       "name": "Config",
+
       "description": "Manages global configuration",
+
       "title": "Configuration",
+
       "parameter": "Parameter",
+
       "value": "Value",
+
       "language": "Language",
+
       "logtype": "Log format",
+
       "language_changed": "Language changed from {0} to {1}",
+
       "logtype_changed": "Log format changed from {0} to {1}",
+
       "invalid_logtype": "Invalid format: {0}. Available formats: {1}",
+
       "change_hint": "Use 'config --lang fr/en' or 'config --logtype json/xml'",
+
       "file_path": "Config file: {0}",
+
       "set_language": "Language changed to {0}",
+
       "current_language": "Current language: {0}",
+
       "available_languages": "Available languages: {0}"
+
     }
+
   },
+
   "errors": {
+
     "generic": "Error: {0}",
+
     "command_not_found": "Unknown command: {0}",
+
     "general": "? An error occurred: {0}",
+
     "invalid_argument": "? Invalid argument: {0}",
+
     "file_not_found": "? File not found: {0}",
+
     "access_denied": "? Access denied: {0}",
+
     "invalid_path": "? Invalid path: {0}",
+
     "source_not_found": "? Source path not found: {0}",
+
     "destination_not_found": "? Destination path not found: {0}",
+
     "work_not_found": "? Backup job {0} not found",
+
     "invalid_backup_type": "? Invalid backup type: {0}",
+
     "execution_failed": "? Execution failed: {0}",
+
     "backup_io_error": "? Error during backup. Make sure folders are accessible and there is enough disk space."
+
   },
+
   "backup_types": {
+
     "full": "Full",
+
     "diff": "Differential"
+
   },
+
   "status": {
+
     "active": "Active",
+
     "inactive": "Inactive",
+
     "paused": "Paused",
+
     "completed": "Completed",
+
     "error": "Error"
+
   },
+
   "messages": {
+
     "welcome": "Welcome to EasySave - Backup Software",
+
     "help": "Use 'help' or '-h' to display help",
+
     "goodbye": "Goodbye!",
+
     "loading": "Loading...",
+
     "saving": "Saving..."
+
   },
+
   "gui": {
-    "buttons": {
-      "select_all": "Select all",
-      "add": "Add",
-      "delete": "Delete",
-      "edit": "Edit",
-      "execute": "Run",
-      "run_all": "Run all",
-      "refresh": "Refresh",
-      "options": "Options",
+
+    "nav": {
+
+      "backups": "Backups",
+
+      "settings": "Settings",
+
       "about": "About"
+
     },
+
+    "buttons": {
+
+      "select_all": "Select all",
+
+      "add": "Add",
+
+      "delete": "Delete",
+
+      "delete_confirm": "Confirm delete",
+
+      "edit": "Edit",
+
+      "execute": "Run",
+
+      "run_all": "Run all",
+
+      "run_selected": "Run selected",
+
+      "refresh": "Refresh",
+
+      "options": "Options",
+
+      "about": "About",
+
+      "save": "Save",
+
+      "cancel": "Cancel",
+
+      "browse": "Browse",
+
+      "remove": "Remove",
+      "add_extension": "Add extension",
+
+      "clear": "Clear",
+      "use_selected_process": "Use selected process",
+      "remove_extension": "Remove extension"
+    },
+
     "labels": {
+
       "language": "Language:",
-      "log_format": "Log format:"
+      "log_format": "Log format:",
+      "server_address": "Server address",
+      "server_port": "Port",
+      "selected": "Selected:",
+      "disabled_hint": "0 = disabled"
     },
+    "sections": {
+      "general": "General",
+      "logs": "Logs"
+    },
+    "logs": {
+      "local": "Local",
+      "save_local": "Save logs locally",
+      "server": "Server",
+      "save_server": "Save logs to a server"
+    },
+
+    "pages": {
+
+      "backups_title": "Backups",
+
+      "settings_title": "Settings",
+
+      "editor_name": "Name",
+
+      "editor_source": "Source folder",
+
+      "editor_destination": "Destination folder",
+
+      "editor_type": "Backup type",
+
+      "running_processes": "Running processes"
+
+    },
+
+    "settings": {
+
+      "crypto_path": "CryptoSoft path:",
+
+      "encrypt_extensions": "Extensions to encrypt:",
+
+      "business_software": "Business software (process):",
+
+      "large_file_threshold": "Large file threshold (KB):",
+
+      "priority_extensions": "Priority file extensions:",
+
+      "encryption_password": "Encryption password",
+
+      "encryption_password_hint": "Leave empty to use the default key. The password is used to derive an AES-256 key."
+
+    },
+
+    "editor": {
+
+      "title_create": "Create backup",
+
+      "title_edit": "Edit backup",
+
+      "saved": "Backup saved",
+
+      "error_name_required": "Name is required",
+
+      "error_source_required": "Source folder is required",
+
+      "error_destination_required": "Destination folder is required",
+
+      "error_save_failed": "Save failed"
+
+    },
+
+    "about": {
+
+      "title": "About",
+
+      "config_path": "Configuration file",
+
+      "logs_path": "Logs directory"
+
+    },
+
     "status": {
+
       "ready": "Ready",
+
       "running": "Running...",
+
       "running_backup": "Running {0}...",
+
       "completed": "Completed!",
+
       "backup_completed": "Backup {0} completed",
+
       "loaded": "{0} backup(s) loaded",
+
       "deleted": "Backup {0} deleted",
+
       "error": "Error: {0}",
-      "language_changed": "Language changed to {0}"
+
+      "language_changed": "Language changed to {0}",
+
+      "invalid_logtype": "Invalid format: {0}. Available formats: {1}",
+
+      "logtype_changed": "Log format changed from {0} to {1}",
+
+      "delete_confirm": "Delete '{0}'?",
+
+      "blocked_business": "Backup blocked: business software '{0}' is running",
+
+      "pausing": "Backup '{0}' pausing after current file...",
+
+      "paused": "Backup '{0}' paused",
+
+      "stopped": "Backup '{0}' stopped",
+
+      "settings_saved": "Settings saved",
+
+      "extension_invalid": "Extension must start with a dot (e.g. .pdf, .docx)",
+
+      "extension_duplicate": "This extension is already in the list",
+
+      "threshold_invalid": "Please enter a valid number (digits only)"
+
+    },
+
+    "hints": {
+
+      "extension_placeholder": "e.g. .pdf, .docx, .txt",
+
+      "threshold_placeholder": "e.g. 1024",
+
+      "business_software_placeholder": "Process name (e.g. calculator)"
+
+    },
+
+    "job_state": {
+
+      "idle": "�",
+
+      "running": "Running",
+
+      "pausing": "Pausing...",
+
+      "paused": "Paused",
+
+      "stopped": "Stopped",
+
+      "done": "Completed",
+
+      "error": "Error",
+
+      "waiting_priority": "Waiting (priority files)",
+
+      "waiting_large_file": "Waiting (large file transfer)",
+
+      "blocked_business": "Blocked (business software)",
+
+      "encrypting": "Encrypting...",
+
+      "encryption_queue": "Waiting (encryption)"
+
     }
+
   }
+
 }
+

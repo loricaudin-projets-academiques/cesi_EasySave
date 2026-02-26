@@ -1,0 +1,32 @@
+# Build
+FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
+WORKDIR /app
+
+# Copier le projet serveur
+COPY EasyLog.Server/*.csproj ./EasyLog.Server/
+# Copier le projet DLL
+COPY EasySave.DLL/*.csproj ./EasySave.DLL/
+
+# Restaurer
+RUN dotnet restore EasyLog.Server/EasyLog.Server.csproj
+
+# Server.exe doit être converti en Server.dll pour être exécuté sur Docker
+COPY . .
+ RUN dotnet publish EasyLog.Server/EasyLog.Server.csproj -c Release -o out
+
+# Runtime
+FROM mcr.microsoft.com/dotnet/runtime:8.0
+WORKDIR /app
+
+RUN mkdir /app/logs
+
+COPY --from=build /app/out .
+COPY EasyLog.Server/.env.server .env
+
+EXPOSE 5000
+
+ENTRYPOINT ["dotnet", "EasyLog.Server.dll"]
+
+# Commandes à exécuter dans la console :
+# docker build -t workshop-server .
+# docker run -p 5000:5000 workshop-server

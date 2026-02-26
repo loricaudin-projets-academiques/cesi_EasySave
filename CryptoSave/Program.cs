@@ -1,4 +1,6 @@
-﻿namespace CryptoSave
+﻿using System.Diagnostics;
+
+namespace CryptoSave
 {
     /// <summary>
     /// Entry point for CryptoSoft application.
@@ -13,9 +15,15 @@
         /// <returns>Exit code (0 = success, other = error).</returns>
         static int Main(string[] args)
         {
-            if (args.Length != 1)
+            bool alreadyRunning = Process.GetProcessesByName("CryptoSoft").Length > 1;
+            if (alreadyRunning) {
+                Console.WriteLine("CryptoSoft is already running.");
+                return 1;
+            }
+
+            if (args.Length < 1 || args.Length > 2)
             {
-                Console.WriteLine("Usage: CryptoSoft.exe <filepath>");
+                Console.WriteLine("Usage: CryptoSoft.exe <filepath> [password]");
                 return 1;
             }
 
@@ -29,7 +37,8 @@
 
             try
             {
-                CryptoService cryptoService = new CryptoService();
+                string? hexKey = args.Length >= 2 ? args[1] : null;
+                CryptoService cryptoService = new CryptoService(hexKey);
                 cryptoService.Encrypt(fullPath);
                 Console.WriteLine("File encrypted successfully");
                 return 0;
