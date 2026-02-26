@@ -314,7 +314,11 @@
 
       "large_file_threshold": "Seuil fichier volumineux (Ko) :",
 
-      "priority_extensions": "Extensions de fichiers prioritaires :"
+      "priority_extensions": "Extensions de fichiers prioritaires :",
+
+      "encryption_password": "Mot de passe de chiffrement",
+
+      "encryption_password_hint": "Laisser vide pour utiliser la clé par défaut. Le mot de passe est utilisé pour dériver une clé AES-256."
 
     },
 
@@ -420,7 +424,11 @@
 
       "waiting_large_file": "En attente (transfert fichier volumineux)",
 
-      "blocked_business": "Bloqué (logiciel métier)"
+      "blocked_business": "Bloqué (logiciel métier)",
+
+      "encrypting": "Chiffrement...",
+
+      "encryption_queue": "En attente (chiffrement)"
 
     }
 

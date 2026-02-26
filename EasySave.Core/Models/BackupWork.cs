@@ -30,6 +30,19 @@ namespace EasySave.Core.Models
         /// <summary>Event raised when a file transfer fails.</summary>
         public event EventHandler? FileTransferError;
 
+        /// <summary>Fired when waiting for the encryption mutex (another file is being encrypted).</summary>
+        public event Action? EncryptionWaiting;
+
+        /// <summary>Fired when encryption of the current file starts.</summary>
+        public event Action<string>? EncryptionStarted;
+
+        /// <summary>Fired when encryption of the current file finishes.</summary>
+        public event Action? EncryptionCompleted;
+
+        internal void RaiseEncryptionWaiting() => EncryptionWaiting?.Invoke();
+        internal void RaiseEncryptionStarted(string filePath) => EncryptionStarted?.Invoke(filePath);
+        internal void RaiseEncryptionCompleted() => EncryptionCompleted?.Invoke();
+
         /// <summary>
         /// Single instance of the copy handler to keep global progress consistent.
         /// </summary>

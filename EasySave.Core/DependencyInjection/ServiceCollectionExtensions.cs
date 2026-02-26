@@ -33,7 +33,8 @@ public static class ServiceCollectionExtensions
             sp.GetRequiredService<BackupWorkList>(),
             sp.GetService<EasyLog.Services.EasyLogger>(),
             sp.GetService<CryptoSoftService>(),
-            sp.GetService<BusinessSoftwareService>()
+            sp.GetService<BusinessSoftwareService>(),
+            sp.GetRequiredService<Config>()
         ));
 
         // Large file transfer lock (prevents parallel transfer of files > threshold)

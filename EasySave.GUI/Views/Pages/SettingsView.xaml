@@ -10,22 +10,50 @@
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
-            <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
         <!-- Page Header -->
-        <StackPanel Grid.Row="0" Margin="0,0,0,20">
-            <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
-                <Border Width="36" Height="36" CornerRadius="8" Background="{StaticResource AccentLightBrush}" Margin="0,0,12,0">
-                    <TextBlock Text="&#xE713;" FontFamily="Segoe MDL2 Assets" FontSize="16" 
-                               Foreground="{StaticResource AccentBrush}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                </Border>
-                <TextBlock Text="{Binding PageTitle}" FontSize="24" FontWeight="Bold" 
-                           Foreground="{StaticResource TextPrimaryBrush}" FontFamily="{StaticResource AppFont}" VerticalAlignment="Center"/>
+        <Grid Grid.Row="0" Margin="0,0,0,20">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+
+            <!-- Left: title + status -->
+            <StackPanel Grid.Column="0">
+                <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
+                    <Border Width="36" Height="36" CornerRadius="8" Background="{StaticResource AccentLightBrush}" Margin="0,0,12,0">
+                        <TextBlock Text="&#xE713;" FontFamily="Segoe MDL2 Assets" FontSize="16" 
+                                   Foreground="{StaticResource AccentBrush}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                    </Border>
+                    <TextBlock Text="{Binding PageTitle}" FontSize="24" FontWeight="Bold" 
+                               Foreground="{StaticResource TextPrimaryBrush}" FontFamily="{StaticResource AppFont}" VerticalAlignment="Center"/>
+                </StackPanel>
+                <TextBlock Text="{Binding StatusMessage}" FontSize="12" 
+                           Foreground="{StaticResource TextMutedBrush}" FontFamily="{StaticResource AppFont}" Margin="48,0,0,0"/>
             </StackPanel>
-            <TextBlock Text="{Binding StatusMessage}" FontSize="12" 
-                       Foreground="{StaticResource TextMutedBrush}" FontFamily="{StaticResource AppFont}" Margin="48,0,0,0"/>
-        </StackPanel>
+
+            <!-- Right: save confirmation + save button -->
+            <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                <Border Background="#E8F5E9" BorderBrush="#4CAF50" BorderThickness="1" CornerRadius="8"
+                        Padding="10,6" Margin="0,0,10,0" VerticalAlignment="Center"
+                        Visibility="{Binding IsSaveConfirmVisible, Converter={StaticResource BooleanToVisibilityConverter}}">
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="&#xE73E;" FontFamily="Segoe MDL2 Assets" FontSize="13"
+                                   Foreground="#4CAF50" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                        <TextBlock Text="{Binding StatusMessage}" FontSize="12" Foreground="#2E7D32"
+                                   FontFamily="{StaticResource AppFont}" VerticalAlignment="Center"/>
+                    </StackPanel>
+                </Border>
+                <Button Style="{StaticResource PrimaryButtonStyle}" MinWidth="140"
+                        Command="{Binding SaveSettingsCommand}">
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="&#xE74E;" FontFamily="Segoe MDL2 Assets" FontSize="14" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                        <TextBlock Text="{Binding SaveButtonText}" VerticalAlignment="Center"/>
+                    </StackPanel>
+                </Button>
+            </StackPanel>
+        </Grid>
 
         <!-- Settings sections -->
         <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
@@ -210,6 +238,41 @@
                                 </DataTemplate>
                             </ItemsControl.ItemTemplate>
                         </ItemsControl>
+
+                        <!-- Encryption Password -->
+                        <Border Height="1" Background="{StaticResource DividerBrush}" Margin="0,12,0,12"/>
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
+                            <TextBlock Text="&#xE192;" FontFamily="Segoe MDL2 Assets" FontSize="13"
+                                       Foreground="{StaticResource AccentBrush}" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                            <TextBlock Text="{Binding EncryptionPasswordLabel}" FontSize="14" FontWeight="SemiBold"
+                                       Foreground="{StaticResource TextPrimaryBrush}" FontFamily="{StaticResource AppFont}"/>
+                        </StackPanel>
+                        <TextBlock Text="{Binding EncryptionPasswordHint}" FontSize="11"
+                                   Foreground="{StaticResource TextMutedBrush}" FontFamily="{StaticResource AppFont}" Margin="0,0,0,6"/>
+                        <Grid Width="350" HorizontalAlignment="Left">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <PasswordBox x:Name="EncryptionPasswordBox"
+                                         Grid.Column="0"
+                                         Style="{StaticResource ModernPasswordBoxStyle}"
+                                         FontSize="13"
+                                         PasswordChanged="EncryptionPasswordBox_PasswordChanged"/>
+                            <TextBox x:Name="EncryptionPasswordVisible"
+                                     Grid.Column="0"
+                                     Style="{StaticResource ModernTextBoxStyle}"
+                                     FontSize="13"
+                                     Visibility="Collapsed"
+                                     TextChanged="EncryptionPasswordVisible_TextChanged"/>
+                            <Button Grid.Column="1" Style="{StaticResource IconButtonStyle}"
+                                    Width="34" Height="34" Margin="6,0,0,0"
+                                    VerticalAlignment="Center"
+                                    Click="TogglePasswordVisibility_Click"
+                                    ToolTip="Show/Hide">
+                                <TextBlock x:Name="EyeIcon" Text="&#xE7B3;" FontFamily="Segoe MDL2 Assets" FontSize="14"/>
+                            </Button>
+                        </Grid>
                     </StackPanel>
                 </Border>
 
@@ -353,30 +416,5 @@
             </StackPanel>
         </ScrollViewer>
 
-        <!-- ===== STICKY SAVE FOOTER ===== -->
-        <Border Grid.Row="2" Background="{StaticResource CardBackgroundBrush}"
-                BorderBrush="{StaticResource InputBorderBrush}" BorderThickness="0,1,0,0" Padding="16,12">
-            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
-                <!-- Save confirmation -->
-                <Border Background="#E8F5E9" BorderBrush="#4CAF50" BorderThickness="1" CornerRadius="8"
-                        Padding="12,8" Margin="0,0,12,0" VerticalAlignment="Center"
-                        Visibility="{Binding IsSaveConfirmVisible, Converter={StaticResource BooleanToVisibilityConverter}}">
-                    <StackPanel Orientation="Horizontal">
-                        <TextBlock Text="&#xE73E;" FontFamily="Segoe MDL2 Assets" FontSize="14"
-                                   Foreground="#4CAF50" VerticalAlignment="Center" Margin="0,0,8,0"/>
-                        <TextBlock Text="{Binding StatusMessage}" FontSize="13" Foreground="#2E7D32"
-                                   FontFamily="{StaticResource AppFont}" VerticalAlignment="Center"/>
-                    </StackPanel>
-                </Border>
-                <!-- Save button -->
-                <Button Style="{StaticResource PrimaryButtonStyle}" MinWidth="180"
-                        Command="{Binding SaveSettingsCommand}">
-                    <StackPanel Orientation="Horizontal">
-                        <TextBlock Text="&#xE74E;" FontFamily="Segoe MDL2 Assets" FontSize="14" VerticalAlignment="Center" Margin="0,0,8,0"/>
-                        <TextBlock Text="{Binding SaveButtonText}" VerticalAlignment="Center"/>
-                    </StackPanel>
-                </Button>
-            </StackPanel>
-        </Border>
     </Grid>
 </UserControl>

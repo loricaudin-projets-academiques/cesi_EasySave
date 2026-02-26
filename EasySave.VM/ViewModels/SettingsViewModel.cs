@@ -32,6 +32,7 @@ public partial class SettingsViewModel : ObservableObject
 
     [ObservableProperty] private string _businessSoftware = string.Empty;
     [ObservableProperty] private string _largeFileThreshold = "0";
+    [ObservableProperty] private string _encryptionPassword = string.Empty;
 
     [ObservableProperty] private string _statusMessage = string.Empty;
     [ObservableProperty] private bool _isSaveConfirmVisible;
@@ -62,6 +63,8 @@ public partial class SettingsViewModel : ObservableObject
     [ObservableProperty] private string _clearLabel = string.Empty;
     [ObservableProperty] private string _useSelectedProcessLabel = string.Empty;
     [ObservableProperty] private string _removeLabel = string.Empty;
+    [ObservableProperty] private string _encryptionPasswordLabel = string.Empty;
+    [ObservableProperty] private string _encryptionPasswordHint = string.Empty;
     
 
     [ObservableProperty] private string? _selectedProcess;
@@ -118,6 +121,8 @@ public partial class SettingsViewModel : ObservableObject
         RefreshProcessesButtonText = _localization.Get("gui.buttons.refresh");
         LargeFileThresholdLabel = _localization.Get("gui.settings.large_file_threshold");
         LargeFileDisabledLabel = _localization.Get("gui.labels.disabled_hint");
+        EncryptionPasswordLabel = _localization.Get("gui.settings.encryption_password");
+        EncryptionPasswordHint = _localization.Get("gui.settings.encryption_password_hint");
         SaveButtonText = _localization.Get("gui.buttons.save");
     }
 
@@ -137,6 +142,8 @@ public partial class SettingsViewModel : ObservableObject
         SyncPriorityExtensionsCollection();
 
         RefreshRunningProcesses();
+
+        EncryptionPassword = _config.EncryptionPassword;
 
         SaveLogsLocal = _config.LogInLocal;
         SaveLogsServer = _config.LogOnServer;
@@ -237,6 +244,8 @@ public partial class SettingsViewModel : ObservableObject
             _config.LogServerPort = port;
         else
             _config.LogServerPort = 0;
+
+        _config.EncryptionPassword = EncryptionPassword?.Trim() ?? string.Empty;
 
         _config.Save();
         StatusMessage = _localization.Get("gui.status.settings_saved");
